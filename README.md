@@ -1,22 +1,26 @@
-# POKÉRICOCHET — Rogue Bounce v0.3
+# POKÉRICOCHET — Rogue Bounce v0.4
 
-Roguelite experimental en un único archivo HTML, sin compilación, para GitHub Pages, móviles y ordenador.
+Prototipo roguelite de rebotes y combates Pokémon, para GitHub Pages. Proyecto fan no oficial.
 
-## Novedades 0.3
+## Cambios de la V0.4
 
-- Reinicio de progreso con el guardado independiente `pokeRicochet-v03` (el de 0.2 permanece intacto). Primera elección de inicial y dos compañeros entre **27 iniciales de las nueve generaciones**.
-- Menú completamente nuevo: inicio, equipo, PC, Pokédex con filtros, gachapón usando fichas obtenidas jugando y registro.
-- Mapa de rutas ramificadas y conectadas: cuatro zonas de 15, 16, 18 y 18 pisos, respectivamente, más sus jefes. Vista completa del recorrido, decisiones sin marcha atrás.
-- Combates de más duración: más PS enemigos, tanques con armadura, caster con proyectiles visibles, atacantes rápidos, soportes que curan aliados y enemigos élite. Los contadores indican cuándo atacan a distancia o cuánto falta para llegar abajo.
-- Eventos con consecuencias: Centros Pokémon, descansos, tesoros, santuarios, huevos y entrenadores; recompensas con decisiones y riesgos.
-- Ataque especial cargado mediante 20 impactos, más bolas y salpicadura; medidor por Pokémon.
-- Más reliquias globales: ritmo, afinidad de tipos, curación y exploración.
-- Progresión con experiencia repartida, mejoras individuales por nivel, rarezas, capturas permanentes y shinies (1/4096; al derrotarlos sueltan Poké Ball con probabilidad 100 %, que se recoge con un proyectil). Las evoluciones aún no están implementadas.
+- **Un solo inicial**: nueva elección de 1 entre los 27 iniciales de las nueve generaciones. Las partidas arrancan con un único Pokémon; los otros dos huecos se llenan capturando especies básicas o usando un Centro Pokémon.
+- **Evoluciones por nivel**: líneas de los 27 iniciales (entre otras especies) con niveles propios, animación de evolución, aumento moderado de PS y potencia y conservación de las mejoras del movimiento. Los niveles se reinician entre expediciones.
+- **Sin capturas directas de evoluciones**: las Poké Balls de formas evolucionadas se convierten en caramelos para la especie básica de su familia. Una evolución shiny, al soltar Poké Ball garantizada, da también la variante shiny de su especie básica.
+- **Caramelos permanentes por familia**: especie básica +2; primera evolución +6; evolución final +14; shiny +5 extra. Los caramelos pueden acumularse incluso si aún no tienes la especie básica.
+- **Laboratorio de caramelos** en el menú: Vínculo (+10 PS al iniciar, 3 niveles; 6/12/20 caramelos) y Afinidad (+1 bola inicial, 2 niveles; 18/36 caramelos) por especie. Ventajas limitadas para preservar el equilibrio.
+- **Gachapón y huevos**: únicamente especies básicas, con caramelos para duplicados. No entregan Pokémon ya evolucionados.
+- **PC en Centros Pokémon**: curación, sustitución y posibilidad de añadir compañeros a los huecos libres.
+- **Pokédex**: las evoluciones descubiertas aparecen registradas, sin que eso implique capturarlas.
+- Indicador visual dorado de caramelos sobre las Poké Balls de las evoluciones.
+- **Guardado independiente** `pokeRicochet-v04`: empieza de cero; los datos de la V0.3 se conservan sin usarse.
+
+## Mecánicas que se mantienen
+
+Mapas ramificados y conectados; rivales con roles, jefes, proyectiles y cuentas atrás; tabla de tipos; experiencia compartida (100 % activo cuando estás solo, 60/40 con dos y 60/20/20 con tres), mejoras por nivel y reliquias globales; ataque especial cargado con impactos.
 
 ## Controles
 
-Arrastra y suelta para apuntar y disparar, o usa el botón. Teclas 1–3 para movimientos, espacio para disparar y F para pantalla completa en navegadores compatibles. Especial cuando llegue a 20 impactos.
+Arrastrar en el tablero para apuntar y soltar para disparar. Teclas 1–3 para elegir movimientos; espacio para disparar; F para pantalla completa. El botón ✦ activa un especial cuando su medidor está lleno.
 
-Los datos se guardan localmente en este navegador. El proyecto no admite pagos ni moneda real.
-
-**Fan project no oficial:** los sprites remotos provienen del repositorio público de PokéAPI; su disponibilidad pública no implica derechos libres de uso ni autorización de The Pokémon Company, Nintendo o Game Freak.
+Sprites cargados desde el repositorio público PokéAPI/sprites. La disponibilidad pública no implica una licencia libre de los personajes o sus diseños de Pokémon. No hay pagos ni monedas compradas con dinero real.
