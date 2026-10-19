@@ -180,13 +180,60 @@
       .quick-actions {margin-top:5px;}
       .quick-actions .control {padding:7px 3px;}
     }
+
+    /* v1.2: el juego es la pantalla. Ningún bloque depende de la altura intrínseca del canvas. */
+    :root { --ui-pad: clamp(5px, 1.05dvh, 12px); }
+    html,body { width:100%; height:100%; overflow:hidden; }
+    .app { max-width:none; width:100%; height:100vh; height:100dvh; min-height:0;
+      padding:var(--ui-pad) clamp(6px,1.7vw,22px); overflow:hidden; display:flex;flex-direction:column; }
+    .masthead { height:clamp(26px,5.4dvh,42px); flex:0 0 auto; padding:0 4px clamp(3px,.75dvh,7px); }
+    .symbol { width:clamp(24px,3.7dvh,32px); height:clamp(24px,3.7dvh,32px); border-radius:10px; }
+    .brandname {font-size:clamp(11px,1.75dvh,15px);}
+    .layout { flex:1 1 auto; min-height:0; max-height:100%; width:100%;
+      display:flex; flex-direction:row; align-items:stretch; justify-content:center; gap:0; overflow:hidden; }
+    .sidebar {display:none!important;}
+    .game-column {height:100%; width:100%; min-width:0; min-height:0; max-width:100%;
+      display:flex; flex-direction:column; align-self:stretch; margin:0 auto; overflow:hidden;}
+    .hud { flex:0 0 auto; min-height:0; border-radius:12px 12px 0 0; }
+    .metric { padding:clamp(3px,.95dvh,8px) 3px; }
+    .metric span {font-size:clamp(7px,1.3dvh,9px); margin-bottom:1px;}
+    .metric strong {font-size:clamp(15px,2.75dvh,23px);line-height:1.08;}
+    .board-shell { flex:1 1 auto; min-height:0; width:100%; display:flex;flex-direction:column;
+      overflow:hidden; border-radius:0 0 12px 12px; }
+    #game {display:block; flex:1 1 auto; min-height:0; width:100%; height:100%; aspect-ratio:auto;}
+    .board-bottom { flex:0 0 auto; min-height:0; height:clamp(22px,3.9dvh,32px); padding:3px 9px; font-size:clamp(8px,1.45dvh,10px); }
+    .end-overlay,.help-overlay {bottom:clamp(22px,3.9dvh,32px);}
+    .quick-actions { flex:0 0 auto; grid-template-columns:1fr 1.05fr 1.3fr 34px;
+      gap:clamp(3px,1vw,7px); margin-top:clamp(4px,.95dvh,8px); }
+    .quick-actions .control {height:clamp(28px,4.7dvh,37px);padding:0 3px; font-size:clamp(9px,1.55dvh,11px); }
+    .tag {font-size:9px;padding:6px 9px;}
+    @media(max-width:500px) {
+      .app{padding-inline:6px;}
+      .tag {display:none;}
+      .masthead {padding-inline:4px;}
+      .quick-actions {grid-template-columns:1fr 1fr 1.26fr 30px;}
+      .board-bottom {letter-spacing:0;}
+    }
+    @media(max-height:440px){
+      .masthead{height:24px;padding-bottom:2px;}
+      .symbol{width:20px;height:20px;}
+      .brandname{font-size:11px;}
+      .tag{display:none;}
+      .board-bottom{height:20px;}
+      .metric{padding:2px;}
+      .metric span{font-size:7px;}
+      .metric strong{font-size:14px;}
+      .quick-actions{margin-top:3px;}
+      .quick-actions .control{height:24px;font-size:9px;}
+    }
+    @media(max-height:330px){ .masthead{display:none;} }
   </style>
 </head>
 <body>
 <main class="app" id="app">
   <header class="masthead">
     <div class="brand"><span class="symbol" aria-hidden="true"></span><span class="brandname">RICOCHET<span>.</span></span></div>
-    <span class="tag">UNA PARTIDA MÁS Y FUERA</span>
+    <span class="tag">RICOCHET · v1.2 · TODO A LA VISTA</span>
   </header>
   <div class="layout" id="layout">
     <section class="game-column" aria-label="Juego Ricochet">
@@ -269,13 +316,16 @@
   try { best = +(localStorage.getItem('ricochet-best') || 0) || 0; } catch (_) {}
 
   function fitBoard() {
-    const layout=$('layout'), hud=document.querySelector('.hud');
-    const actions=document.querySelector('.quick-actions'), bottom=document.querySelector('.board-bottom');
-    const columns=getComputedStyle(layout).gridTemplateColumns.split(' ');
-    const slotWidth=parseFloat(columns[0]) || layout.clientWidth;
-    const freeHeight=layout.clientHeight-hud.offsetHeight-actions.offsetHeight-bottom.offsetHeight-14;
-    const width=Math.max(60,Math.floor(Math.min(slotWidth,freeHeight*W/H)));
-    document.querySelector('.game-column').style.width=width+'px';
+    const layout=$('layout'), column=document.querySelector('.game-column');
+    const hud=document.querySelector('.hud'), actions=document.querySelector('.quick-actions');
+    const bottom=document.querySelector('.board-bottom');
+    // Nunca medimos el propio tablero, para evitar un ciclo de tamaños del grid.
+    const actionMargin=parseFloat(getComputedStyle(actions).marginTop)||0;
+    const availableHeight=Math.max(80, layout.clientHeight-hud.offsetHeight-
+      actions.offsetHeight-bottom.offsetHeight-actionMargin-2);
+    const availableWidth=Math.max(80,layout.clientWidth);
+    const width=Math.min(availableWidth,Math.floor(availableHeight*W/H));
+    column.style.width=width+'px';
   }
   function resize() {
     fitBoard();
@@ -286,6 +336,7 @@
     scaleY = H / canvas.getBoundingClientRect().height;
   }
   window.addEventListener('resize', resize, {passive:true});
+  if('ResizeObserver' in window) new ResizeObserver(resize).observe($('layout'));
   window.visualViewport?.addEventListener('resize', resize, {passive:true});
   const rr = (x,y,w,h,r) => {
     r = Math.min(r,w/2,h/2);
@@ -299,7 +350,7 @@
     blocks = []; orbs = []; balls = []; sparks = []; ripples = [];
     game = { round:1, ammo:5, score:0, launched:0, remaining:0, pending:0, state:'ready',
       sourceX:W/2, nextSourceX:null, angle:.09, velocity:{x:0,y:-SPEED}, shotTimer:0,
-      waitTimer:0, elapsed:0, fast:false, pulse:0, hasPlayed:false, aimVisible:false };
+      waitTimer:0, elapsed:0, fast:false, pulse:0, dropProgress:0, hasPlayed:false, aimVisible:false };
     spawnRow(3,1); spawnRow(2,1);
     $('endOverlay').classList.add('hidden');
     $('fastBtn').classList.remove('visible','active');
@@ -493,16 +544,24 @@
   }
   function endVolley() {
     if(game.state!=='shooting')return;
-    game.state='transition';game.waitTimer=.65;
+    game.state='transition';game.waitTimer=.25;
     $('fastBtn').classList.remove('visible');
     if(game.pending)toast('+'+game.pending+' BOLA'+(game.pending>1?'S':'')+' CONSEGUIDA'+(game.pending>1?'S':''));
     showStatus('¡Buena! Preparando la siguiente ronda…');
   }
-  function nextRound() {
+  function startDescent() {
     game.sourceX=game.nextSourceX??game.sourceX;
     game.ammo+=game.pending; game.pending=0;
-    blocks.forEach(b=>b.row++);
-    orbs.forEach(o=>o.row++);
+    // Entra la nueva fila desde arriba mientras todas las demás se deslizan.
+    spawnRow(-1,game.round+1);
+    game.state='descending';game.dropProgress=0;
+    showStatus('↓ Los bloques están descendiendo…');
+    syncUI();
+  }
+  function finishDescent() {
+    for(const b of blocks)b.row++;
+    for(const o of orbs)o.row++;
+    game.dropProgress=0;
     orbs=orbs.filter(o=>!o.collected && atY(o.row)<DEADLINE+15);
     if(blocks.some(b=>atY(b.row)+BLOCK_H>DEADLINE)) {
       game.state='over';$('endOverlay').classList.remove('hidden');
@@ -510,17 +569,22 @@
       $('endScore').textContent=game.score.toLocaleString('es-ES');
       showStatus('Fin de partida · pulsa volver a jugar');playTone(195,'triangle',.4,.08,-125);syncUI();return;
     }
-    game.round++;spawnRow(0,game.round);
-    game.state='ready';game.aimVisible=false;game.fast=false;game.pulse=1;
-    showStatus('Apunta y dispara · +1 bola en los aros dorados');
+    game.round++;game.state='ready';game.aimVisible=false;game.fast=false;game.pulse=1;
+    showStatus('Apunta y dispara · recoge las bolas doradas');
     syncUI();
+  }
+  function visualY(row) {
+    if(game.state!=='descending')return atY(row);
+    const t=clamp(game.dropProgress,0,1);
+    return atY(row)+STEP*(1-Math.pow(1-t,3));
   }
   function update(dt) {
     game.pulse=Math.max(0,game.pulse-dt*1.5);
     for(const b of blocks)b.hit=Math.max(0,b.hit-dt*5);
     for(let i=sparks.length-1;i>=0;i--){const p=sparks[i];p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=Math.exp(-dt*3);p.vy=p.vy*Math.exp(-dt*2)+45*dt;if(p.life<=0)sparks.splice(i,1);}
     for(let i=ripples.length-1;i>=0;i--){ripples[i].life-=dt;ripples[i].r+=dt*120;if(ripples[i].life<=0)ripples.splice(i,1);}
-    if(game.state==='transition') {game.waitTimer-=dt;if(game.waitTimer<=0)nextRound();return;}
+    if(game.state==='transition') {game.waitTimer-=dt;if(game.waitTimer<=0)startDescent();return;}
+    if(game.state==='descending') {game.dropProgress=Math.min(1,game.dropProgress+dt/.62);if(game.dropProgress>=1)finishDescent();return;}
     if(game.state!=='shooting')return;
     const mult=game.fast?3:1;
     const step=dt*mult;
@@ -554,8 +618,9 @@
     ctx.fillStyle='rgba(116,149,219,.12)';rr(17,680,W-34,2,1);ctx.fill();
   }
   function drawBlocks() {
+    ctx.save();ctx.beginPath();ctx.rect(MARGIN,85,W-MARGIN*2,H-85);ctx.clip();
     for(const b of blocks){
-      const x=colX(b.col),y=atY(b.row), colors=getColors(b.hp), grow=b.hit*1.3;
+      const x=colX(b.col),y=visualY(b.row), colors=getColors(b.hp), grow=b.hit*1.3;
       ctx.save();ctx.translate(x+CELL/2,y+BLOCK_H/2);ctx.scale(1+grow/26,1+grow/26);ctx.translate(-CELL/2,-BLOCK_H/2);
       ctx.shadowColor=colors[0];ctx.shadowBlur=8+b.hit*17;ctx.shadowOffsetY=2;
       const grad=ctx.createLinearGradient(0,0,CELL,BLOCK_H);grad.addColorStop(0,colors[0]);grad.addColorStop(1,colors[1]);ctx.fillStyle=grad;rr(0,0,CELL,BLOCK_H,10);ctx.fill();ctx.shadowBlur=0;
@@ -563,16 +628,19 @@
       ctx.fillStyle='rgba(10,17,39,.76)';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='900 22px Inter,system-ui,sans-serif';ctx.fillText(b.hp,CELL/2,BLOCK_H/2+2);
       ctx.restore();
     }
+    ctx.restore();
   }
   function drawOrbs(t) {
+    ctx.save();ctx.beginPath();ctx.rect(MARGIN,85,W-MARGIN*2,H-85);ctx.clip();
     for(const o of orbs){if(o.collected)continue;
-      const x=colX(o.col)+CELL/2,y=atY(o.row)+BLOCK_H/2,pulse=Math.sin(t*3.3+o.phase);
+      const x=colX(o.col)+CELL/2,y=visualY(o.row)+BLOCK_H/2,pulse=Math.sin(t*3.3+o.phase);
       ctx.save();ctx.shadowColor='#ffd585';ctx.shadowBlur=14+pulse*4;
       ctx.strokeStyle='rgba(255,208,133,.2)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,17+pulse*2,0,Math.PI*2);ctx.stroke();
       ctx.fillStyle='rgba(243,173,89,.16)';ctx.strokeStyle='#ffcb79';ctx.lineWidth=2.5;
       ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.shadowBlur=0;
       ctx.fillStyle='#ffe7bc';ctx.font='900 18px Inter,system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('+',x,y+.2);ctx.restore();
     }
+    ctx.restore();
   }
   function drawLauncher() {
     const x=game.sourceX, y=LAUNCH_Y;
