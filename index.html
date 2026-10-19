@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#0a1121">
 <meta name="description" content="PokéRicochet: prototipo fan roguelite de rebotes, captura y progreso Pokémon.">
-<title>POKÉRICOCHET · Rogue Bounce v0.2</title>
+<title>POKÉRICOCHET · Rogue Bounce v0.3</title>
 <style>
 :root{color-scheme:dark;--bg:#080e1b;--panel:#101c32;--panel2:#142540;--line:#2b4262;--faint:#8c9fbb;--white:#f5f8ff;--aqua:#70f2d3;--yellow:#ffdb7c;--pink:#f6a1c4;--red:#ff7383;--blue:#85aaff}
 *{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--white);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}button{font:inherit;cursor:pointer;touch-action:manipulation}button:disabled{cursor:not-allowed;opacity:.4}button:focus-visible{outline:2px solid var(--aqua);outline-offset:3px}body:before{position:fixed;content:"";inset:0;pointer-events:none;background:radial-gradient(ellipse 65% 55% at 20% 0%,#22396383,transparent),radial-gradient(ellipse 43% 60% at 93% 90%,#0f4e5d40,transparent);z-index:0}.app{position:relative;display:flex;flex-direction:column;height:100vh;height:100dvh;max-width:1320px;margin:auto;padding:clamp(7px,1.5vh,14px) clamp(8px,1.5vw,22px);gap:clamp(6px,1vh,11px);min-height:0}.top{flex:0 0 auto;display:flex;align-items:center;gap:12px;min-height:46px}.brand{font-size:clamp(17px,2vw,23px);font-weight:950;line-height:1;letter-spacing:-.06em;white-space:nowrap}.brand b{color:var(--aqua)}.brand small{display:block;margin-top:5px;letter-spacing:.16em;font-size:9px;font-weight:800;color:#839cba}.top-right{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex:1;min-width:0}.mini-status{font-size:11px;color:#c2d1e5;background:#13243b;border:1px solid #284260;border-radius:9px;padding:9px 11px;white-space:nowrap}.mini-status strong{color:var(--yellow)}.iconbtn{color:#dce8f9;background:#14243a;border:1px solid #2c4360;border-radius:10px;min-width:34px;height:34px;display:grid;place-items:center;font-size:16px}.iconbtn:hover{background:#253d5d}
@@ -21,11 +21,26 @@
 @media(max-width:775px){.floor-dots{max-width:47%;gap:2px;flex-wrap:wrap;justify-content:flex-end}.floor-dot{flex:0 0 6px}.floor-dot.boss{flex-basis:7px}}
 
 .prep-slots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}.prep-slot{display:flex;flex-direction:column;gap:2px;align-items:center;background:#152b45;border:1px solid #375676;border-radius:13px;color:#eef6ff;padding:7px 3px;min-width:0}.prep-slot.chosen{border:2px solid #7cf3d3;background:#1e4551}.prep-slot img{width:58px;height:58px;object-fit:contain;image-rendering:pixelated}.prep-slot small{font-size:9px;font-weight:900;letter-spacing:.07em;color:#9ebad2}.prep-slot b{font-size:12px;white-space:nowrap;max-width:95%;overflow:hidden;text-overflow:ellipsis}.starter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(75px,1fr));gap:5px;max-height:128px;overflow-y:auto}.starter{display:flex;flex-direction:column;align-items:center;border:1px solid #35516c;border-radius:8px;background:#11273c;color:#e9f7ff;padding:4px 3px;font-size:10px}.starter img{width:44px;height:44px;image-rendering:pixelated;object-fit:contain}.starter:hover{border-color:#7ce8ce}.gacha{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 0;padding:12px;border:1px solid #7a6459;border-radius:12px;background:linear-gradient(110deg,#49314385,#2a345baa)}.gacha b{font-size:13px}.gacha small{display:block;margin-top:4px;color:#c6b6d0;font-size:11px;line-height:1.4}.gacha button{font-size:11px;white-space:nowrap}.path-track{display:flex;flex-wrap:wrap;align-items:center;gap:3px;min-height:45px;margin:8px 0 16px;padding:7px;border-radius:10px;background:#0c1c32}.path-node{display:grid;place-items:center;border-radius:9px;width:27px;height:27px;font-size:12px;border:1px solid #3b6472;background:#244151}.path-node.now{background:#e4b964;color:#12273b;font-weight:950}.path-node.boss{border-color:#aa668a}.path-line{color:#7f9ab9;font-size:11px}.modal .choices{margin:13px 0}.choice{min-height:102px}@media(max-height:680px){.prep-slot img{height:40px;width:42px}.starter-grid{max-height:93px}.starter img{width:32px;height:32px}.modal .choices{margin:8px 0}.gacha{padding:8px}.prep-slots{margin:7px 0}}@media(max-width:390px){.prep-slot img{width:40px;height:40px}.gacha{gap:7px}.gacha button{padding:9px 5px;font-size:10px}.path-node{width:23px;height:23px}}
+/* v0.3: complete hub, starter draft and connected expedition map */
+.modal:has(.home-screen),.modal:has(.route-panel),.modal:has(.draft-progress){width:min(950px,100%);max-height:calc(100dvh - 22px);padding:clamp(12px,2.8vw,27px);background:linear-gradient(140deg,#15283e 0%,#101c31 65%,#0b1729 100%)}
+.home-screen,.route-panel{width:100%;min-width:0}.home-header{display:flex;align-items:center;justify-content:space-between;gap:10px}.home-currency,.pill{font-size:11px;font-weight:850;color:#d5f7ea;border:1px solid #3d6075;background:#142d3f;border-radius:99px;padding:7px 12px}.home-currency span{color:#8aa9be;font-size:9px;margin-left:5px}
+.hero-logo{font-size:clamp(27px,4.8vw,43px);letter-spacing:-.06em;line-height:1.14;font-weight:1000;margin:10px 0 14px;color:#f7faff;text-shadow:0 3px 25px #02081499}.hero-logo span{color:#7df5cc}.nav-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:7px 0 17px}.nav-card{display:flex;justify-content:center;align-items:center;gap:6px;min-width:0;color:#b7c8d9;border-radius:10px;border:1px solid #334962;background:#132239;padding:9px 5px;font-size:11px;font-weight:800;transition:background .16s,border-color .16s}.nav-card span{font-size:17px;color:#84dccc}.nav-card.chosen{background:#1b4c4e;border-color:#7ee9c5;color:#f0fffb}.nav-card:hover,.gen-chip:hover,.draft-poke:hover:not(:disabled){border-color:#74c5cc}
+.home-content{min-height:210px}.hub-welcome{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:20px;align-items:center;padding:10px 4px 14px}.overline{font-size:10px;color:#78d5bb;letter-spacing:.18em;font-weight:900}.hub-welcome h2,.gacha-show h2{font-size:clamp(29px,5vw,48px);line-height:1.04;letter-spacing:-.06em;margin:10px 0 13px}.hub-welcome h2 em,.gacha-show h2 em{color:#79e9c8;font-style:normal}.hub-welcome p,.gacha-show p,.home-lead,.home-subtitle{color:#aabed2;line-height:1.5;font-size:13px;margin:5px 0 15px}.big-play{display:inline-flex;align-items:center;justify-content:space-between;gap:15px;padding:14px 18px;margin-top:6px;min-width:218px;border:0;border-radius:13px;color:#061c25;background:linear-gradient(135deg,#b3ffe6,#62e7c2);font-size:13px;font-weight:1000;box-shadow:0 10px 30px #11b89824}.big-play:hover{filter:brightness(1.1)}.big-play span{font-size:20px}.big-play.smaller{margin-top:14px;padding:11px 16px}.big-play:disabled{opacity:.38}
+.hero-trio{display:flex;align-items:end;justify-content:center;gap:4px;padding:18px 6px;background:radial-gradient(ellipse at center,#225c5773,transparent 72%);min-width:0}.hero-mon{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-width:0;flex:1;gap:2px}.hero-mon img{width:min(100%,140px);height:clamp(75px,12vw,135px);object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 7px 11px var(--glow))}.hero-mon:first-child img{height:clamp(98px,14vw,151px)}.hero-mon small{font-size:9px;font-weight:800;letter-spacing:.09em;color:#88b2bd}.hero-mon b{font-size:11px;overflow:hidden;text-overflow:ellipsis;max-width:100%}.home-tip{display:flex;gap:14px;justify-content:space-between;align-items:center;background:#132b3d;border:1px solid #31516a;padding:12px;border-radius:12px;font-size:11px;color:#a9c6d7}.home-tip b{color:#83e0c4;white-space:nowrap}.home-footer{display:flex;justify-content:space-between;align-items:center;gap:9px;flex-wrap:wrap;color:#8199b1;font-size:9px;font-weight:700;letter-spacing:.09em;margin-top:16px;border-top:1px solid #31465c;padding-top:11px}.home-footer span{color:#b3cbdd}
+.prep-slots.new-slots{margin:11px 0}.new-slots .prep-slot img{height:65px;width:68px}.subheading{color:#86d5c4;font-size:10px;font-weight:900;letter-spacing:.12em;margin:12px 0 9px}.storage-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(91px,1fr));gap:7px;max-height:min(42vh,290px);overflow-y:auto;scrollbar-width:thin;padding:2px}.storage-mon{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;padding:8px 3px;color:#e2f1f9;background:#162a40;border:1px solid #31516d;border-radius:10px;min-height:104px;font-size:10px;gap:3px}.storage-mon img{width:60px;height:61px;object-fit:contain;image-rendering:pixelated}.storage-mon b{max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.storage-mon small{font-size:9px;color:#f2d587}.storage-mon:hover:not(.storage-static){background:#20465b}.storage-mon.locked{opacity:.42}.dex-unknown{font-size:42px;line-height:61px;color:#8fabc1}.dex-filter{display:flex;gap:5px;flex-wrap:wrap;max-height:76px;overflow:auto;margin:9px 0}.gen-chip{padding:6px 9px;border-radius:8px;background:#142941;border:1px solid #385471;font-size:10px;color:#bed2e3;font-weight:750}.gen-chip.on{color:#061e29;background:#82e8cc;border-color:#82e8cc}.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:15px 0}.stats-grid>div{background:#142b43;border:1px solid #34536f;border-radius:12px;padding:19px;text-align:center}.stats-grid strong{display:block;font-size:32px;color:#a1f3d6}.stats-grid small{font-size:10px;color:#adc4db;font-weight:850}
+.gacha-show{display:grid;grid-template-columns:minmax(120px,.8fr) minmax(0,1.2fr);gap:20px;align-items:center;padding:8px 4px}.gacha-orb{display:grid;place-items:center;font-size:clamp(100px,18vw,200px);color:#ffd17b;filter:drop-shadow(0 0 28px #d4bb7494);position:relative;text-shadow:0 5px 15px #020912}.gacha-orb span{position:absolute;color:#fbf2b3;font-size:40px;top:15%;right:4%}.gacha-rates{font-size:11px;color:#b6cbdd;line-height:1.7;border-left:2px solid #4ac6a4;padding-left:12px;margin:12px 0}.gacha-reveal{text-align:center}.gacha-reveal>img{width:min(200px,55vw);height:180px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 0 25px #99f9d17b)}.gacha-reveal .pull-spark{font-size:29px;color:#ffdd84;animation:pulseGlint 1.1s ease-in-out infinite alternate}.gacha-reveal .actions{justify-content:center}@keyframes pulseGlint{to{transform:scale(1.15);opacity:.55}}
+.draft-progress{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:12px 0}.draft-step{border-radius:10px;border:1px solid #335570;padding:9px;background:#14273b;min-width:0}.draft-step.active{border-color:#6ee9c1;background:#194c48}.draft-step small{font-size:9px;letter-spacing:.04em;color:#95afc5;display:block}.draft-step strong{font-size:11px;color:#ebf8ff;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.draft-heading{display:flex;align-items:center;justify-content:space-between;font-size:12px;margin-bottom:10px}.draft-heading small{color:#92a9c3}.generation-grid{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:5px;margin:10px 0}.generation-grid .gen-chip{padding:7px 3px;font-size:10px}.draft-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.draft-poke{display:flex;flex-direction:column;align-items:center;gap:3px;color:#f2fbff;background:linear-gradient(155deg,#1b364e,#11223a);border:1px solid #365c73;border-radius:15px;padding:13px 7px}.draft-poke img{width:95px;height:93px;object-fit:contain;image-rendering:pixelated}.draft-poke.used{opacity:.35}.draft-poke b{font-size:12px}.type-mini{font-size:10px;font-weight:800}
+.route-panel h2{font-size:clamp(21px,4vw,29px);margin:9px 0}.route-intro{font-size:12px;color:#b3c7d9;line-height:1.45;margin:6px 0 10px}.route-key,.route-bottom{display:flex;justify-content:space-between;gap:8px;font-size:10px;color:#9edfc9;align-items:center;margin-bottom:6px}.route-key span{color:#a3bbce}.route-overview{background:radial-gradient(ellipse at 50% 36%,#1b4a4e70,transparent 70%),#0a192a;border:1px solid #35546d;border-radius:15px;padding:9px}.map-scroll{height:clamp(200px,47dvh,425px);overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#3d7585 transparent;overscroll-behavior:contain}.map-stage{position:relative;width:100%;min-height:100%;background-image:radial-gradient(#8ddfc619 1px,transparent 1px);background-size:17px 17px}.map-lines{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}.map-lines path{fill:none;stroke:#3f6976;stroke-width:1.4;stroke-dasharray:5 5;vector-effect:non-scaling-stroke}.map-node{position:absolute;transform:translate(-50%,-50%);width:clamp(70px,10vw,94px);height:52px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:0;border:1px solid #49697c;border-radius:13px;background:#173049e9;color:#dce9f1;transition:transform .14s,box-shadow .14s;z-index:2}.map-node span{font-size:20px;line-height:23px}.map-node b{font-size:9px;white-space:nowrap}.map-node:disabled{opacity:.58;cursor:default}.map-node.selectable{background:#1e514a;border:2px solid #83f7cc;color:white;box-shadow:0 0 0 5px #73f4b518,0 0 19px #54e7b635;animation:routePulse 1.7s ease-in-out infinite alternate}.map-node.selectable:hover{transform:translate(-50%,-50%) scale(1.07)}.map-node.travelled{border-color:#ebcb75;background:#615037}.map-node.passed{opacity:.26}.map-boss{position:absolute;left:50%;transform:translate(-50%,-50%);z-index:2;border:1px solid #edcc7f;border-radius:11px;padding:6px 14px;background:#624835;color:#ffebbb;white-space:nowrap}.map-boss b{font-size:10px}@keyframes routePulse{to{box-shadow:0 0 0 7px #76f4c22b,0 0 24px #65f9cc83}}.route-bottom{margin:10px 0 0;color:#bcccdc}.route-bottom button{font-size:10px;padding:7px 10px}
+.special-btn{border:1px solid #ba9462;background:linear-gradient(140deg,#564333,#2e2931);color:#ffe9b4;font-size:11px;font-weight:900;border-radius:9px;padding:8px;white-space:nowrap}.special-btn:disabled{opacity:.45}.special-btn:not(:disabled){background:linear-gradient(135deg,#ffe29a,#c5a3f1);color:#231d37;box-shadow:0 0 14px #ecce8881;animation:routePulse 1.2s infinite alternate}.arena-bottom{gap:7px}
+@media(max-width:775px){.nav-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:3px}.nav-card{font-size:9px;flex-direction:column;gap:1px;padding:5px 1px}.nav-card span{font-size:17px}.hub-welcome{gap:8px}.hero-trio{padding:5px 0}.hero-mon img{height:75px}.hero-mon:first-child img{height:90px}.home-content{min-height:0}.storage-grid{grid-template-columns:repeat(auto-fill,minmax(78px,1fr));max-height:40dvh}.hero-logo{margin:5px 0 10px}.generation-grid{grid-template-columns:repeat(5,minmax(0,1fr))}.draft-poke img{height:75px;width:80px}.special-btn{padding:6px;font-size:9px}.modal:has(.home-screen),.modal:has(.route-panel),.modal:has(.draft-progress){max-height:calc(100dvh - 12px)}.home-tip{flex-direction:column;align-items:start;gap:4px}}
+@media(max-width:430px){.hub-welcome{display:flex;flex-direction:column-reverse;align-items:stretch}.hero-trio{gap:4px}.hero-mon img{height:66px}.hero-mon:first-child img{height:74px}.hub-welcome h2{font-size:28px;margin:4px 0}.hub-welcome p{font-size:11px;margin:0 0 6px}.big-play{padding:10px 13px;width:100%;justify-content:center}.gacha-show{grid-template-columns:1fr}.gacha-orb{display:none}.home-footer{margin-top:8px}.modal{padding:12px}.route-intro{font-size:11px}.map-node{width:70px}.map-node b{font-size:8px}.home-header .emblem{font-size:9px}.home-currency span{display:none}}
+@media(max-height:620px){.modal:has(.home-screen),.modal:has(.route-panel),.modal:has(.draft-progress){padding:9px}.home-screen .hero-logo{font-size:27px;margin:2px 0}.home-screen .nav-grid{margin:4px 0 6px}.home-screen .hub-welcome{padding:3px 0}.home-screen .hub-welcome h2{font-size:25px}.home-screen .hub-welcome p{font-size:11px}.home-footer{margin-top:6px}.map-scroll{height:clamp(160px,45dvh,350px)}.special-btn{padding:5px}}
+
 </style>
 </head>
 <body>
 <div class="app" id="app">
-<header class="top"><div class="brand">POKÉ<b>RICOCHET</b><small>ROGUE BOUNCE · PROTOTIPO 0.2</small></div><div class="top-right"><div class="mini-status" id="topStatus">⚡ Expedición sin iniciar</div><button class="iconbtn" id="fastBtn" title="Velocidad ×1 / ×3" aria-label="Acelerar ráfagas">×1</button><button class="iconbtn" id="audioBtn" title="Activar sonido" aria-label="Activar sonido">♫</button><button class="iconbtn" id="helpBtn" title="Cómo jugar" aria-label="Cómo jugar">?</button><button class="iconbtn" id="fullscreenBtn" title="Pantalla completa" aria-label="Pantalla completa">⛶</button></div></header>
+<header class="top"><div class="brand">POKÉ<b>RICOCHET</b><small>ROGUE BOUNCE · PROTOTIPO 0.3</small></div><div class="top-right"><div class="mini-status" id="topStatus">⚡ Expedición sin iniciar</div><button class="iconbtn" id="fastBtn" title="Velocidad ×1 / ×3" aria-label="Acelerar ráfagas">×1</button><button class="iconbtn" id="audioBtn" title="Activar sonido" aria-label="Activar sonido">♫</button><button class="iconbtn" id="helpBtn" title="Cómo jugar" aria-label="Cómo jugar">?</button><button class="iconbtn" id="fullscreenBtn" title="Pantalla completa" aria-label="Pantalla completa">⛶</button></div></header>
 <main class="content"><section class="arena"><div class="arena-top"><div><div class="eyebrow" id="zoneEyebrow">REGIÓN · KANTO</div><div class="zone-title" id="zoneTitle">EL BOSQUE <span>VIRIDIAN</span></div></div><div class="mobile-hud" id="mobileHud"></div><div class="floor-dots" id="floorDots"></div></div><div class="board-area" id="boardArea"><div class="board-frame" id="boardFrame"><canvas id="game" aria-label="Tablero de rebotes Pokémon" width="420" height="570"></canvas><div class="board-message" id="boardMessage">Arrastra para apuntar y suelta para disparar</div></div></div><div class="roster-mobile" id="mobileRoster"></div><div class="arena-bottom"><div class="moves" id="moveButtons"></div><button class="fire-btn" id="fireBtn">DISPARAR ↗</button></div></section>
 <aside class="sidebar"><section class="side-card"><div class="card-label">POKÉMON ACTIVO</div><div class="active-profile"><img id="activeSprite" class="active-sprite" alt="Pokémon activo"><div style="flex:1;min-width:0"><div id="activeName" class="profile-name">Charmander</div><div id="activeLevel" class="profile-level">Nv. 5 · 0 exp.</div><div id="activeTypes" class="type-row"></div></div></div><div class="bar" id="healthBar"><i></i></div><div class="small-line"><span>PS</span><b id="healthText">—</b></div><div class="bar exp"><i id="xpBar"></i></div><div class="small-line"><span>EXPERIENCIA</span><b id="xpText">—</b></div></section><section class="side-card"><div class="card-label">TU EQUIPO · REPARTIR EXP. ACTIVADO</div><div class="team" id="teamPanel"></div><div class="squad-caption">60 % activo · 20 % para cada reserva. El relevo entra protegido.</div></section><section class="side-card"><div class="card-label">EXPEDICIÓN</div><div class="metrics"><div class="metric"><b id="floorValue">0</b><span>Piso actual</span></div><div class="metric"><b id="captureValue">0</b><span>Capturas</span></div><div class="metric"><b id="defeatsValue">0</b><span>Derrotados</span></div><div class="metric"><b id="roundValue">0</b><span>Turnos</span></div></div></section><section class="side-card"><div class="card-label">ÚLTIMOS EVENTOS</div><div class="event-log" id="log"></div></section><div class="footer-hint"><span>⚔ Ventajas de tipo ×2 y resistencias ×½</span><span>V0.1</span></div></aside></main><div id="toast" role="status"></div>
 </div>
@@ -52,9 +67,9 @@ function sprite(id,shiny=false){return 'https://raw.githubusercontent.com/PokeAP
 function prefetchSprite(id,shiny=false){let key=id+(shiny?'s':'n');if(images.has(key))return images.get(key);let im=new Image();const item={im,loaded:false,error:false};images.set(key,item);im.onload=()=>{item.loaded=true};im.onerror=()=>{item.error=true};im.src=sprite(id,shiny);return item}
 const clamp=(n,lo,hi)=>Math.min(hi,Math.max(lo,n));const rand=(a,b)=>a+Math.random()*(b-a);const pick=a=>a[Math.floor(Math.random()*a.length)];const chance=p=>Math.random()<p;const nice=n=>Math.round(n).toLocaleString('es-ES');
 let saved=loadSave(),run=null;
-function loadSave(){let defaults={'4':{normal:1,shiny:0},'7':{normal:1,shiny:0},'1':{normal:1,shiny:0}};try{let v=JSON.parse(localStorage.getItem('pokeRicochet-v1')||'{}');return {collection:{...defaults,...(v.collection||{})},best:v.best||0,runs:v.runs||0,tokens:Number.isFinite(v.tokens)?v.tokens:8}}catch{return {collection:defaults,best:0,runs:0,tokens:8}}}
+function loadSave(){let defaults={'4':{normal:1,shiny:0},'7':{normal:1,shiny:0},'1':{normal:1,shiny:0}};try{let v=JSON.parse(localStorage.getItem('pokeRicochet-v03-backup-only')||'{}');return {collection:{...defaults,...(v.collection||{})},best:v.best||0,runs:v.runs||0,tokens:Number.isFinite(v.tokens)?v.tokens:8}}catch{return {collection:defaults,best:0,runs:0,tokens:8}}}
 let starterTeam=[4,7,1],starterShiny=[false,false,false],selectingSlot=0;
-function save(){try{localStorage.setItem('pokeRicochet-v1',JSON.stringify(saved))}catch{}}
+function save(){try{localStorage.setItem('pokeRicochet-v03-backup-only',JSON.stringify(saved))}catch{}}
 function mkMon(id,lvl=5,shiny=false){let d=def(id),hp=176+(lvl-5)*14+(d.rarity==='boss'?28:0),moves=(BASE_MOVES[d.types[0]]||BASE_MOVES.normal).slice(0,1).map(([name,type,power,balls])=>({name,type,power,balls,blast:0,pierce:0}));prefetchSprite(id,shiny);return {...d,level:lvl,xp:0,maxHp:hp,hp,moves,chosen:0,shield:0,shiny,globalBalls:0,crit:.05,healKO:0,armor:0}}
 const neededXP=lvl=>Math.round(60+(lvl-5)*23+(lvl-5)*(lvl-5)*2);
 function message(str){let el=$id('toast');el.textContent=str;el.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('visible'),1550)}
@@ -65,7 +80,7 @@ const btn=(a,title,desc,emoji)=>`<button class="choice" data-action="${a}"><span
 function newState(team){return {zone:0,floor:0,turn:0,shots:[],blocks:[],drops:[],particles:[],texts:[],enemyBullets:[],team:team.map((i,j)=>mkMon(i,5,starterShiny[j])),active:0,aim:-Math.PI/2,log:['Explora rutas y construye tu equipo.'],captures:0,defeated:0,expQueue:[],afterReward:null,pendingGlobal:false,impactShake:0,globalBonus:0,relics:[],shooter:W/2,turnTotal:0,landing:W/2,bolts:0,shield:0,routeHistory:[],floorOptions:[],clearedFights:0,fast:false,crit:.04,expBoost:1,lucky:1,armor:0,relayHeal:0};}
 function startMenu(){mode='menu';run=newState(starterTeam);refresh();showStartScreen()}
 function availableOwned(){return Object.entries(saved.collection).filter(([id,n])=>n&&(+n.normal>0||+n.shiny>0)&&DB[+id]).flatMap(([id,n])=>[...(+n.normal>0?[{id:+id,shiny:false}]:[]),...(+n.shiny>0?[{id:+id,shiny:true}]:[])]).sort((a,b)=>a.id-b.id)}
-function showStartScreen(){const items=availableOwned(),slotNames=['LÍDER','RESERVA 1','RESERVA 2'];showModal(`<div class="emblem">ROGUE BOUNCE · VERSIÓN 0.2</div><h2>POKÉ<span class="accent">RICOCHET</span></h2><p>Prepara a tus tres Pokémon. <b>Solo lucha el primero</b>; al caer entra la siguiente reserva. Cada uno empieza con <b>un movimiento</b> que podrá evolucionar al subir de nivel.</p><div class="prep-slots">${starterTeam.map((id,i)=>`<button class="prep-slot ${selectingSlot===i?'chosen':''}" data-action="menu:slot:${i}"><small>${slotNames[i]}</small><img src="${sprite(id,starterShiny[i])}" alt=""><b>${def(id).name}${starterShiny[i]?' ✨':''}</b></button>`).join('')}</div><div class="card-label">ELIGE UN POKÉMON PARA EL HUECO SELECCIONADO</div><div class="starter-grid">${items.map(({id,shiny})=>`<button class="starter" data-action="menu:mon:${id}:${shiny?1:0}"><img src="${sprite(id,shiny)}" alt=""><span>${def(id).name}${shiny?' ✨':''}</span></button>`).join('')}</div><div class="gacha"><div><b>🎰 MÁQUINA CÁPSULA</b><small>Consigue Pokémon nuevos y amplía tu PC. Los pisos dan fichas; el gachapón cuesta 4.</small></div><button data-action="menu:gacha" class="secondary" ${saved.tokens<4?'disabled':''}>4 🪙 · Tienes ${saved.tokens}</button></div><div class="actions"><button class="primary" data-action="newrun">INICIAR EXPEDICIÓN →</button><span class="tiny">Récord ${saved.best} · Colección permanente · Prototipo fan</span></div>`) }
+function showStartScreen(){const items=availableOwned(),slotNames=['LÍDER','RESERVA 1','RESERVA 2'];showModal(`<div class="emblem">ROGUE BOUNCE · VERSIÓN 0.3</div><h2>POKÉ<span class="accent">RICOCHET</span></h2><p>Prepara a tus tres Pokémon. <b>Solo lucha el primero</b>; al caer entra la siguiente reserva. Cada uno empieza con <b>un movimiento</b> que podrá evolucionar al subir de nivel.</p><div class="prep-slots">${starterTeam.map((id,i)=>`<button class="prep-slot ${selectingSlot===i?'chosen':''}" data-action="menu:slot:${i}"><small>${slotNames[i]}</small><img src="${sprite(id,starterShiny[i])}" alt=""><b>${def(id).name}${starterShiny[i]?' ✨':''}</b></button>`).join('')}</div><div class="card-label">ELIGE UN POKÉMON PARA EL HUECO SELECCIONADO</div><div class="starter-grid">${items.map(({id,shiny})=>`<button class="starter" data-action="menu:mon:${id}:${shiny?1:0}"><img src="${sprite(id,shiny)}" alt=""><span>${def(id).name}${shiny?' ✨':''}</span></button>`).join('')}</div><div class="gacha"><div><b>🎰 MÁQUINA CÁPSULA</b><small>Consigue Pokémon nuevos y amplía tu PC. Los pisos dan fichas; el gachapón cuesta 4.</small></div><button data-action="menu:gacha" class="secondary" ${saved.tokens<4?'disabled':''}>4 🪙 · Tienes ${saved.tokens}</button></div><div class="actions"><button class="primary" data-action="newrun">INICIAR EXPEDICIÓN →</button><span class="tiny">Récord ${saved.best} · Colección permanente · Prototipo fan</span></div>`) }
 function createRun(){run=newState(starterTeam);run.log=['¡Comienza la expedición!'];saved.runs++;save();nextRoute()}
 function zone(){return ZONES[run.zone]||ZONES[ZONES.length-1]}
 function active(){return run?.team[run.active]}
@@ -136,7 +151,7 @@ if(action.startsWith('level:')){let p=run.team[run.upgrading],k=action.split(':'
 if(action.startsWith('global:')){let k=action.split(':')[1];if(!run.globalOptions?.some(o=>o[0]===k))return;if(k==='balls')run.team.forEach(p=>p.globalBalls++);else if(k==='damage')run.globalBonus++;else if(k==='heal')run.team.forEach(p=>p.hp=Math.min(p.maxHp,p.hp>0?p.hp+Math.round(p.maxHp*.42):Math.round(p.maxHp*.35)));else if(k==='armor')run.armor++;else if(k==='exp')run.expBoost*=1.2;else if(k==='crit')run.crit+=.06;else if(k==='luck')run.lucky*=1.5;else if(k==='relay')run.relayHeal+=.22;run.relics.push(k);playTone(800,.16,'triangle',.05);afterUpgrades();return}
 if(action==='closebattle'){hideModal();run.afterReward?.();return}if(action==='nextzone'){run.zone++;run.floor=0;run.turn=0;hideModal();nextRoute();return}}
 modal.addEventListener('click',e=>{let el=e.target.closest('[data-action]');if(el)handleAction(el.dataset.action)});$id('moveButtons').addEventListener('click',e=>{const b=e.target.closest('[data-move]');if(b)chooseMove(+b.dataset.move)});$id('fireBtn').addEventListener('click',shoot);
-$id('helpBtn').onclick=()=>{showModal(`<div class="emblem">GUÍA RÁPIDA · V0.2</div><h2>Elige, apunta, rebota</h2><p>El líder dispara un movimiento; las dos reservas entran automáticamente cuando cae. Cada Pokémon comienza con <b>un movimiento</b> y aprende otros al subir de nivel. Los enemigos muestran <b>✦ N</b> (rondas hasta el ataque a distancia) o <b>⬇ N</b> (rondas hasta golpear el suelo). Cuando atacan, sus proyectiles viajan visiblemente hasta tu Pokémon.</p><p><b>Capturas:</b> derrotar un enemigo puede soltar su Poké Ball, cada vez menos probable cuanto más raro. Necesitas tocarla con una de tus bolas. Los shiny (1/4096) siempre dejan una.</p><p><b>Progresión:</b> 60/20/20 de XP compartida, cada nivel da una mejora individual aleatoria; cada 3 victorias, mejora global. Centro Pokémon = curación y PC. El gachapón usa fichas ganadas en salas.</p><div class="actions"><button class="primary" data-action="helpexit">ENTENDIDO</button>${mode==='menu'?'':'<button class="secondary" data-action="menu:confirm">SALIR AL MENÚ</button>'}</div>`) };
+$id('helpBtn').onclick=()=>{showModal(`<div class="emblem">GUÍA RÁPIDA · V0.3</div><h2>Elige, apunta, rebota</h2><p>El líder dispara un movimiento; las dos reservas entran automáticamente cuando cae. Cada Pokémon comienza con <b>un movimiento</b> y aprende otros al subir de nivel. Los enemigos muestran <b>✦ N</b> (rondas hasta el ataque a distancia) o <b>⬇ N</b> (rondas hasta golpear el suelo). Cuando atacan, sus proyectiles viajan visiblemente hasta tu Pokémon.</p><p><b>Capturas:</b> derrotar un enemigo puede soltar su Poké Ball, cada vez menos probable cuanto más raro. Necesitas tocarla con una de tus bolas. Los shiny (1/4096) siempre dejan una.</p><p><b>Progresión:</b> 60/20/20 de XP compartida, cada nivel da una mejora individual aleatoria; cada 3 victorias, mejora global. Centro Pokémon = curación y PC. El gachapón usa fichas ganadas en salas.</p><div class="actions"><button class="primary" data-action="helpexit">ENTENDIDO</button>${mode==='menu'?'':'<button class="secondary" data-action="menu:confirm">SALIR AL MENÚ</button>'}</div>`) };
 $id('fastBtn').onclick=()=>{run.fast=!run.fast;$id('fastBtn').textContent=run.fast?'×3':'×1';message(run.fast?'Ráfaga acelerada ×3':'Velocidad normal ×1')};
 $id('audioBtn').onclick=()=>{sound=!sound;$id('audioBtn').textContent=sound?'♫':'♪';message(sound?'Sonido activado':'Sonido desactivado');if(sound)playTone(550)};
 $id('fullscreenBtn').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen()}catch{message('Pantalla completa no disponible en este navegador')}setTimeout(fitBoard,80)};
@@ -168,6 +183,250 @@ for(let b of run.shots){ctx.fillStyle=TYPE_COLOR[b.move.type]||'#f5faff';for(let
 for(let eb of run.enemyBullets||[]){ctx.save();ctx.fillStyle=eb.color;ctx.shadowColor=eb.color;ctx.shadowBlur=18;ctx.beginPath();ctx.arc(eb.x,eb.y,8,0,Math.PI*2);ctx.fill();ctx.fillStyle='#ffffffbd';ctx.beginPath();ctx.arc(eb.x-2,eb.y-2,3,0,Math.PI*2);ctx.fill();ctx.restore()}
 for(let p of run.particles){ctx.globalAlpha=clamp(p.life/p.max,0,1);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1;for(let t of run.texts){ctx.globalAlpha=clamp(t.life/.7,0,1);ctx.fillStyle=t.color;ctx.textAlign='center';ctx.font='900 13px system-ui';ctx.shadowColor='#081321';ctx.shadowBlur=4;ctx.fillText(t.s,t.x,t.y);ctx.shadowBlur=0}ctx.globalAlpha=1;ctx.restore()}
 document.addEventListener('error',e=>{const el=e.target;if(el?.tagName!=='IMG'||!el.src.includes('/sprites/pokemon/'))return;const id=Number(el.src.match(/(?:shiny\/)?(\d+)\.png/)?.[1]),icon=DB[id]?.[4]||'◉';const r=el.getBoundingClientRect();const span=document.createElement('span');span.textContent=icon;span.style.cssText=`display:inline-grid;place-items:center;width:${Math.max(r.width,26)}px;height:${Math.max(r.height,26)}px;flex-shrink:0;font-size:${Math.min(r.width,35)}px`;if(el.id){el.style.display='none';if(!el.nextElementSibling?.classList.contains('sprite-fallback')){span.classList.add('sprite-fallback');el.insertAdjacentElement('afterend',span)}}else{el.replaceWith(span)}},true);
+// POKÉRICOCHET 0.3 — the original collision engine stays intact.
+const STARTER_GENERATIONS=[
+ ['Kanto',[1,4,7]],['Johto',[152,155,158]],['Hoenn',[252,255,258]],
+ ['Sinnoh',[387,390,393]],['Teselia',[495,498,501]],['Kalos',[650,653,656]],
+ ['Alola',[722,725,728]],['Galar',[810,813,816]],['Paldea',[906,909,912]]
+];
+const STARTER_INFO={
+ 152:['Chikorita','grass','🌱'],155:['Cyndaquil','fire','🔥'],158:['Totodile','water','💦'],
+ 252:['Treecko','grass','🌿'],255:['Torchic','fire','🔥'],258:['Mudkip','water','💧'],
+ 387:['Turtwig','grass','🌱'],390:['Chimchar','fire','🔥'],393:['Piplup','water','💧'],
+ 495:['Snivy','grass','🍃'],498:['Tepig','fire','🔥'],501:['Oshawott','water','🌊'],
+ 650:['Chespin','grass','🌰'],653:['Fennekin','fire','🔥'],656:['Froakie','water','💦'],
+ 722:['Rowlet','grass','🦉'],725:['Litten','fire','🐈'],728:['Popplio','water','🫧'],
+ 810:['Grookey','grass','🥁'],813:['Scorbunny','fire','🐇'],816:['Sobble','water','💧'],
+ 906:['Sprigatito','grass','🍃'],909:['Fuecoco','fire','🐊'],912:['Quaxly','water','🦆']
+};
+for(const [id,info] of Object.entries(STARTER_INFO)) DB[id]=[info[0],[info[1]],'common',12,info[2]];
+ZONES[0].rooms=15;ZONES[1].rooms=16;ZONES[2].rooms=18;ZONES[3].rooms=18;
+// The new storage namespace intentionally starts with a fresh collection. The v0.2 data remain untouched.
+const DATA_V03='pokeRicochet-v03';
+let firstChoice=[],homeTab='inicio',starterGeneration=0,selectedDexType='all',homeResult=null;
+try{
+ const old=localStorage.getItem(DATA_V03);
+ saved=old?{collection:{},best:0,runs:0,tokens:0,hasStarter:false,...JSON.parse(old)}:{collection:{},best:0,runs:0,tokens:6,hasStarter:false};
+}catch{saved={collection:{},best:0,runs:0,tokens:6,hasStarter:false}}
+save=function(){try{localStorage.setItem(DATA_V03,JSON.stringify(saved))}catch{}};
+let starterTeamBefore=starterTeam.slice();
+const _origNewEnemy=newEnemy,_origAttackInfo=attackInfo,_origHit=hit,_origEndVolley=endVolley,_origShoot=shoot,_origStartBattle=startBattle,_origWinBattle=winBattle,_origHandleAction=handleAction,_origRefresh=refresh,_origRenderBoard=renderBoard;
+
+// Three to five purposeful shots to down standard enemies, rather than one accidental volley.
+newEnemy=function(id,col,row,boss=false,elite=false){
+ const e=_origNewEnemy(id,col,row,boss,elite),depth=run.zone*14+run.floor;
+ e.role=boss?'boss':elite?'elite':(
+  ['rock','steel','ground'].includes(e.types[0])?'tank':
+  ['psychic','fairy','grass'].includes(e.types[0])&&chance(.44)?'support':
+  ['fighting','flying','bug'].includes(e.types[0])&&chance(.55)?'fast':
+  e.ranged?'caster':'brawler');
+ const bonus=e.role==='tank'?1.30:e.role==='support'?1.08:e.role==='elite'?1.42:1;
+ // Bosses already have a ~6.4x HP multiplier in the base engine.
+ const factor=boss?(1.27+run.zone*.10):clamp(3.40-depth*.019,2.35,3.4);
+ e.maxHp=Math.round(e.maxHp*factor*bonus);
+ e.hp=e.maxHp;
+ e.attack=Math.round(e.attack*(e.role==='fast'?1.25:e.role==='boss'?1.16:1));
+ if(e.role==='support'){e.ranged=true;e.interval=3;e.cooldown=3}
+ if(e.role==='tank')e.armor=0.27;
+ e.xpBonus=e.role==='tank'||e.role==='support'?1.18:1;
+ return e;
+};
+attackInfo=function(m,e){const out=_origAttackInfo(m,e);if(e.armor&&out.dmg)out.dmg=Math.max(1,Math.ceil(out.dmg*(1-e.armor)));return out};
+hit=function(e,b){const before=e.hp;_origHit(e,b);const mon=active();if(mon&&mode!=='menu'&&before>e.hp)mon.ult=Math.min(24,(mon.ult||0)+1)};
+endVolley=function(){
+ // Support enemies heal one nearby wounded ally; elite tanks absorb damage instead of only adding HP.
+ if(run&&run.blocks.length){for(const e of [...run.blocks]){
+   if(e.role==='support'){
+      const peers=run.blocks.filter(o=>o!==e&&o.hp>0&&o.hp<o.maxHp);
+      if(peers.length){peers.sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp);let p=peers[0],heal=Math.min(p.maxHp-p.hp,Math.max(4,Math.round(p.maxHp*.09)));
+       p.hp+=heal;textFx(enemyX(p)+enemyW(p)/2,enemyY(p)-4,'+'+heal+' PS','#84f4bd');burst(enemyX(p)+20,enemyY(p)+20,'#72dcb3',6)}
+   }
+ }}
+ return _origEndVolley();
+};
+const _origMkMon=mkMon;
+mkMon=function(id,lvl=5,shiny=false){const m=_origMkMon(id,lvl,shiny);m.ult=0;return m};
+const _origCreateRun=createRun;
+createRun=function(){homeTab='inicio';_origCreateRun()};
+// newState is called by startMenu; draw the main menu instead of the legacy modal.
+showStartScreen=function(){if(!saved.hasStarter){showStarterDraft();return}showHome(homeTab)};
+
+function sImg(id,shiny=false){return `<img src="${sprite(id,shiny)}" alt="${def(id).name}" loading="lazy">`}
+function buttonNav(tab,label,icon){return `<button class="nav-card ${homeTab===tab?'chosen':''}" data-action="ui:tab:${tab}"><span>${icon}</span>${label}</button>`}
+function showStarterDraft(){
+ mode='menu';const ready=firstChoice.length===3,stage=firstChoice.length,labels=['TU INICIAL','RESERVA 1','RESERVA 2'];
+ const generation=STARTER_GENERATIONS[starterGeneration]||STARTER_GENERATIONS[0];
+ const choices=generation[1].map(id=>{
+  let unavailable=firstChoice.includes(id),p=def(id);
+  return `<button class="draft-poke ${unavailable?'used':''}" ${unavailable?'disabled':''} data-action="ui:draft:${id}">${sImg(id)}<b>${p.name}</b><small class="type-mini" style="color:${TYPE_COLOR[p.types[0]]}">${TT[p.types[0]]}</small></button>`;
+ }).join('');
+ showModal(`<div class="home-header"><span class="emblem">NUEVA AVENTURA · EDICIÓN 0.3</span><span class="pill">9 GENERACIONES</span></div><div class="hero-logo">POKÉ<span>RICOCHET</span></div><p class="home-subtitle">Tu historia comienza aquí. Elige un inicial y después dos compañeros. Las tres elecciones serán tus primeros Pokémon del PC.</p><div class="draft-progress">${labels.map((label,i)=>`<div class="draft-step ${i===stage?'active':''}"><small>${label}</small><strong>${firstChoice[i]?def(firstChoice[i]).name:i===stage?'ELIGE AHORA':'—'}</strong></div>`).join('')}</div><div class="draft-heading"><b>${labels[stage]||'EQUIPO COMPLETO'}</b><small>Escoge entre los 27 iniciales</small></div><div class="generation-grid">${STARTER_GENERATIONS.map(([name],i)=>`<button class="gen-chip ${i===starterGeneration?'on':''}" data-action="ui:gen:${i}">${name}</button>`).join('')}</div><div class="draft-grid">${choices}</div><div class="home-footer"><span>${stage+1}/3 · Cada expedición reinicia niveles y movimientos.</span>${stage>0?'<button class="secondary" data-action="ui:draftback">← ANTERIOR</button>':''}</div>`);
+}
+function ownedUnique(){return Object.entries(saved.collection).flatMap(([id,c])=>[
+ ...((c?.normal||0)>0?[{id:+id,shiny:false,count:c.normal}]:[]),...((c?.shiny||0)>0?[{id:+id,shiny:true,count:c.shiny}]:[])
+ ]).filter(x=>DB[x.id]).sort((a,b)=>a.id-b.id)}
+function collectionCount(){return Object.entries(saved.collection).filter(([id,c])=>DB[+id]&&(c.normal||c.shiny)).length}
+function showHome(tab='inicio'){
+ mode='menu';homeTab=tab;
+ const title={inicio:'CUARTEL GENERAL',equipo:'PREPARA TU EQUIPO',pc:'CAJAS DEL PC',dex:'POKÉDEX',gacha:'MÁQUINA CÁPSULA',historial:'TU HISTORIA'}[tab]||'CUARTEL GENERAL';
+ const nav=['inicio','equipo','pc','dex','gacha','historial'];const ico=['⌂','⚔','▦','◉','✦','▤'];const names=['Inicio','Equipo','PC','Pokédex','Gachapón','Registro'];
+ const mons=ownedUnique();const total=saved.tokens||0;
+ let content='';
+ if(tab==='inicio')content=`<div class="hub-welcome"><div><div class="overline">UNA EXPEDICIÓN, MIL REBOTES</div><h2>Haz que cada<br><em>bola cuente.</em></h2><p>Traza tu propio camino, captura criaturas, descubre reliquias y derrota a los jefes de cada zona.</p><button class="big-play" data-action="newrun">▶ INICIAR EXPEDICIÓN <span>→</span></button></div><div class="hero-trio">${starterTeam.map((id,i)=>`<div class="hero-mon" style="--glow:${TYPE_COLOR[def(id).types[0]]}">${sImg(id,starterShiny[i])}<small>${i?'RESERVA '+i:'LÍDER'}</small><b>${def(id).name}</b></div>`).join('')}</div></div><div class="home-tip"><b>✦ NOVEDADES DE LA V0.3</b><span>Mapa conectado · Enemigos con roles · Especiales por impactos · Nuevas reliquias</span></div>`;
+ if(tab==='equipo')content=`<p class="home-lead">Selecciona un hueco y sustitúyelo por cualquier Pokémon de tu colección. Al iniciar cada partida todos vuelven al nivel 5.</p><div class="prep-slots new-slots">${starterTeam.map((id,i)=>`<button class="prep-slot ${selectingSlot===i?'chosen':''}" data-action="ui:slot:${i}"><small>${i?'RESERVA '+i:'LÍDER ACTIVO'}</small>${sImg(id,starterShiny[i])}<b>${def(id).name}${starterShiny[i]?' ✨':''}</b></button>`).join('')}</div><div class="subheading">COLECCIÓN · ${mons.length} VARIANTES</div><div class="storage-grid">${mons.map(({id,shiny})=>`<button class="storage-mon" data-action="ui:mon:${id}:${shiny?1:0}">${sImg(id,shiny)}<b>${def(id).name}</b>${shiny?'<small>✨ SHINY</small>':''}</button>`).join('')}</div><button class="big-play smaller" data-action="newrun">▶ INICIAR CON ESTE EQUIPO</button>`;
+ if(tab==='pc')content=`<p class="home-lead">Tu colección permanente. Puedes cambiar el equipo aquí antes de una expedición y en los Centros Pokémon que encuentres.</p><div class="subheading">CAJA 01 · ${mons.length} VARIANTES ENCONTRADAS</div><div class="storage-grid">${mons.map(({id,shiny,count})=>`<div class="storage-mon storage-static">${sImg(id,shiny)}<b>${def(id).name}</b><small>${shiny?'✧ shiny · ':''}×${count}</small></div>`).join('')}</div><div class="home-tip"><b>CONSEJO</b><span>Captura Poké Balls que sueltan los enemigos, abre cápsulas y visita Centros Pokémon para incorporar refuerzos.</span></div>`;
+ if(tab==='dex'){
+   let listed=Object.entries(DB).sort((a,b)=>Number(a[0])-Number(b[0])).filter(([id])=>selectedDexType==='all'||def(+id).types.includes(selectedDexType));
+   content=`<p class="home-lead">Registra nuevas especies capturándolas. Las variantes shiny se muestran con una estrella dorada.</p><div class="dex-filter"><button class="gen-chip ${selectedDexType==='all'?'on':''}" data-action="ui:filter:all">Todos</button>${['grass','fire','water','electric','rock','ghost','poison','bug','normal'].map(t=>`<button class="gen-chip ${selectedDexType===t?'on':''}" data-action="ui:filter:${t}">${TT[t]}</button>`).join('')}</div><div class="storage-grid dex-grid">${listed.map(([id])=>{const d=def(+id),owned=!!(saved.collection[id]?.normal||saved.collection[id]?.shiny);return `<div class="storage-mon ${owned?'':'locked'}">${owned?sImg(+id,!!saved.collection[id]?.shiny&&!saved.collection[id]?.normal):'<span class="dex-unknown">?</span>'}<b>${owned?d.name:'???'}</b><small>#${String(id).padStart(4,'0')}${saved.collection[id]?.shiny?' ✨':''}</small></div>`}).join('')}</div>`;
+ }
+ if(tab==='gacha')content=`<div class="gacha-show"><div class="gacha-orb">◉<span>✧</span></div><div><div class="overline">CAPSULAS DE EXPLORACIÓN</div><h2>Una cápsula.<br><em>Una sorpresa.</em></h2><p>Las fichas se consiguen jugando. Las cápsulas pueden desbloquear Pokémon nuevos y variantes shiny.</p><div class="gacha-rates">Común 70 % · Poco común 25 % · Raro 5 %<br>Shiny: 1/4096 de base.</div><button class="big-play ${total<4?'disabled':''}" data-action="ui:roll" ${total<4?'disabled':''}>✦ ABRIR CÁPSULA · 4 FICHAS</button><div class="tiny">Saldo actual: ${total} fichas</div></div></div>`;
+ if(tab==='historial')content=`<div class="stats-grid"><div><strong>${saved.runs||0}</strong><small>EXPEDICIONES</small></div><div><strong>${saved.best||0}</strong><small>RÉCORD DE PISOS</small></div><div><strong>${collectionCount()}</strong><small>ESPECIES EN EL PC</small></div><div><strong>${Object.values(saved.collection).reduce((a,c)=>a+(c.shiny||0),0)}</strong><small>SHINIES</small></div></div><div class="home-tip"><b>PROGRESIÓN DE TEMPORADA</b><span>Esta versión comienza con un guardado nuevo. Tu progreso anterior sigue intacto en el navegador.</span></div>`;
+ showModal(`<div class="home-screen"><div class="home-header"><span class="emblem">${title} · V0.3</span><div class="home-currency">🪙 ${total} <span>FICHAS</span></div></div><div class="hero-logo">POKÉ<span>RICOCHET</span></div><div class="nav-grid">${nav.map((n,i)=>buttonNav(n,names[i],ico[i])).join('')}</div><div class="home-content">${content}</div><div class="home-footer">ROGUE BOUNCE · PROTOTIPO FAN NO OFICIAL <span>${collectionCount()} ESPECIES · ${saved.runs||0} EXPEDICIONES</span></div></div>`);
+}
+
+// A connected, generated graph makes the route a choice with consequences.
+const PATH_TYPES={wild:{icon:'🌿',name:'Salvajes',desc:'Combate normal, experiencia y fichas'},swarm:{icon:'⚔️',name:'Horda',desc:'Más enemigos, más experiencia'},rare:{icon:'✨',name:'Rastro raro',desc:'Especies más difíciles de encontrar'},elite:{icon:'💀',name:'Alfa',desc:'Enemigos élite, mayor botín'},center:{icon:'🏥',name:'Centro',desc:'Cura, revive y usa el PC'},rest:{icon:'⛺',name:'Descanso',desc:'Curación o defensa'},cache:{icon:'🎁',name:'Tesoro',desc:'Fichas o potencia global'},shrine:{icon:'🔮',name:'Santuario',desc:'Intercambia PS por una ventaja'},egg:{icon:'🥚',name:'Huevo',desc:'Recompensa misteriosa'},trade:{icon:'🤝',name:'Entrenador',desc:'Pactos, fichas o experiencia'}};
+const PATH_LANES=[17,50,83];
+function weightedRoom(floor,lane){
+ const pool=['wild','wild','wild','swarm','rare','elite','rest','cache','shrine','egg','trade'];
+ // Centers appear predictably in one lane every 4-6 floors, but still demand routing.
+ if(floor===5||floor===11||floor===16&&zone().rooms>16)return lane===1?'center':pick(['wild','rare','elite']);
+ if(floor<3)return pick(['wild','wild','swarm','cache']);
+ return pick(pool);
+}
+function generateMap(){const floors=zone().rooms,rows=[];
+ for(let f=1;f<=floors;f++){const row=[];for(let lane=0;lane<3;lane++){
+   const kind=weightedRoom(f,lane);
+   row.push({floor:f,lane,kind,edges:f===1?[]:[lane,...(lane>0&&chance(.58)?[lane-1]:[]),...(lane<2&&chance(.58)?[lane+1]:[])]});
+ }rows.push(row)}
+ return {zone:run.zone,rows};
+}
+function drawRoute(){const map=run.mapPlan,rooms=zone().rooms,availableFloor=run.floor+1,stageH=(rooms+1)*77+24,xs=[61,180,299];let paths='',nodes='';
+ for(let f=1;f<=rooms;f++){
+  const y=(rooms-f)*77+65;
+  for(let lane=0;lane<3;lane++){
+   const n=map.rows[f-1][lane];
+   if(f>1)for(const from of n.edges){const yy=y+77;paths+=`<path d="M${xs[lane]} ${y} C${xs[lane]} ${y+34},${xs[from]} ${yy-34},${xs[from]} ${yy}"/>`}
+   if(f===rooms)paths+=`<path d="M${xs[lane]} ${y} L180 30"/>`;
+   const taken=run.branchHistory.find(p=>p.floor===f&&p.lane===lane),past=f<availableFloor;
+   const selectable=f===availableFloor&&(run.lastMapLane===null||n.edges.includes(run.lastMapLane)||f===1);
+   const details=PATH_TYPES[n.kind];
+   nodes+=`<button class="map-node ${taken?'travelled':''} ${selectable?'selectable':''} ${past&&!taken?'passed':''}" style="left:${PATH_LANES[lane]}%;top:${y}px" data-action="map:${f}:${lane}" ${!selectable?'disabled':''}><span>${details.icon}</span><b>${details.name}</b></button>`;
+  }
+ }
+ const bossY=30;
+ nodes+=`<div class="map-boss" style="top:${bossY}px">👑 <b>JEFE</b></div>`;
+ return `<div class="route-overview"><div class="route-key">🟢 Disponible <span>✦ Elegir camino de riesgo o recompensa · 👑 jefe</span></div><div class="map-scroll" id="mapScroll"><div class="map-stage" style="height:${stageH}px"><svg viewBox="0 0 360 ${stageH}" preserveAspectRatio="none" class="map-lines">${paths}</svg>${nodes}</div></div></div>`;
+}
+nextRoute=function(){if(!run||mode==='over')return;
+ run.turn=0;run.blocks=[];run.drops=[];run.shots=[];run.enemyBullets=[];run.particles=[];
+ if(run.floor>=zone().rooms){run.floor++;startBattle('boss');return}
+ if(!run.mapPlan||run.mapPlan.zone!==run.zone){run.mapPlan=generateMap();run.lastMapLane=null;run.branchHistory=[]}
+ mode='route';const nextFloor=run.floor+1;
+ showModal(`<div class="route-panel"><div class="home-header"><span class="emblem">🧭 MAPA · ${zone().tag}</span><span class="pill">PISO ${nextFloor}/${zone().rooms} · JEFE AL FINAL</span></div><h2>Escoge tu <span class="accent">camino.</span></h2><p class="route-intro">Puedes anticipar las salas del mapa. Las conexiones indican los caminos posibles; una vez avanzas, no hay vuelta atrás.</p>${drawRoute()}<div class="route-bottom">${run.branchHistory.length?`Última sala: ${PATH_TYPES[run.branchHistory.at(-1).kind].name}`:'Primera sala: elige cualquiera de los tres caminos.'}<button class="secondary" data-action="menu:confirm">MENÚ</button></div></div>`);
+ requestAnimationFrame(()=>{const sc=$id('mapScroll');if(sc)sc.scrollTop=sc.scrollHeight});refresh();
+};
+
+// More interesting utility rooms make the choice matter.
+const _origStartEvent=startEvent;
+startEvent=function(kind){if(!['shrine','egg','trade'].includes(kind))return _origStartEvent(kind);mode='event';run.blocks=[];run.shots=[];
+ const choices=kind==='shrine'?[
+  ['event:altar','Ofrenda arriesgada','Sacrifica un 20 % de los PS actuales a cambio de +2 daño global','🔮'],
+  ['event:blessing','Bendición del bosque','Todos reciben un escudo y recuperan un 12 % de PS','🌿']
+ ]:kind==='egg'?[
+  ['event:egg','Incubar el huevo','Obtén una especie aleatoria nueva para el PC','🥚'],
+  ['event:eggxp','Compartir nutrientes','Todos ganan 55 XP de forma inmediata','✨']
+ ]:[
+  ['event:trader','Entrenar con veterano','Todos ganan 38 XP y se curan un poco','🥊'],
+  ['event:trademoney','Vender objetos','Recibes 7 fichas para gastar en el gachapón','🪙']
+ ];
+ showModal(`<div class="emblem">${PATH_TYPES[kind].icon} EVENTO DE RUTA</div><h2>${{shrine:'Un santuario olvidado',egg:'Un huevo misterioso',trade:'Encuentro con entrenador'}[kind]}</h2><p>Decide cómo quieres afrontar este evento. Las consecuencias duran el resto de la expedición.</p><div class="choices">${choices.map(a=>btn(...a)).join('')}</div>`);refresh();
+};
+
+// Additional global relics: less predictable bonuses than raw stats.
+GLOBAL_POOL.push(
+ ['momentum','Ritmo imparable','Cada tercera ronda: +4 proyectiles','🎼'],
+ ['scout','Instinto depredador','El primer ataque contra cada sala hace daño adicional','🦅'],
+ ['clinic','Sangre fría','Curación del equipo tras ganar cada combate','🌿'],
+ ['surge','Afinidad elemental','+2 proyectiles si el movimiento es eficaz contra enemigos','🌈']
+);
+shoot=function(){if(mode!=='aim')return;const m=active();if(!m)return;
+ let extra=0;
+ if(run.relics.includes('momentum')&&run.turn%3===0)extra+=4;
+ if(run.relics.includes('surge')&&run.blocks.some(e=>effectiveness(m.moves[m.chosen].type,e.types)>1))extra+=2;
+ if(run.specialShot)extra+=6;
+ m.globalBalls+=extra;
+ _origShoot();
+ m.globalBalls-=extra;
+ if(run.specialShot){run.firingMove.power+=8;run.firingMove.blast=Math.max(run.firingMove.blast,.45);run.specialShot=false}
+};
+startBattle=function(kind){_origStartBattle(kind);if(run.relics.includes('scout'))for(const e of run.blocks){e.hp=Math.max(1,e.hp-Math.round(e.maxHp*.1))} refresh()};
+winBattle=function(){if(mode==='over'||mode==='reward'||mode==='upgrade'||mode==='global')return;
+ if(run.relics.includes('clinic'))for(const m of run.team){if(m.hp>0)m.hp=Math.min(m.maxHp,m.hp+Math.round(m.maxHp*.11))}
+ _origWinBattle();
+};
+
+function advanceRoom(node){
+ const lane=node.lane,kind=node.kind;
+ hideModal();run.floor++;run.lastMapLane=lane;run.branchHistory.push({floor:run.floor,lane,kind});run.routeHistory.push(PATH_TYPES[kind].icon);
+ if(kind==='center'){run.lastCenter=run.floor;startCenter()}
+ else if(['rest','cache','shrine','egg','trade'].includes(kind))startEvent(kind);
+ else startBattle(kind);
+}
+const _menuAction=handleAction;
+handleAction=function(action){
+ if(action.startsWith('ui:gen:')){starterGeneration=+action.split(':')[2];showStarterDraft();return}
+ if(action.startsWith('ui:draft:')){const id=+action.split(':')[2];if(!STARTER_GENERATIONS.flatMap(x=>x[1]).includes(id)||firstChoice.includes(id))return;firstChoice.push(id);if(firstChoice.length<3){showStarterDraft();return}
+  starterTeam=firstChoice.slice();starterShiny=[false,false,false];for(const i of starterTeam)saved.collection[i]={normal:1,shiny:0};saved.hasStarter=true;saved.tokens=6;save();firstChoice=[];run=newState(starterTeam);showHome('inicio');return;
+ }
+ if(action==='ui:draftback'){firstChoice.pop();showStarterDraft();return}
+ if(action.startsWith('ui:tab:')){showHome(action.split(':')[2]);return}
+ if(action.startsWith('ui:slot:')){selectingSlot=+action.split(':')[2];showHome('equipo');return}
+ if(action.startsWith('ui:mon:')){const [, , idRaw, shine]=action.split(':'),id=+idRaw,shiny=shine==='1';if(!saved.collection[id]?.[shiny?'shiny':'normal'])return;
+  const other=starterTeam.findIndex((v,i)=>i!==selectingSlot&&v===id&&starterShiny[i]===shiny);
+  if(other>=0){[starterTeam[other],starterTeam[selectingSlot]]=[starterTeam[selectingSlot],starterTeam[other]];[starterShiny[other],starterShiny[selectingSlot]]=[starterShiny[selectingSlot],starterShiny[other]]}
+  else{starterTeam[selectingSlot]=id;starterShiny[selectingSlot]=shiny}run=newState(starterTeam);showHome('equipo');return
+ }
+ if(action.startsWith('ui:filter:')){selectedDexType=action.split(':')[2];showHome('dex');return}
+ if(action==='ui:roll'){
+  if(saved.tokens<4)return;
+  saved.tokens-=4;
+  const roll=Math.random(),rarity=roll<.7?'common':roll<.95?'uncommon':'rare';
+  const pool=Object.keys(DB).map(Number).filter(id=>DB[id][2]===rarity);
+  const id=pick(pool.length?pool:Object.keys(DB).map(Number).filter(id=>DB[id][2]!=='boss'));
+  const shiny=chance(1/4096),mon=saved.collection[id]||{normal:0,shiny:0};mon[shiny?'shiny':'normal']++;saved.collection[id]=mon;save();
+  showModal(`<div class="gacha-reveal"><div class="overline">CÁPSULA ABIERTA · ${rarity.toUpperCase()}</div><div class="pull-spark">✧ ✦ ✧</div>${sImg(id,shiny)}<h2>${def(id).name}${shiny?' ✨ SHINY':''}</h2><p>${mon.normal+mon.shiny>1?'¡Una nueva copia se añade a tu colección!':'¡Nuevo Pokémon registrado en el PC!'}</p><div class="actions"><button class="primary" data-action="ui:tab:gacha">CONTINUAR</button><button class="secondary" data-action="ui:tab:pc">VER EN EL PC</button></div></div>`);return
+ }
+ if(action.startsWith('map:')){if(mode!=='route')return;const [,f,l]=action.split(':'),floor=+f,lane=+l;let n=run.mapPlan?.rows[floor-1]?.[lane];if(!n||floor!==run.floor+1||run.lastMapLane!==null&&floor!==1&&!n.edges.includes(run.lastMapLane))return;advanceRoom(n);return}
+ if(action.startsWith('event:altar')||action==='event:blessing'||action==='event:egg'||action==='event:eggxp'||action==='event:trader'||action==='event:trademoney'){
+  if(mode!=='event')return;
+  if(action==='event:altar'){run.team.forEach(p=>{if(p.hp>0)p.hp=Math.max(1,Math.round(p.hp*.80))});run.globalBonus+=2}
+  if(action==='event:blessing'){run.team.forEach(p=>{p.shield++;p.hp=Math.min(p.maxHp,p.hp+Math.round(p.maxHp*.12))})}
+  if(action==='event:egg'){const ids=Object.keys(DB).map(Number).filter(x=>DB[x][2]==='uncommon'||DB[x][2]==='rare');const id=pick(ids);const col=saved.collection[id]||{normal:0,shiny:0};col.normal++;saved.collection[id]=col;save();message('🥚 '+def(id).name+' añadido al PC')}
+  if(action==='event:eggxp')run.team.forEach((p,i)=>{p.xp+=55;let loops=0;while(p.xp>=neededXP(p.level)&&loops++<3){p.xp-=neededXP(p.level);p.level++;p.maxHp+=12;p.hp=Math.min(p.maxHp,p.hp+18);run.expQueue.push(i)}});
+  if(action==='event:trader'){run.team.forEach(p=>{p.hp=Math.min(p.maxHp,p.hp+18);p.xp+=38;while(p.xp>=neededXP(p.level)){p.xp-=neededXP(p.level);p.level++;p.maxHp+=12;p.hp=Math.min(p.maxHp,p.hp+18);run.expQueue.push(run.team.indexOf(p))}})}
+  if(action==='event:trademoney'){saved.tokens+=7;save()}
+  hideModal();if(run.expQueue.length){run.afterReward=()=>nextRoute();run.pendingGlobal=false;showLevelUp()}else nextRoute();return;
+ }
+ if(action==='ui:special'){if(mode!=='aim'||(active().ult||0)<20)return;active().ult=0;run.specialShot=true;shoot();refresh();return}
+ if(action==='menu:home'){homeTab='inicio';return _menuAction(action)}
+ return _menuAction(action)
+};
+const SPECIAL_BUTTON=document.createElement('button');SPECIAL_BUTTON.id='specialBtn';SPECIAL_BUTTON.className='special-btn';SPECIAL_BUTTON.dataset.action='ui:special';SPECIAL_BUTTON.textContent='✦ ESPECIAL · 0/20';
+$id('fireBtn').insertAdjacentElement('beforebegin',SPECIAL_BUTTON);
+SPECIAL_BUTTON.addEventListener('click',()=>handleAction('ui:special'));
+refresh=function(){_origRefresh();if(!run)return;const p=active();if(p){SPECIAL_BUTTON.disabled=mode!=='aim'||(p.ult||0)<20;SPECIAL_BUTTON.textContent=(p.ult||0)>=20?'✦ ESPECIAL LISTO':`✦ ESPECIAL ${p.ult||0}/20`}
+ if(mode==='menu'){$id('topStatus').innerHTML=`🪙 <strong>${saved.tokens||0}</strong> · ${collectionCount()} especies`}
+};
+renderBoard=function(now){_origRenderBoard(now);if(!run)return;
+ ctx.save();
+ for(const e of run.blocks){const x=enemyX(e),y=enemyY(e),w=enemyW(e);
+   const ico={tank:'🛡',fast:'⚡',support:'✚',caster:'✦',brawler:'↓',elite:'💀',boss:'👑'}[e.role]||'•';
+   drawRoundRect(x+w-19,y+3,17,16,5,'#081523e9','#8ca3b0');ctx.textAlign='center';ctx.font='bold 10px system-ui';ctx.fillStyle='#e8f4ff';ctx.fillText(ico,x+w-10.5,y+14);
+ }
+ ctx.restore();
+};
+
 fitBoard();startMenu();requestAnimationFrame(render);
 })();
 </script>
