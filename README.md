@@ -1,26 +1,18 @@
-# POKÉRICOCHET — Rogue Bounce v0.4
+# POKÉRICOCHET — Rogue Bounce v0.5
 
-Prototipo roguelite de rebotes y combates Pokémon, para GitHub Pages. Proyecto fan no oficial.
+Prototipo fan en HTML, CSS y JavaScript sin pagos ni compras con dinero real.
 
-## Cambios de la V0.4
+## Novedades
+- Elegir un único inicial de 27 solo al comenzar el juego por primera vez. Las siguientes expediciones empiezan con uno, dos o tres Pokémon básicos elegidos de tu PC. El equipo se guarda en el navegador.
+- PS ajustados a las estadísticas base de las especies y al nivel: Charmander inicia al nivel 5 con 19 PS, en vez de 176. Ataques y daño enemigo recalibrados. Enemigos más resistentes, pero menos objetivos simultáneos en los primeros combates de un equipo de uno.
+- Mapa conectado con combates garantizados en casi todos los pisos; máximo tres pisos con eventos pacíficos por zona, como el centro o santuario, en los pisos 5, 10 y 14.
+- Nuevas probabilidades orientativas de soltar Poké Ball según rareza: común 3 %, poco común 1 %, raro 0,25 %, jefe 0,1 %. Las evoluciones tienen menos probabilidad. Shiny 1/4096 de aparición y Poké Ball 100 % tras derrota; aun así hay que tocar la Poké Ball con una de tus bolas.
+- Gachapón de 18 fichas con animación de cápsula y revelación diferida. Fichas mucho más escasas: normalmente una cada cuatro victorias, una por élite y cuatro por jefe. Probabilidades de cápsula: común 82 %, poco común 15 %, raro 2,5 %, ultra-raro 0,5 %; shiny 1/4096.
+- Caramelos por familia: Vínculo (+1 PS por rango, tres rangos), Instinto (+4 % crítico por rango, dos rangos) y Técnica (movimiento inicial alternativo). Eliminadas grandes mejoras permanentes de +10 PS o +1 bola por rango.
+- Canvas a mayor densidad de píxeles según la pantalla y sprites con escalado sin suavizado.
+- Se conserva el progreso del guardado de la v0.4; se añade la selección de equipo para expediciones futuras.
 
-- **Un solo inicial**: nueva elección de 1 entre los 27 iniciales de las nueve generaciones. Las partidas arrancan con un único Pokémon; los otros dos huecos se llenan capturando especies básicas o usando un Centro Pokémon.
-- **Evoluciones por nivel**: líneas de los 27 iniciales (entre otras especies) con niveles propios, animación de evolución, aumento moderado de PS y potencia y conservación de las mejoras del movimiento. Los niveles se reinician entre expediciones.
-- **Sin capturas directas de evoluciones**: las Poké Balls de formas evolucionadas se convierten en caramelos para la especie básica de su familia. Una evolución shiny, al soltar Poké Ball garantizada, da también la variante shiny de su especie básica.
-- **Caramelos permanentes por familia**: especie básica +2; primera evolución +6; evolución final +14; shiny +5 extra. Los caramelos pueden acumularse incluso si aún no tienes la especie básica.
-- **Laboratorio de caramelos** en el menú: Vínculo (+10 PS al iniciar, 3 niveles; 6/12/20 caramelos) y Afinidad (+1 bola inicial, 2 niveles; 18/36 caramelos) por especie. Ventajas limitadas para preservar el equilibrio.
-- **Gachapón y huevos**: únicamente especies básicas, con caramelos para duplicados. No entregan Pokémon ya evolucionados.
-- **PC en Centros Pokémon**: curación, sustitución y posibilidad de añadir compañeros a los huecos libres.
-- **Pokédex**: las evoluciones descubiertas aparecen registradas, sin que eso implique capturarlas.
-- Indicador visual dorado de caramelos sobre las Poké Balls de las evoluciones.
-- **Guardado independiente** `pokeRicochet-v04`: empieza de cero; los datos de la V0.3 se conservan sin usarse.
+## Pendiente
+El balance de combate, la distribución exacta de rarezas y las estadísticas de combate de cada especie necesitan iteración. Estas probabilidades son de diseño del prototipo, no reglas oficiales de los videojuegos Pokémon.
 
-## Mecánicas que se mantienen
-
-Mapas ramificados y conectados; rivales con roles, jefes, proyectiles y cuentas atrás; tabla de tipos; experiencia compartida (100 % activo cuando estás solo, 60/40 con dos y 60/20/20 con tres), mejoras por nivel y reliquias globales; ataque especial cargado con impactos.
-
-## Controles
-
-Arrastrar en el tablero para apuntar y soltar para disparar. Teclas 1–3 para elegir movimientos; espacio para disparar; F para pantalla completa. El botón ✦ activa un especial cuando su medidor está lleno.
-
-Sprites cargados desde el repositorio público PokéAPI/sprites. La disponibilidad pública no implica una licencia libre de los personajes o sus diseños de Pokémon. No hay pagos ni monedas compradas con dinero real.
+Este es un proyecto fan no oficial. Los sprites de PokéAPI son públicamente accesibles, pero no deben considerarse libres de derechos ni autorizados por Nintendo, Game Freak o The Pokémon Company.
