@@ -94,15 +94,101 @@
       footer{margin-top:18px;}
     }
     @media(prefers-reduced-motion:reduce){.control,.toast{transition:none;}}
+
+    /* v1.1: una sola pantalla, sin scroll, incluso en móviles pequeños. */
+    html, body {height:100%; overflow:hidden; overscroll-behavior:none;}
+    .app {width:100%;max-width:1080px;height:100vh;height:100dvh;min-height:0;
+      padding:clamp(9px,1.5vh,15px) clamp(10px,2.5vw,30px);
+      display:flex;flex-direction:column;overflow:hidden;}
+    .masthead {flex:none;padding:0 1px clamp(9px,1.4vh,14px);gap:10px;}
+    .symbol {width:33px;height:33px;border-radius:11px;}
+    .brandname {font-size:15px;letter-spacing:.16em;}
+    .tag {font-size:9px;padding:7px 11px;}
+    .layout {flex:1;min-height:0;min-width:0;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+      align-items:center;gap:clamp(16px,4vw,48px);}
+    .game-column {width:100%;min-width:0;height:auto;align-self:center;justify-self:center;
+      display:flex;flex-direction:column;}
+    .hud {flex:none;border-radius:14px 14px 0 0;}
+    .metric {padding:8px 8px 7px;}
+    .metric span {font-size:9px;margin-bottom:2px;}
+    .metric strong {font-size:22px;}
+    .board-shell {flex:none;border-radius:0 0 13px 13px;}
+    #game {width:100%;height:auto;aspect-ratio:420/710;}
+    .board-bottom {min-height:35px;padding:6px 10px;font-size:10px;}
+    #fastBtn {font-size:10px;padding:4px 7px;}
+    .end-overlay {bottom:35px;}
+    .quick-actions {display:grid;grid-template-columns:1.2fr 1fr 1.15fr 38px;gap:6px;margin-top:9px;flex:none;}
+    .quick-actions .control {min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+      padding:10px 5px;border-radius:9px;font-size:10px;letter-spacing:0;text-align:center;}
+    .quick-actions .control:hover {transform:none;}
+    .quick-actions .control[aria-pressed=true] {border-color:var(--aqua);color:var(--aqua);}
+    .quick-actions .control.primary[aria-pressed=true] {color:#0b2431;}
+    .sidebar {min-width:0;max-width:none;align-self:center;max-height:100%;padding:0 0 0 1px;overflow:hidden;}
+    .sidebar h1 {font-size:clamp(35px,5vw,69px);margin:13px 0 10px;}
+    .sidebar .lead {font-size:clamp(12px,1.4vw,15px);line-height:1.5;margin:12px 0 20px;}
+    .instruction {padding:clamp(12px,1.8vw,18px);}
+    .instruction-head {margin-bottom:10px;}
+    .instruction p {font-size:12px;line-height:1.5;}
+    .legend {margin-top:12px;gap:11px;font-size:10px;}
+    .smallprint {font-size:11px;line-height:1.5;margin-top:17px;}
+    footer {display:none;}
+    .help-overlay {position:absolute;inset:0 0 35px;z-index:4;display:flex;align-items:center;
+      justify-content:center;padding:12px;background:rgba(5,11,29,.91);backdrop-filter:blur(8px);}
+    .help-overlay.hidden {display:none;}
+    .help-card {position:relative;border-radius:15px;border:1px solid rgba(176,194,255,.23);
+      background:linear-gradient(150deg,#1a284e,#101b37);padding:23px 18px;
+      max-width:330px;max-height:100%;overflow-y:auto;text-align:left;}
+    .help-card h2 {margin:0 0 13px;font-size:20px;}
+    .help-card p {color:#c0cde7;font-size:13px;line-height:1.6;}
+    .help-card button {margin-top:5px;width:100%;}
+    @media (max-width:730px) {
+      .app {max-width:none;padding:9px 10px 10px;}
+      .masthead {padding:0 1px 9px;}
+      .layout {grid-template-columns:minmax(0,1fr);gap:0;}
+      .sidebar {display:none;}
+      .game-column {align-self:center;}
+      .metric {padding:7px 5px 6px;}
+      .metric strong {font-size:20px;}
+      .quick-actions {margin-top:8px;}
+      .brandname {font-size:14px;}
+      .tag {font-size:8px;}
+    }
+    @media (max-width:370px) {
+      .tag {display:none;}
+      .quick-actions .control {font-size:9px;}
+      .board-bottom {font-size:9px;}
+    }
+    @media (max-height:600px) and (min-width:731px) {
+      .tag,.sidebar .lead,.sidebar .smallprint {display:none;}
+      .sidebar h1 {font-size:36px;margin:8px 0 14px;}
+      .instruction {padding:11px;}
+      .instruction p {font-size:11px;}
+    }
+    @media (orientation:landscape) and (max-height:480px) and (max-width:900px) {
+      .masthead {display:none;}
+      .app {padding:4px 8px;}
+    }
+    @media (max-width:730px) and (max-height:620px) {
+      .app {padding-top:5px;padding-bottom:6px;}
+      .masthead {padding-bottom:5px;}
+      .symbol {width:28px;height:28px;}
+      .brandname {font-size:12px;}
+      .metric {padding:4px 3px 3px;}
+      .metric span {font-size:8px;margin-bottom:1px;}
+      .metric strong {font-size:18px;}
+      .board-bottom {min-height:28px;padding:4px 7px;}
+      .quick-actions {margin-top:5px;}
+      .quick-actions .control {padding:7px 3px;}
+    }
   </style>
 </head>
 <body>
-<main class="app">
+<main class="app" id="app">
   <header class="masthead">
     <div class="brand"><span class="symbol" aria-hidden="true"></span><span class="brandname">RICOCHET<span>.</span></span></div>
     <span class="tag">UNA PARTIDA MÁS Y FUERA</span>
   </header>
-  <div class="layout">
+  <div class="layout" id="layout">
     <section class="game-column" aria-label="Juego Ricochet">
       <div class="hud" aria-live="polite">
         <div class="metric"><span>RONDA</span><strong id="roundValue">01</strong></div>
@@ -123,12 +209,27 @@
           </div>
         </div>
         <div class="board-bottom"><span id="statusNote"><i class="live-dot"></i>Arrastra para apuntar · suelta para lanzar</span><button id="fastBtn" aria-pressed="false">» RÁPIDO x3</button></div>
+        <div class="help-overlay hidden" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+          <div class="help-card">
+            <h2 id="helpTitle">Cómo se juega</h2>
+            <p>Arrastra sobre el tablero para apuntar y <b>suelta para disparar</b>. Cada bola resta 1 vida al bloque que golpea.</p>
+            <p>Al acabar la ráfaga los bloques bajan una fila. Recoge los <b>aros dorados</b> para ganar otra bola. ¡Que ningún bloque cruce la línea roja!</p>
+            <p>En ordenador también puedes usar <b>← →</b> y <b>espacio</b>. Pulsa <b>F</b> para alternar pantalla completa.</p>
+            <button class="control primary" id="closeHelpBtn">¡ENTENDIDO!</button>
+          </div>
+        </div>
+      </div>
+      <div class="quick-actions" aria-label="Controles del juego">
+        <button class="control primary" id="restartBtn" title="Nueva partida">↻ NUEVA</button>
+        <button class="control" id="soundBtn" aria-pressed="false" title="Activar o desactivar sonido">♫ AUDIO OFF</button>
+        <button class="control" id="fullscreenBtn" aria-pressed="false" title="Pantalla completa (F)">⛶ PANTALLA</button>
+        <button class="control" id="helpBtn" aria-expanded="false" title="Cómo jugar">?</button>
       </div>
     </section>
     <aside class="sidebar">
       <div class="eyebrow">TU PEQUEÑA DOSIS DE DOPAMINA</div>
       <h1>Apunta.<br><em>Rebota.</em><br>Repite.</h1>
-      <p class="lead">Una lluvia de bolas. Bloques que explotan. Reacciones en cadena. Sin prisas, sin complicaciones.</p>
+      <p class="lead">Dispara una lluvia de bolas. Haz que reboten, destruye los bloques y supera tu récord. Sin prisas.</p>
       <div class="instruction">
         <div class="instruction-head">
           <span class="gesture" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3-3 4m3-4 3 4m-3-4v12"/><path d="M8 15.5 6 18c-.7.9-.4 2.2.5 2.6l2.5 1.1a4 4 0 0 0 1.6.3h4.1a3 3 0 0 0 2.9-2.2l1.2-4.4a1.5 1.5 0 0 0-2.7-1.2l-.5 1.1V10a1.5 1.5 0 0 0-3 0v5.5"/></svg></span>
@@ -137,8 +238,7 @@
         <p><b>Arrastra sobre el tablero</b> para apuntar y suelta para disparar todas tus bolas. Cada impacto quita <b>1 punto de vida</b> al bloque. Cuando termina la ráfaga, los bloques bajan una fila.</p>
         <div class="legend"><span><span class="mini-block"></span> Bloque con vida</span><span><span class="mini-orb">+</span> +1 bola para la siguiente ronda</span></div>
       </div>
-      <div class="controls"><button class="control primary" id="restartBtn">↻ NUEVA PARTIDA</button><button class="control" id="soundBtn" aria-pressed="false">♫ SONIDO: OFF</button></div>
-      <p class="smallprint">Las bolas vuelven al suelo y la primera en caer marca desde dónde disparas después. Puedes acelerar una ráfaga con <b>» RÁPIDO</b>.<br>También puedes apuntar con <span class="keys">←</span><span class="keys">→</span> y lanzar con <span class="keys">ESPACIO</span>.</p>
+      <p class="smallprint">La primera bola que cae marca el siguiente lanzamiento. Pulsa <b>» RÁPIDO</b> para acelerar, o <b>F</b> para pantalla completa.</p>
     </aside>
   </div>
   <footer><span>HECHO PARA DESCONECTAR. SIN ANUNCIOS, SIN VIDAS, SIN TRUCOS.</span><b>RICOCHET / 01</b></footer>
@@ -168,7 +268,17 @@
   let best = 0;
   try { best = +(localStorage.getItem('ricochet-best') || 0) || 0; } catch (_) {}
 
+  function fitBoard() {
+    const layout=$('layout'), hud=document.querySelector('.hud');
+    const actions=document.querySelector('.quick-actions'), bottom=document.querySelector('.board-bottom');
+    const columns=getComputedStyle(layout).gridTemplateColumns.split(' ');
+    const slotWidth=parseFloat(columns[0]) || layout.clientWidth;
+    const freeHeight=layout.clientHeight-hud.offsetHeight-actions.offsetHeight-bottom.offsetHeight-14;
+    const width=Math.max(60,Math.floor(Math.min(slotWidth,freeHeight*W/H)));
+    document.querySelector('.game-column').style.width=width+'px';
+  }
   function resize() {
+    fitBoard();
     dpr = Math.min(window.devicePixelRatio || 1, 2.5);
     canvas.width = Math.round(W * dpr);
     canvas.height = Math.round(H * dpr);
@@ -176,6 +286,7 @@
     scaleY = H / canvas.getBoundingClientRect().height;
   }
   window.addEventListener('resize', resize, {passive:true});
+  window.visualViewport?.addEventListener('resize', resize, {passive:true});
   const rr = (x,y,w,h,r) => {
     r = Math.min(r,w/2,h/2);
     ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r);
@@ -282,6 +393,9 @@
   });
   canvas.addEventListener('pointercancel',()=>{pointer=null;if(game.state==='ready')game.aimVisible=false;});
   document.addEventListener('keydown',e=>{
+    if(e.code==='KeyF' && !e.repeat && !e.altKey && !e.ctrlKey && !e.metaKey) {e.preventDefault();toggleFullscreen();return;}
+    if(e.code==='Escape' && !$('helpOverlay').classList.contains('hidden')) {closeHelp();return;}
+    if(!$('helpOverlay').classList.contains('hidden'))return;
     if(['ArrowLeft','ArrowRight','Space'].includes(e.code) && game.state==='ready')e.preventDefault();
     if(game.state!=='ready')return;
     if(e.code==='ArrowLeft'||e.code==='ArrowRight') {
@@ -290,10 +404,33 @@
     }
     if(e.code==='Space' && !e.repeat) fire();
   });
+  function closeHelp() {
+    $('helpOverlay').classList.add('hidden');
+    $('helpBtn').setAttribute('aria-expanded','false');
+  }
+  $('helpBtn').addEventListener('click',()=>{
+    const open=$('helpOverlay').classList.toggle('hidden')===false;
+    $('helpBtn').setAttribute('aria-expanded',String(open));
+  });
+  $('closeHelpBtn').addEventListener('click',closeHelp);
+  async function toggleFullscreen() {
+    try {
+      if(document.fullscreenElement) await document.exitFullscreen();
+      else if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
+      else toast('Usa F11 o añade el juego a inicio');
+    } catch(_) { toast('Usa F11 o añade el juego a inicio'); }
+  }
+  $('fullscreenBtn').addEventListener('click',toggleFullscreen);
+  document.addEventListener('fullscreenchange',()=>{
+    const on=!!document.fullscreenElement;
+    $('fullscreenBtn').textContent=on?'⤢ SALIR':'⛶ PANTALLA';
+    $('fullscreenBtn').setAttribute('aria-pressed',String(on));
+    resize();
+  });
   $('restartBtn').addEventListener('click',reset);
   $('retryBtn').addEventListener('click',reset);
   $('soundBtn').addEventListener('click',()=>{
-    soundOn=!soundOn;$('soundBtn').textContent='♫ SONIDO: '+(soundOn?'ON':'OFF');
+    soundOn=!soundOn;$('soundBtn').textContent='♫ AUDIO '+(soundOn?'ON':'OFF');
     $('soundBtn').setAttribute('aria-pressed',soundOn?'true':'false');
     if(soundOn)playTone(560,'sine',.13,.04,120);
   });
