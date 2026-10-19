@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#0a1121">
 <meta name="description" content="PokéRicochet: prototipo fan roguelite de rebotes, captura y progreso Pokémon.">
-<title>POKÉRICOCHET · Rogue Bounce v0.5</title>
+<title>POKÉRICOCHET · Rogue Bounce v0.6</title>
 <style>
 :root{color-scheme:dark;--bg:#080e1b;--panel:#101c32;--panel2:#142540;--line:#2b4262;--faint:#8c9fbb;--white:#f5f8ff;--aqua:#70f2d3;--yellow:#ffdb7c;--pink:#f6a1c4;--red:#ff7383;--blue:#85aaff}
 *{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--white);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}button{font:inherit;cursor:pointer;touch-action:manipulation}button:disabled{cursor:not-allowed;opacity:.4}button:focus-visible{outline:2px solid var(--aqua);outline-offset:3px}body:before{position:fixed;content:"";inset:0;pointer-events:none;background:radial-gradient(ellipse 65% 55% at 20% 0%,#22396383,transparent),radial-gradient(ellipse 43% 60% at 93% 90%,#0f4e5d40,transparent);z-index:0}.app{position:relative;display:flex;flex-direction:column;height:100vh;height:100dvh;max-width:1320px;margin:auto;padding:clamp(7px,1.5vh,14px) clamp(8px,1.5vw,22px);gap:clamp(6px,1vh,11px);min-height:0}.top{flex:0 0 auto;display:flex;align-items:center;gap:12px;min-height:46px}.brand{font-size:clamp(17px,2vw,23px);font-weight:950;line-height:1;letter-spacing:-.06em;white-space:nowrap}.brand b{color:var(--aqua)}.brand small{display:block;margin-top:5px;letter-spacing:.16em;font-size:9px;font-weight:800;color:#839cba}.top-right{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex:1;min-width:0}.mini-status{font-size:11px;color:#c2d1e5;background:#13243b;border:1px solid #284260;border-radius:9px;padding:9px 11px;white-space:nowrap}.mini-status strong{color:var(--yellow)}.iconbtn{color:#dce8f9;background:#14243a;border:1px solid #2c4360;border-radius:10px;min-width:34px;height:34px;display:grid;place-items:center;font-size:16px}.iconbtn:hover{background:#253d5d}
@@ -146,13 +146,96 @@ function enemyDown(e){if(!run.blocks.includes(e))return;run.blocks=run.blocks.fi
 function burst(x,y,color,n=8){for(let i=0;i<n;i++){let a=rand(-Math.PI,Math.PI),speed=rand(35,180),life=rand(.2,.65);run.particles.push({x,y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,life,max:life,color,r:rand(1.4,4.4)})}}
 function textFx(x,y,s,color='#ffec9a'){run.texts.push({x,y,s,color,life:.78})}
 function attackInfo(m,e){const mult=effectiveness(m.type,e.types);const crit=chance(Math.min(.7,(active().crit||0)+(run.crit||0)))?1.75:1;return {mult,crit,dmg:Math.max(0,Math.round((m.power+(active().level-5)*.6+run.globalBonus)*(active().types.includes(m.type)?1.18:1)*mult*crit))}}
-function hit(e,b){const {mult,crit,dmg}=attackInfo(b.move,e);e.hp-=dmg;let cx=b.x,cy=b.y;burst(cx,cy,mult>1?'#ffe381':mult===0?'#70859d':TYPE_COLOR[b.move.type],dmg?5:2);if(dmg){textFx(cx+rand(-10,10),cy-8,`-${dmg}${crit>1?'!':''}`,mult>1?'#ffdc72':'#f0f9ff');if(mult>1&&chance(.15))message('¡SUPEREFICAZ! ×2')}else if(chance(.1))textFx(cx,cy,'INMUNE','#91a5bf');if(b.move.blast>0&&dmg>0){for(const other of [...run.blocks]){if(other===e)continue;const d=Math.hypot(enemyX(other)+enemyW(other)/2-cx,enemyY(other)+enemyH(other)/2-cy);if(d<CS*1.4){let splash=Math.max(1,Math.round(dmg*b.move.blast));other.hp-=splash;textFx(enemyX(other)+20,enemyY(other),'-'+splash,'#ffbb88');if(other.hp<=0)enemyDown(other)}}burst(cx,cy,'#ffc188',9)}playTone(mult>1?620:330,.02,'sine',.012);if(e.hp<=0)enemyDown(e)}
+function hit(e,b){
+ const {mult,crit,dmg}=attackInfo(b.move,e),cx=b.x,cy=b.y;
+ e.hp-=dmg;
+ burst(cx,cy,mult>1?'#ffe381':mult===0?'#70859d':TYPE_COLOR[b.move.type],dmg?5:2);
+ if(dmg){textFx(cx+rand(-10,10),cy-8,`-${dmg}${crit>1?'!':''}`,mult>1?'#ffdc72':'#f0f9ff');if(mult>1&&chance(.15))message('¡SUPEREFICAZ! ×2')}
+ else if(chance(.1))textFx(cx,cy,'INMUNE','#91a5bf');
+ // A projectile triggers at most ONE secondary effect for its whole flight.
+ if(dmg>0&&!b.effectUsed&&(b.move.blast||0)>0){
+  b.effectUsed=true;
+  for(const other of [...run.blocks]){
+   if(other===e)continue;
+   const d=Math.hypot(enemyX(other)+enemyW(other)/2-cx,enemyY(other)+enemyH(other)/2-cy);
+   if(d<CS*1.4){
+    const splash=Math.max(1,Math.round(dmg*b.move.blast));other.hp-=splash;
+    textFx(enemyX(other)+20,enemyY(other),'-'+splash,'#ffbb88');
+    if(other.hp<=0)enemyDown(other);
+   }
+  }
+  burst(cx,cy,'#ffc188',9);
+ }else if(dmg>0&&!b.effectUsed&&(b.move.chain||0)>0&&b.move.type==='electric'){
+  b.effectUsed=true;
+  const targets=run.blocks.filter(o=>o!==e&&o.hp>0)
+   .sort((a,c)=>Math.hypot(enemyX(a)-cx,enemyY(a)-cy)-Math.hypot(enemyX(c)-cx,enemyY(c)-cy))
+   .slice(0,Math.min(2,b.move.chain));
+  let fromX=cx,fromY=cy;
+  for(const t of targets){
+   const tx=enemyX(t)+enemyW(t)/2,ty=enemyY(t)+enemyH(t)/2;
+   const multiplier=effectiveness('electric',t.types),chainDamage=multiplier===0?0:Math.max(1,Math.round(dmg*.42*multiplier));
+   if(chainDamage){t.hp-=chainDamage;textFx(tx,ty-10,'⚡ -'+chainDamage,'#e9f59a');burst(tx,ty,'#f6e784',6)}
+   if(t.hp<=0)enemyDown(t);
+   fromX=tx;fromY=ty;
+  }
+  if(targets.length)textFx(cx,cy-16,'⚡ CADENA','#fff1a0');
+ }
+ if(run.relics?.includes('bankshot')&&b.wallBounces>0&&e.hp>0&&dmg>0){
+  e.hp-=1;if(e.hp<=0)enemyDown(e);
+ }
+ playTone(mult>1?620:330,.02,'sine',.012);
+ if(e.hp<=0)enemyDown(e);
+}
 function enemyX(e){return LEFT+e.col*CS+4}function enemyY(e){return TOP+e.row*STEP+4+(run?.descentProgress||0)}function enemyW(e){return e.boss?CS*2-7:CS-8}function enemyH(e){return e.boss?STEP*2-9:STEP-8}
 function shoot(){if(mode!=='aim'||!active()||active().hp<=0)return;const move=active().moves[active().chosen],count=clamp(move.balls+active().globalBalls+(run.relics.includes('echo')&&run.turn%2===0?2:0),1,45);run.firingMove={...move};run.shots=[];run.pending=count;run.launched=0;run.volleyClock=0;run.landing=null;mode='shooting';log(`⚡ ${active().name}: ${move.name} · ${count} proyectiles`);playTone(600,.055,'triangle',.026);refresh()}
 function launchBall(){let move=run.firingMove,speed=520,theta=run.aim;run.shots.push({x:run.shooter,y:SHOOT_Y,vx:Math.cos(theta)*speed,vy:Math.sin(theta)*speed,r:BALL_R,move,trail:[],last:null});run.launched++;run.pending--}
 function circleRect(b,e){let x=enemyX(e),y=enemyY(e),w=enemyW(e),h=enemyH(e);let nearX=clamp(b.x,x,x+w),nearY=clamp(b.y,y,y+h);return (b.x-nearX)**2+(b.y-nearY)**2<=BALL_R*BALL_R}
 function touchDrop(b){for(let i=run.drops.length-1;i>=0;i--){let d=run.drops[i];if(Math.hypot(b.x-d.x,b.y-d.y)<14){run.drops.splice(i,1);onCapture(d)}}}
-function advanceVolley(dt){if(run.pending>0){run.volleyClock+=dt*(run.fast?2.5:1);while(run.pending>0&&run.volleyClock>=.085){run.volleyClock-=.085;launchBall()}}let factor=run.fast?2.5:1;let sub=Math.max(1,Math.min(7,Math.ceil(dt*factor/.007))),delta=dt*factor/sub;for(let step=0;step<sub;step++){for(let i=run.shots.length-1;i>=0;i--){let b=run.shots[i];b.trail.push([b.x,b.y]);if(b.trail.length>6)b.trail.shift();b.x+=b.vx*delta;b.y+=b.vy*delta;if(b.x<BALL_R+7){b.x=BALL_R+7;b.vx=Math.abs(b.vx)}if(b.x>W-BALL_R-7){b.x=W-BALL_R-7;b.vx=-Math.abs(b.vx)}if(b.y<TOP-4+BALL_R){b.y=TOP-4+BALL_R;b.vy=Math.abs(b.vy)}if(b.y>SHOOT_Y+4){run.landing??=b.x;run.shots.splice(i,1);continue}touchDrop(b);for(const e of [...run.blocks]){if(e===b.ignore)continue;if(!circleRect(b,e))continue;const r={x:enemyX(e),y:enemyY(e),w:enemyW(e),h:enemyH(e)};let prevx=b.x-b.vx*delta,prevy=b.y-b.vy*delta;let pass=(b.move.pierce||0)>0&&chance(b.move.pierce);if(pass){b.ignore=e;textFx(b.x,b.y-12,'PERFORA','#a8edff')}else{const side=prevx<r.x||prevx>r.x+r.w,top=prevy<r.y||prevy>r.y+r.h;if(side&&!top){b.vx*=-1;b.x+=b.vx*delta*1.5}else{b.vy*=-1;b.y+=b.vy*delta*1.5}}hit(e,b);break}if(b.ignore&&Math.hypot(b.x-(enemyX(b.ignore)+enemyW(b.ignore)/2),b.y-(enemyY(b.ignore)+enemyH(b.ignore)/2))>80)b.ignore=null}}if(run.pending===0&&run.shots.length===0){run.shooter=clamp(run.landing??run.shooter,32,W-32);run.landing=null;endVolley()}}
+function advanceVolley(dt){
+ if(run.pending>0){
+  run.volleyClock+=dt*(run.fast?2.5:1);
+  while(run.pending>0&&run.volleyClock>=.085){run.volleyClock-=.085;launchBall()}
+ }
+ const factor=run.fast?2.5:1,sub=Math.max(1,Math.min(7,Math.ceil(dt*factor/.007))),stepDt=dt*factor/sub;
+ for(let step=0;step<sub;step++)for(let i=run.shots.length-1;i>=0;i--){
+  const b=run.shots[i];
+  b.contacts??=new Set();
+  b.wallBounces??=0;
+  b.trail.push([b.x,b.y]);if(b.trail.length>6)b.trail.shift();
+  b.x+=b.vx*stepDt;b.y+=b.vy*stepDt;
+  if(b.x<BALL_R+7){b.x=BALL_R+7;b.vx=Math.abs(b.vx);b.wallBounces++}
+  if(b.x>W-BALL_R-7){b.x=W-BALL_R-7;b.vx=-Math.abs(b.vx);b.wallBounces++}
+  if(b.y<TOP-4+BALL_R){b.y=TOP-4+BALL_R;b.vy=Math.abs(b.vy)}
+  if(b.y>SHOOT_Y+4){run.landing??=b.x;run.shots.splice(i,1);continue}
+  touchDrop(b);
+  for(const touched of [...b.contacts])if(!run.blocks.includes(touched)||!circleRect(b,touched))b.contacts.delete(touched);
+  for(const e of [...run.blocks]){
+   if(e===b.ignore||b.contacts.has(e)||!circleRect(b,e))continue;
+   b.contacts.add(e);
+   const x=enemyX(e),y=enemyY(e),w=enemyW(e),h=enemyH(e);
+   const closestX=clamp(b.x,x,x+w),closestY=clamp(b.y,y,y+h);
+   let nx=b.x-closestX,ny=b.y-closestY,len=Math.hypot(nx,ny);
+   if(len<.0001){
+     const distances=[b.x-x,x+w-b.x,b.y-y,y+h-b.y];
+     const edge=distances.indexOf(Math.min(...distances));
+     nx=edge===0?-1:edge===1?1:0;ny=edge===2?-1:edge===3?1:0;len=1;
+   }
+   nx/=len;ny/=len;
+   const pass=!b.effectUsed&&(b.move.pierce||0)>0&&chance(b.move.pierce);
+   if(pass){b.ignore=e;b.effectUsed=true;textFx(b.x,b.y-12,'PERFORA','#a8edff')}
+   else{
+     b.x=closestX+nx*(BALL_R+1.1);b.y=closestY+ny*(BALL_R+1.1);
+     const dot=b.vx*nx+b.vy*ny;
+     if(dot<0){b.vx-=2*dot*nx;b.vy-=2*dot*ny}
+     else{const speed=Math.hypot(b.vx,b.vy);b.vx=nx*speed;b.vy=ny*speed}
+   }
+   hit(e,b);
+   break;
+  }
+  if(b.ignore&&!circleRect(b,b.ignore))b.ignore=null;
+ }
+ if(run.pending===0&&run.shots.length===0){run.shooter=clamp(run.landing??run.shooter,32,W-32);run.landing=null;endVolley()}
+}
 function takeDamage(amount,label){if(mode==='over')return;let m=active();if(!m)return;let original=amount;if(run.relaySafety&&run.team[run.active]===m)return;if(m.shield>0){amount=Math.round(amount*.38);m.shield--;log(`🛡 ${m.name} resiste (${original} → ${amount})`)}if(amount<=0)return;m.hp=Math.max(0,m.hp-amount);run.impactShake=7;burst(run.shooter,SHOOT_Y,'#ff8492',13);textFx(run.shooter-14,SHOOT_Y-28,'-'+amount+' PS','#ff99ab');if(m.hp===0){log(`💔 ${m.name} se ha debilitado.`);let next=run.team.findIndex((p,i)=>i>run.active&&p.hp>0);if(next===-1)next=run.team.findIndex(p=>p.hp>0);if(next===-1){gameOver();return}run.active=next;run.team[next].shield=Math.max(2,run.team[next].armor+run.armor+1);run.team[next].hp=Math.min(run.team[next].maxHp,run.team[next].hp+Math.round(run.team[next].maxHp*(run.relayHeal||.13)));run.relaySafety=true;message(`¡Adelante, ${run.team[next].name}! 🛡`);log(`🛡 Relevo de ${run.team[next].name}: escudo y recuperación`)}else log(`⚠ ${label}: -${amount} PS`);refresh()}
 function endVolley(){if(mode!=='shooting')return;run.turn++;run.turnTotal++;if(run.blocks.length===0){winBattle();return}let attackers=[];for(let e of [...run.blocks]){if(!e.ranged)continue;e.cooldown--;if(e.cooldown<=0){attackers.push(e);e.cooldown=e.interval}}run.aim=-Math.PI/2;if(attackers.length){mode='retaliating';run.enemyBullets=[];run.enemyQueue=attackers;run.enemyClock=.1;log(`⚠ ${attackers.length} enemigos preparan sus proyectiles`)}else beginDescent();refresh()}
 function beginDescent(){mode='descending';run.descentProgress=0;run.descentClock=0;log('⬇ Los enemigos descienden.');refresh()}
@@ -210,10 +293,20 @@ ctx.strokeStyle='#ffffff08';ctx.lineWidth=1;for(let x=LEFT;x<W;x+=CS){ctx.beginP
 ctx.font='800 10px system-ui';ctx.textAlign='left';ctx.fillStyle='#a6bfd096';ctx.fillText('ENCUENTRO · '+(run.encounter==='boss'?'JEFE FINAL':(run.encounter||'SENDA').toUpperCase()),19,21);
 ctx.setLineDash([5,7]);ctx.strokeStyle='#ff8f9d6a';ctx.beginPath();ctx.moveTo(13,FLOOR_Y);ctx.lineTo(W-13,FLOOR_Y);ctx.stroke();ctx.setLineDash([]);ctx.textAlign='right';ctx.font='700 9px system-ui';ctx.fillStyle='#ffadb6b0';ctx.fillText('ZONA DE CONTACTO',W-18,FLOOR_Y-5);
 for(let e of run.blocks){const x=enemyX(e),y=enemyY(e),w=enemyW(e),h=enemyH(e);if(y>H+60||y<-120)continue;const color=TYPE_COLOR[e.types[0]]||'#91aacc';drawRoundRect(x+2,y+4,w,h,11,'#01071888');let grad=ctx.createLinearGradient(x,y,x+w,y+h);grad.addColorStop(0,'#243a55');grad.addColorStop(1,'#0e2036');drawRoundRect(x,y,w,h,10,grad,e.shiny?'#ffe27a':color,e.boss?2.8:1.6);
-ctx.save();ctx.globalAlpha=.13;ctx.fillStyle=color;ctx.beginPath();ctx.ellipse(x+w/2,y+h*.5,w*.43,h*.39,0,0,Math.PI*2);ctx.fill();ctx.restore();drawSprite(e.id,e.shiny,x+w*.12,y+h*(e.boss?.08:-.02),w*.76,h*(e.boss?.77:.79),e.icon);if(e.shiny){ctx.fillStyle='#ffe284';ctx.textAlign='left';ctx.font='bold 12px system-ui';ctx.fillText('✧',x+4,y+14)}
+ctx.save();ctx.globalAlpha=.13;ctx.fillStyle=color;ctx.beginPath();ctx.ellipse(x+w/2,y+h*.5,w*.43,h*.39,0,0,Math.PI*2);ctx.fill();ctx.restore();drawSprite(e.id,e.shiny,x+w*.055,y+h*.07,w*.89,h*.86,e.icon);if(e.shiny){ctx.fillStyle='#ffe284';ctx.textAlign='left';ctx.font='bold 12px system-ui';ctx.fillText('✧',x+4,y+14)}
 const dangerText=e.ranged?('✦'+Math.max(1,e.cooldown)):('↓'+Math.max(1,Math.ceil((FLOOR_Y-(TOP+e.row*STEP+4+enemyH(e)))/STEP)));
-const dangerColor=e.ranged&&e.cooldown===1?'#ff7e99':e.ranged?'#f9cf79':'#9ce8cf';ctx.save();ctx.shadowColor=dangerColor;ctx.shadowBlur=e.ranged&&e.cooldown===1?8:0;drawRoundRect(x+3,y+3,31,15,5,'#051221da',dangerColor,e.ranged&&e.cooldown===1?1.6:1);ctx.shadowBlur=0;ctx.font='900 10px system-ui';ctx.fillStyle=dangerColor;ctx.textAlign='center';ctx.fillText(dangerText,x+18,y+14);ctx.restore();
-const value=e.hp/e.maxHp;drawRoundRect(x+4,y+h-15,w-8,12,4,'#081421d9');drawRoundRect(x+6,y+h-12,(w-12)*clamp(value,0,1),5,3,value>.45?'#72e6a3':'#f18a7e');ctx.fillStyle='#e9f7ff';ctx.textAlign='center';ctx.font=`900 ${e.boss?14:11}px system-ui`;ctx.fillText(Math.max(0,Math.ceil(e.hp)),x+w/2,y+h-17)}
+const dangerColor=e.ranged&&e.cooldown===1?'#ff7e99':e.ranged?'#f9cf79':'#9ce8cf';
+ctx.save();
+ctx.font='bold 10px system-ui';ctx.textAlign='center';
+drawRoundRect(x+2,y+2,Math.min(29,w*.48),14,4,'#061426ec','#536577',.8);
+ctx.fillStyle='#f5f9ff';ctx.fillText(String(Math.ceil(e.hp)),x+Math.min(29,w*.48)/2+2,y+12);
+const dw=Math.min(28,w*.45);
+drawRoundRect(x+w-dw-2,y+2,dw,14,4,'#061426ec',dangerColor,1.2);
+ctx.fillStyle=dangerColor;ctx.fillText(dangerText,x+w-dw/2-2,y+12);
+ctx.restore();
+drawRoundRect(x+3,y+h-5,w-6,4,2,'#04101ae8');
+drawRoundRect(x+3,y+h-5,Math.max(0,(w-6)*clamp(e.hp/e.maxHp,0,1)),4,2,(e.hp/e.maxHp)>.45?'#73edaf':'#f58b86');
+}
 for(const d of run.drops){let bob=Math.sin(time*5+d.id)*3;ctx.save();ctx.translate(d.x,d.y+bob);ctx.shadowColor=d.shiny?'#ffe985':'#ff99b7';ctx.shadowBlur=d.shiny?22:11;ctx.fillStyle='#f6f8ff';ctx.beginPath();ctx.arc(0,0,10,0,Math.PI*2);ctx.fill();ctx.fillStyle=d.shiny?'#ffd45d':'#f26c81';ctx.beginPath();ctx.arc(0,0,10,Math.PI,2*Math.PI);ctx.fill();ctx.strokeStyle='#1c3047';ctx.lineWidth=2.3;ctx.beginPath();ctx.moveTo(-10,0);ctx.lineTo(10,0);ctx.stroke();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(0,0,3.7,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#263549';ctx.lineWidth=1.5;ctx.stroke();ctx.restore()}
 if(mode==='aim'){let theta=run.aim;ctx.globalAlpha=.7;for(let j=1;j<=18;j++){let dist=j*21,x=run.shooter+Math.cos(theta)*dist,y=SHOOT_Y+Math.sin(theta)*dist;let left=BALL_R+8,right=W-BALL_R-8;if(x<left)x=left+(left-x);if(x>right)x=right-(x-right);if(y<TOP)break;ctx.fillStyle='#8ef5d6';ctx.beginPath();ctx.arc(x,y,Math.max(1,3-j*.10),0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1}
 // The active Pokémon is visible at the launch position, not just in the HUD.
@@ -771,7 +864,7 @@ const v05OldWinBattle=winBattle;
 winBattle=function(){if(['over','reward','upgrade','global'].includes(mode))return;
  const old=saved.tokens||0,kind=run.encounter;
  const result=v05OldWinBattle();
- const reward=kind==='boss'?4:kind==='elite'?1:run.clearedFights%4===0?1:0;
+ const reward=kind==='boss'?4:kind==='elite'||kind==='fortress'?1:run.clearedFights%4===0?1:0;
  saved.tokens=Math.max(0,old+reward);save();if(run?.log?.[0]?.startsWith('🏆'))run.log[0]=`🏆 Victoria · +${reward} ficha${reward===1?'':'s'} (cápsula: ${V05_COST})`;refresh();return result;
 };
 const v05OldEvent=startEvent;
@@ -884,6 +977,149 @@ const v05Dpi=Math.min(3,Math.max(1.7,window.devicePixelRatio||1));
 canvas.width=Math.round(W*v05Dpi);canvas.height=Math.round(H*v05Dpi);
 canvas.style.imageRendering='auto';ctx.setTransform(v05Dpi,0,0,v05Dpi,0,0);
 // Battle canvas is now rendered at native high pixel density; sprite smoothing is disabled by drawSprite.
+
+
+/* ========== v0.6: combat readability, deliberate routes and useful relics ========== */
+PATH_TYPES.duel={icon:'🥊',name:'Duelo',desc:'Dos enemigos fuertes · mucha XP',hint:'2 rivales duros'};
+PATH_TYPES.ambush={icon:'⚡',name:'Emboscada',desc:'Enemigos más cerca del suelo · experiencia extra',hint:'Avanzan antes'};
+PATH_TYPES.storm={icon:'🌧️',name:'Lluvia',desc:'Agua reforzada, Fuego debilitado durante este combate',hint:'Clima cambiante'};
+PATH_TYPES.fortress={icon:'🪨',name:'Fortaleza',desc:'Armadura en varios rivales · mejor botín',hint:'Peligro alto'};
+PATH_TYPES.hunt={icon:'🔎',name:'Cacería',desc:'Mayor aparición de raros y más posibilidad de botín',hint:'Captura ×1,8'};
+const v06Choose=(a)=>a[Math.floor(Math.random()*a.length)];
+const v06OldGenerateMap=generateMap;
+generateMap=function(){
+ const plan=v06OldGenerateMap(),specials=new Set([5,10,Math.min(14,zone().rooms-1)]);
+ for(let i=0;i<plan.rows.length;i++){
+  const floor=i+1,row=plan.rows[i];
+  for(let lane=0;lane<3;lane++){
+   if(specials.has(floor)&&lane===1)continue;
+   const choices=lane===0?['wild','wild','duel','hunt','swarm']:
+    lane===1?['wild','rare','storm','ambush','hunt','duel']:
+      ['fortress','elite','fortress','ambush','storm','swarm'];
+   let kind=v06Choose(choices);
+   if(floor<4&&['fortress','ambush','elite'].includes(kind))kind='wild';
+   if(floor<6&&kind==='fortress')kind='swarm';
+   if(lane>0&&row[lane-1].kind===kind)kind=v06Choose(choices.filter(x=>x!==kind));
+   row[lane].kind=kind;
+  }
+ }
+ return plan;
+};
+const v06OldStartBattle=startBattle;
+startBattle=function(kind){
+ run.weather=null;
+ const mapped={duel:'wild',ambush:'swarm',storm:'wild',fortress:'elite',hunt:'rare'}[kind]||kind;
+ v06OldStartBattle(mapped);
+ if(!['duel','ambush','storm','fortress','hunt'].includes(kind))return;
+ run.encounter=kind;
+ if(kind==='duel'){
+  run.blocks=run.blocks.slice(0,2);
+  for(const e of run.blocks){e.hp=Math.ceil(e.hp*1.52);e.maxHp=e.hp;e.attack+=1}
+ }else if(kind==='ambush'){
+  run.blocks=run.blocks.slice(0,Math.min(5,run.blocks.length));
+  for(const e of run.blocks){e.row=Math.min(3,e.row+1);e.attack+=1}
+ }else if(kind==='storm'){
+  run.weather='rain';for(const e of run.blocks){if(e.types.includes('water'))e.attack+=1}
+ }else if(kind==='fortress'){
+  for(const e of run.blocks){e.armor=clamp((e.armor||0)+.12,0,.43);e.attack+=1}
+ }else if(kind==='hunt'){
+  for(const e of run.blocks){e.drop=e.shiny?1:Math.min(.14,e.drop*1.8);e.maxHp=Math.round(e.maxHp*1.12);e.hp=e.maxHp}
+ }
+ log('⚑ '+PATH_TYPES[kind].name+': '+PATH_TYPES[kind].desc);
+ refresh();
+};
+const v06OldAttack=attackInfo;
+attackInfo=function(m,e){
+ const out=v06OldAttack(m,e);
+ if(run?.weather==='rain'&&out.dmg>0){
+  out.dmg=Math.max(1,Math.round(out.dmg*(m.type==='water'?1.30:m.type==='fire'?.76:1)));
+ }
+ if(run?.relics?.includes('typecraft')&&out.dmg>0&&out.mult>1)out.dmg+=1;
+ if(run?.relics?.includes('desperation')&&out.dmg>0&&active()?.hp<=active().maxHp*.35)out.dmg+=1;
+ return out;
+};
+const v06OldEnemyDown=enemyDown;
+enemyDown=function(e){
+ const isPresent=run?.blocks?.includes(e);
+ v06OldEnemyDown(e);
+ if(!isPresent||run?.blocks?.includes(e))return;
+ if(['duel','ambush','fortress'].includes(run.encounter))addXP(run.encounter==='duel'?12:6);
+ if(run?.relics?.includes('renewal')){
+  run.v06Kills=(run.v06Kills||0)+1;
+  if(run.v06Kills%3===0&&active()?.hp>0){active().hp=Math.min(active().maxHp,active().hp+1);textFx(run.shooter,SHOOT_Y-33,'+1 PS','#8eecad')}
+ }
+};
+GLOBAL_POOL.push(
+ ['bankshot','Tiro con rebote','+1 daño al enemigo tras rebotar en una pared','↩️'],
+ ['conductive','Bobina eléctrica','Una cadena eléctrica por bola de tipo Eléctrico','⚡'],
+ ['renewal','Raíces medicinales','Cada tres KOs: recupera 1 PS el Pokémon activo','🌱'],
+ ['typecraft','Afinidad elemental','+1 daño en golpes supereficaces','🔷'],
+ ['desperation','Último aliento','Bajo el 35 % PS, +1 daño por contacto','🔥'],
+ ['bulwark','Escudo táctico','Cada tercer turno, escudo al Pokémon activo','🛡']
+);
+const v06OldShowGlobalUpgrade=showGlobalUpgrade;
+showGlobalUpgrade=function(){
+ const offensive=['bankshot','conductive','damage','balls','typecraft','desperation'],
+ defensive=['heal','armor','renewal','bulwark','ward','relay'],
+ utility=['exp','crit','echo','luck','salvage'];
+ mode='global';run.pendingGlobal=false;
+ const used=new Set(run.relics||[]);
+ const choose=ids=>{
+  const candidates=GLOBAL_POOL.filter(x=>ids.includes(x[0])&&!used.has(x[0]));
+  if(!candidates.length)return v06Choose(GLOBAL_POOL.filter(x=>!used.has(x[0])));
+  const picked=v06Choose(candidates);used.add(picked[0]);return picked;
+ };
+ run.globalOptions=[choose(offensive),choose(defensive),choose(utility)].filter(Boolean);
+ showModal(`<div class="emblem">💠 BOTÍN DE RUTA · PISO ${run.floor}</div><h2>Elige una <span class="accent">reliquia</span></h2><p>Una ofensiva, una defensiva y una de utilidad: solo puedes llevarte una.</p><div class="choices">${run.globalOptions.map(([id,name,detail,ico])=>btn('global:'+id,name,detail,ico)).join('')}</div>`);
+};
+const v06OldHandle=handleAction;
+handleAction=function(action){
+ if(action==='global:bankshot'||action==='global:conductive'||action==='global:renewal'||action==='global:typecraft'||action==='global:desperation'||action==='global:bulwark'){
+  if(mode!=='global'||!run.globalOptions?.some(o=>'global:'+o[0]===action))return;
+  run.relics.push(action.split(':')[1]);hideModal();afterUpgrades();refresh();return;
+ }
+ if(action==='level:chain'){
+  if(mode!=='upgrade'||!run.levelOptions?.some(o=>o.key==='chain'))return;
+  const p=run.team[run.upgrading],m=p.moves[p.chosen];
+  if(m.type!=='electric')return;
+  m.chain=Math.min(2,(m.chain||0)+1);
+  hideModal();afterUpgrades();refresh();return;
+ }
+ return v06OldHandle(action);
+};
+const v06OldLevelOptions=levelOptions;
+levelOptions=function(p){
+ const options=v06OldLevelOptions(p),m=p.moves[p.chosen];
+ if(m?.type==='electric'){
+  const chain={key:'chain',title:'Rayo encadenado',desc:'Cada bola conduce una sola descarga a '+((m.chain||0)+1)+' rival(es)',emoji:'⚡'};
+  if((m.chain||0)<2&&!options.some(o=>o.key==='chain'))options[options.length-1]=chain;
+ }
+ return options;
+};
+const v06OldShoot=shoot;
+shoot=function(){
+ v06OldShoot();
+ if(mode==='shooting'&&run.firingMove?.type==='electric'&&run.relics.includes('conductive'))
+  run.firingMove.chain=Math.max(1,run.firingMove.chain||0);
+};
+const v06OldEndVolley=endVolley;
+endVolley=function(){
+ if(run?.relics?.includes('bulwark')&&run.turn%3===2&&active()?.hp>0)active().shield++;
+ return v06OldEndVolley();
+};
+const v06OldRenderBoard=renderBoard;
+renderBoard=function(now){
+ v06OldRenderBoard(now);
+ if(run?.weather==='rain'&&['aim','shooting','retaliating','descending'].includes(mode)){
+  ctx.save();ctx.fillStyle='#9ae4ff';ctx.font='bold 11px system-ui';ctx.textAlign='right';
+  ctx.fillText('🌧 LLUVIA: AGUA +30 % · FUEGO −24 %',W-14,21);ctx.restore();
+ }
+};
+const v06OldDrawRoute=drawRoute;
+drawRoute=function(){
+ const html=v06OldDrawRoute();
+ return html.replace('✦ Elegir camino de riesgo o recompensa · 👑 jefe','🥊 Duelo · 🌧 Clima · 🔎 Caza · 💀 Riesgo · 👑 Jefe');
+};
 
 fitBoard();startMenu();requestAnimationFrame(render);
 })();
