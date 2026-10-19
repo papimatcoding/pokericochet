@@ -180,8 +180,8 @@ function hit(e,b){
   }
   if(targets.length)textFx(cx,cy-16,'⚡ CADENA','#fff1a0');
  }
- if(run.relics?.includes('bankshot')&&b.wallBounces>0&&e.hp>0&&dmg>0){
-  e.hp-=1;if(e.hp<=0)enemyDown(e);
+ if(run.relics?.includes('bankshot')&&b.wallBounces>0&&!b.effectUsed&&e.hp>0&&dmg>0){
+  b.effectUsed=true;e.hp-=1;textFx(cx,cy-13,'↩ +1','#92eddb');if(e.hp<=0)enemyDown(e);
  }
  playTone(mult>1?620:330,.02,'sine',.012);
  if(e.hp<=0)enemyDown(e);
@@ -877,7 +877,7 @@ function v05TeamScreen(){
  const cards=[0,1,2].map(i=>{const p=prepared[i];return `<div class="v05-slot ${v05Slot===i?'current':''}"><button data-action="v05:slot:${i}" ${i>prepared.length?'disabled':''} class="v05-slot-main"><small>${i===0?'LÍDER':'RESERVA '+i}</small>${p?sImg(p.id,p.shiny):'<span class="v05-plus">＋</span>'}<b>${p?def(p.id).name:'VACÍO'}</b>${p?v05Name(p.id):'<small>Selecciona un compañero</small>'}</button>${p&&i>0?'<button class="v05-remove" data-action="v05:remove:'+i+'">QUITAR</button>':''}</div>`}).join('');
  const selectors=mons.map(({id,shiny})=>{const inTeam=prepared.some(x=>x.id===id),p=def(id);return `<button class="storage-mon ${inTeam?'chosen':''}" data-action="v05:pick:${id}:${shiny?1:0}">${sImg(id,shiny)}<b>${p.name}${shiny?' ✨':''}</b><small>${v05Name(id)} · ${v05HP(id,5)} PS Nv.5</small></button>`}).join('');
  v04Shell('equipo',`<div class="v05-lead"><b>Prepara tu expedición</b><p>Solo elegiste un inicial la primera vez. Ahora puedes empezar con <b>1, 2 o 3 Pokémon</b> que hayas conseguido. Cada uno comienza al nivel 5.</p></div><div class="v05-slots">${cards}</div><div class="subheading">TU PC · ELIGE PARA EL HUECO ${v05Slot+1}</div><div class="storage-grid v05-storage">${selectors||'<p>Aún no has capturado compañeros.</p>'}</div><div class="home-tip"><b>🎯 CONSEJO</b><span>Arriesgarte con un solo Pokémon deja huecos para reclutar durante la ruta; salir con tres ofrece más supervivencia.</span></div>`);
- modal.querySelector('.home-header .emblem').textContent='EQUIPO DE EXPEDICIÓN · V0.5';
+ modal.querySelector('.home-header .emblem').textContent='EQUIPO DE EXPEDICIÓN · V0.6';
  const footer=modal.querySelector('.home-footer');if(footer)footer.firstChild.textContent='ELIGE DE 1 A 3 POKÉMON';
 }
 function v05CandyScreen(){
@@ -886,7 +886,7 @@ function v05CandyScreen(){
  const bCost=[8,18,32][bond]||0,fCost=[14,30][focus]||0,tCost=tech?0:24;
  return `<div class="candy-card">${sImg(id)}<div><b>${def(id).name}</b><small>${count} 🍬 · Vínculo ${bond}/3 · Instinto ${focus}/2 ${tech?'· Técnica desbloqueada':''}</small><div class="candy-buy"><button data-action="v05:buy:bond:${id}" ${!owned||!bCost||count<bCost?'disabled':''}>❤️ +1 PS · ${bCost||'MAX'} 🍬</button><button data-action="v05:buy:focus:${id}" ${!owned||!fCost||count<fCost?'disabled':''}>🎯 +4 % crítico · ${fCost||'MAX'} 🍬</button><button data-action="v05:buy:tech:${id}" ${!owned||!tCost||count<tCost?'disabled':''}>⚡ Ataque inicial alternativo · ${tCost||'OK'} 🍬</button></div></div></div>`}).join('');
  v04Shell('caramelos',`<p class="home-lead">Los caramelos son <b>progreso permanente por familia</b>, no niveles gratis. Se consiguen capturando básicos (+2) o alcanzando Poké Balls de evoluciones (+6/+14). Compra pequeñas especializaciones, sin disparar los PS ni regalar ráfagas.</p><div class="candy-cards">${cards}</div>`);
- modal.querySelector('.home-header .emblem').textContent='LABORATORIO DE CARAMELOS · V0.5';
+ modal.querySelector('.home-header .emblem').textContent='LABORATORIO DE CARAMELOS · V0.6';
  const footer=modal.querySelector('.home-footer');if(footer)footer.firstChild.textContent='MEJORAS PERMANENTES MODERADAS';
 }
 showHome=function(tab='inicio'){
@@ -906,10 +906,10 @@ showHome=function(tab='inicio'){
     const x=card.querySelector('small');if(x){const id=+(x.textContent.match(/\d+/)||[])[0];if(DB[id])x.innerHTML+=` · ${v05Name(id)}`}
   });
  }
- modal.innerHTML=modal.innerHTML.replace(/V0\.4/g,'V0.5').replace('Solo puedes comenzar con un inicial: incorpora compañeros durante la ruta y reorganízalos en un Centro Pokémon.','Antes de salir puedes elegir hasta tres Pokémon básicos que hayas capturado. También puedes reorganizarlos en un Centro Pokémon.');
+ modal.innerHTML=modal.innerHTML.replace(/V0\.4/g,'V0.6').replace('Solo puedes comenzar con un inicial: incorpora compañeros durante la ruta y reorganízalos en un Centro Pokémon.','Antes de salir puedes elegir hasta tres Pokémon básicos que hayas capturado. También puedes reorganizarlos en un Centro Pokémon.');
 };
 const v05OldStarterDraft=showStarterDraft;
-showStarterDraft=function(){v05OldStarterDraft();modal.innerHTML=modal.innerHTML.replace(/V0\.4/g,'V0.5')};
+showStarterDraft=function(){v05OldStarterDraft();modal.innerHTML=modal.innerHTML.replace(/V0\.4/g,'V0.6')};
 const v05OldRegister=registerReward;
 registerReward=function(id,shiny=false,source='capture'){const out=v05OldRegister(id,shiny,source);if(source==='gacha'&&!out.isFirst){const root=rootOf(id);saved.candies[root]=(saved.candies[root]||0)+3;save();out.reward+=3}return out};
 function v05Roll(){
