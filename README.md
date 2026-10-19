@@ -1,17 +1,25 @@
-# RICOCHET
+# RICOCHET · v1.2
 
-Un minijuego arcade ligero de romper bloques con ráfagas de bolas, hecho en un único archivo HTML/CSS/JavaScript y sin dependencias externas.
+Juego arcade de rebotes, creado en HTML/CSS/JavaScript sin dependencias externas.
 
 ## Jugar
 
-- Arrastra el ratón o el dedo sobre el tablero para apuntar y suelta para disparar.
-- Los bloques pierden 1 vida por impacto. Cada vez que termina la ráfaga, los bloques bajan una fila.
-- Los aros dorados te dan una bola adicional para la siguiente ronda.
-- Perderás cuando un bloque cruce la línea inferior.
-- Usa `» RÁPIDO x3` para acelerar los disparos, o las flechas y la barra espaciadora para apuntar con teclado.
+https://papimatcoding.github.io/the-last-menagerie/
 
-La partida funciona directamente abriendo `index.html` en un navegador moderno. El tablero se ajusta automáticamente al espacio de la ventana para que los controles queden visibles sin scroll. El botón **⛶ PANTALLA** (o la tecla `F`) activa y desactiva la pantalla completa en navegadores compatibles. En algunos iPhone la API de pantalla completa no está disponible; se puede añadir a la pantalla de inicio para una experiencia más inmersiva. El sonido está desactivado inicialmente. El récord se guarda localmente.
+El navegador siempre intenta encajar el tablero completo, el marcador y los botones en el alto visible, tanto en móvil como en ordenador, sin desplazar la página. Para ampliar utiliza «⛶ PANTALLA» o la tecla F; el mismo botón permite salir del modo pantalla completa.
 
-## Próximos pasos posibles
+1. Arrastra sobre el tablero para apuntar.
+2. Suelta para disparar la ráfaga. Cada bola resta vida a los bloques.
+3. Recoge los orbes dorados para añadir una bola a la siguiente ronda.
+4. Cuando termina la ráfaga, los bloques **descienden animados** y aparece una fila nueva.
+5. Si llegan al límite rojo, la partida termina.
 
-Bolas especiales, mejoras, habilidades, eventos o jefes. También es posible una variante de criaturas de combate con elementos, PS, evoluciones y proyectiles coleccionables; si se publica, conviene usar criaturas y arte propios en lugar de material protegido de Pokémon. El motor se ha dejado deliberadamente pequeño y accesible.
+El récord se almacena únicamente en el navegador (`localStorage`). Puedes acelerar una ráfaga con «RÁPIDO x3» y activar el audio opcionalmente.
+
+## Pruebas
+
+Se comprobó en Chromium con distintos tamaños de ventana, desde 320×480 hasta 1920×1080, sin desbordamiento del documento ni controles fuera de pantalla. Probados lanzamiento, descenso entre rondas, reinicio y activación/desactivación de pantalla completa.
+
+## Futuro
+
+La base está preparada para evolucionar hacia una variante inspirada en monstruos de bolsillo: equipo de tres combatientes, ataques únicos que generan proyectiles, enemigos capaces de atacar cada ronda, jefes, capturas y recompensas de elección múltiple. Se debatirá el diseño antes de implementarlo.
