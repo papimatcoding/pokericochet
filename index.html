@@ -143,6 +143,10 @@
 .v07-route .v07-current{box-shadow:inset 0 1px 24px #81deb012}
 @media(max-width:760px){.modal:has(.home-screen)::before{font-size:115vw;top:20%;right:-40%}.home-screen .nav-card:hover{transform:none}}
 
+
+.v08-wave-banner{position:absolute;left:50%;top:10%;transform:translate(-50%,-9px);z-index:6;background:linear-gradient(90deg,#153c42ef,#163442ef);color:#e8fff7;border:1px solid #78ddbc;border-radius:12px;padding:8px 15px;font-size:12px;letter-spacing:.09em;font-weight:900;white-space:nowrap;max-width:96%;overflow:hidden;text-overflow:ellipsis;box-shadow:0 8px 32px #0008;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+.v08-wave-banner.visible{opacity:1;transform:translate(-50%,0)}
+
 </style>
 </head>
 <body>
@@ -164,10 +168,10 @@ function effectiveness(attack,defTypes){const m=TYPE_MAP[attack]||{};return defT
 const DB={
 1:['Bulbasaur',['grass','poison'],'common',13,'🌱'],2:['Ivysaur',['grass','poison'],'uncommon',12,'🌿'],3:['Venusaur',['grass','poison'],'boss',7,'🌺'],4:['Charmander',['fire'],'common',12,'🔥'],5:['Charmeleon',['fire'],'uncommon',11,'🔥'],6:['Charizard',['fire','flying'],'boss',6,'🐉'],7:['Squirtle',['water'],'common',13,'💧'],8:['Wartortle',['water'],'uncommon',12,'💦'],9:['Blastoise',['water'],'boss',6,'🐢'],10:['Caterpie',['bug'],'common',28,'🐛'],13:['Weedle',['bug','poison'],'common',28,'🐛'],15:['Beedrill',['bug','poison'],'boss',8,'🐝'],16:['Pidgey',['normal','flying'],'common',25,'🪶'],19:['Rattata',['normal'],'common',29,'🐭'],25:['Pikachu',['electric'],'rare',6,'⚡'],27:['Sandshrew',['ground'],'common',24,'🟤'],37:['Vulpix',['fire'],'uncommon',17,'🦊'],41:['Zubat',['poison','flying'],'common',27,'🦇'],43:['Oddish',['grass','poison'],'common',26,'🍃'],54:['Psyduck',['water'],'uncommon',17,'🦆'],58:['Growlithe',['fire'],'rare',8,'🐕'],60:['Poliwag',['water'],'common',25,'💧'],69:['Bellsprout',['grass','poison'],'common',27,'🌱'],72:['Tentacool',['water','poison'],'common',23,'🪼'],74:['Geodude',['rock','ground'],'common',24,'🪨'],77:['Ponyta',['fire'],'rare',7,'🔥'],81:['Magnemite',['electric','steel'],'uncommon',14,'🧲'],92:['Gastly',['ghost','poison'],'uncommon',16,'👻'],94:['Gengar',['ghost','poison'],'boss',6,'👻'],95:['Onix',['rock','ground'],'rare',8,'🐍'],100:['Voltorb',['electric'],'uncommon',18,'⚡'],104:['Cubone',['ground'],'uncommon',18,'💀'],129:['Magikarp',['water'],'common',28,'🐟'],130:['Gyarados',['water','flying'],'boss',5,'🐉'],133:['Eevee',['normal'],'rare',7,'🦊'],218:['Slugma',['fire'],'common',25,'🌋']};
 const ZONES=[
-{name:'Bosque Viridian',tag:'KANTO · LA PRIMERA SENDA',rooms:12,boss:15,normal:[10,13,16,19,43,69,27,41],uncommon:[25,1,2],theme:['#0b2631','#124b3c']},
-{name:'Cueva Eco',tag:'KANTO · TÚNELES PROFUNDOS',rooms:14,boss:94,normal:[41,74,27,92,104,19],uncommon:[95,81,133],theme:['#151e3b','#42406d']},
-{name:'Costa Brumosa',tag:'KANTO · OLEAJE',rooms:16,boss:130,normal:[129,60,72,54,7,16],uncommon:[25,81,133],theme:['#092d43','#18587b']},
-{name:'Cumbre Ígnea',tag:'KANTO · CIELO ESCARLATA',rooms:14,boss:6,normal:[218,37,77,58,74,100],uncommon:[5,25,133],theme:['#361f36','#78443d']}];
+{name:'Bosque Viridian',tag:'KANTO · LA PRIMERA SENDA',rooms:6,boss:15,normal:[10,13,16,19,43,69,27,41],uncommon:[25,1,2],theme:['#0b2631','#124b3c']},
+{name:'Cueva Eco',tag:'KANTO · TÚNELES PROFUNDOS',rooms:7,boss:94,normal:[41,74,27,92,104,19],uncommon:[95,81,133],theme:['#151e3b','#42406d']},
+{name:'Costa Brumosa',tag:'KANTO · OLEAJE',rooms:8,boss:130,normal:[129,60,72,54,7,16],uncommon:[25,81,133],theme:['#092d43','#18587b']},
+{name:'Cumbre Ígnea',tag:'KANTO · CIELO ESCARLATA',rooms:8,boss:6,normal:[218,37,77,58,74,100],uncommon:[5,25,133],theme:['#361f36','#78443d']}];
 const BASE_MOVES={normal:[['Placaje','normal',7,7],['Ataque Rápido','normal',5,11]],fire:[['Ascuas','fire',8,7],['Giro Fuego','fire',6,10]],water:[['Pistola Agua','water',7,8],['Burbuja','water',5,12]],grass:[['Látigo Cepa','grass',8,7],['Hoja Afilada','grass',6,10]],electric:[['Impactrueno','electric',8,8],['Chispa','electric',6,11]],rock:[['Lanzarrocas','rock',9,6],['Pedrada','rock',5,12]],ground:[['Disparo Lodo','ground',8,7],['Bofetón Lodo','ground',5,11]],poison:[['Picotazo Veneno','poison',7,8],['Ácido','poison',5,11]],bug:[['Picadura','bug',7,8],['Disparo Demora','bug',5,11]],ghost:[['Lengüetazo','ghost',8,7],['Bola Sombra','ghost',6,10]],flying:[['Tornado','flying',7,9],['Ataque Ala','flying',6,10]],psychic:[['Confusión','psychic',8,7],['Psicorrayo','psychic',6,11]],steel:[['Garra Metal','steel',8,7],['Bomba Imán','steel',6,10]]};
 function def(id){let a=DB[id]||DB[19];return {id,name:a[0],types:a[1],rarity:a[2],drop:a[3]/100,icon:a[4]}}
 function sprite(id,shiny=false){return 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/'+(shiny?'shiny/':'')+id+'.png'}
@@ -1484,7 +1488,7 @@ function v07MusicBeat(){
  }
  if(state==='battle'&&j%8===6)playTone(195,.045,'sawtooth',.006);
 }
-setInterval(v07MusicBeat,240);
+// Continuous loop removed in 0.8: audio is intentionally event-driven.
 $id('audioBtn').title='Música original de estilo chiptune y efectos · activar/desactivar';
 $id('audioBtn').setAttribute('aria-label','Activar o desactivar música y efectos');
 const v07SoundBeforeEnemyDown=enemyDown;
@@ -1513,6 +1517,103 @@ v05Roll=function(){
  const ret=v07SoundBeforeGacha();
  if(t>(saved.tokens||0))v07PlayChord([v07Midi(60),v07Midi(64),v07Midi(67),v07Midi(76)]);
  return ret;
+};
+
+
+/* v0.8 — fewer floors; multi-wave encounters; no redundant between-room modal */
+const V08_UPGRADES_AT_END_OF_VOLLEY=true;
+const v08OldStartBattle=startBattle;
+startBattle=function(kind){
+ const fresh=!run.v08WaveActive;
+ if(fresh){
+  run.v08WaveActive=true;run.v08Wave=1;run.v08WaveCount=kind==='boss'?4:kind==='elite'||kind==='fortress'?4:3;run.v08WaveKind=kind;
+  run.v08RoomTurns=0;
+ }
+ v08OldStartBattle(kind);
+ if(run.v08Wave>1){
+  run.blocks.forEach(e=>{e.maxHp=Math.round(e.maxHp*(1+.065*(run.v08Wave-1)));e.hp=e.maxHp});
+ }
+ v08WaveToast(run.v08Wave===1?'ENCUENTRO · '+(V07_DETAILS[kind]?.[1]||'Combate'):'OLEADA '+run.v08Wave+'/'+run.v08WaveCount);
+ refresh();
+};
+let v08WaveTimer;
+const v08WaveBanner=document.createElement('div');v08WaveBanner.className='v08-wave-banner';
+$id('boardFrame').appendChild(v08WaveBanner);
+function v08WaveToast(txt){
+ v08WaveBanner.textContent=txt;v08WaveBanner.classList.add('visible');
+ clearTimeout(v08WaveTimer);v08WaveTimer=setTimeout(()=>v08WaveBanner.classList.remove('visible'),1120);
+}
+const v08OldWinBattle=winBattle;
+winBattle=function(){
+ if(run?.v08WaveActive&&run.v08Wave<run.v08WaveCount){
+  run.v08Wave++;
+  const kind=run.v08WaveKind;
+  run.drops=[]; // Each wave has its own captures: only balls actually reached are registered.
+  v08OldStartBattle(kind);
+  run.blocks.forEach(e=>{e.maxHp=Math.round(e.maxHp*(1+.065*(run.v08Wave-1)));e.hp=e.maxHp});
+  run.turn=run.v08RoomTurns+1;
+  mode='aim';
+  v08WaveToast('⚔ OLEADA '+run.v08Wave+' / '+run.v08WaveCount);
+  refresh();return;
+ }
+ if(run)run.v08WaveActive=false;
+ return v08OldWinBattle();
+};
+const v08OldEndVolley=endVolley;
+endVolley=function(){
+ if(mode!=='shooting')return;
+ if(run.expQueue.length){
+  run.v08ResumeVolley=true;showLevelUp();return;
+ }
+ run.v08RoomTurns=(run.v08RoomTurns||0)+1;
+ return v08OldEndVolley();
+};
+const v08OldAfterUpgrades=afterUpgrades;
+afterUpgrades=function(){
+ if(run?.v08ResumeVolley){
+  if(run.expQueue.length){showLevelUp();return}
+  run.v08ResumeVolley=false;
+  hideModal();mode='shooting';endVolley();return;
+ }
+ return v08OldAfterUpgrades();
+};
+const v08OldShowBattleClear=showBattleClear;
+showBattleClear=function(boss){
+ if(boss)return v08OldShowBattleClear(boss);
+ mode='reward';hideModal();
+ v08WaveToast('✓ PISO SUPERADO · +EXP');
+ if(!run?.v08AutoAdvance){
+  run.v08AutoAdvance=true;
+  setTimeout(()=>{
+   if(!run||mode!=='reward')return;
+   run.v08AutoAdvance=false;
+   const action=run.afterReward;run.afterReward=null;
+   if(action)action();
+  },560);
+ }
+};
+const v08OldNextRoute=nextRoute;
+nextRoute=function(){
+ if(!run||mode==='over')return;
+ run.turn=0;run.blocks=[];run.drops=[];run.shots=[];run.enemyBullets=[];run.particles=[];
+ if(run.floor>=zone().rooms){run.floor++;startBattle('boss');return}
+ if(!run.mapPlan||run.mapPlan.zone!==run.zone){run.mapPlan=generateMap();run.lastMapLane=null;run.branchHistory=[]}
+ const node=run.mapPlan.rows[run.floor]?.[1];if(!node)return;
+ const kind=node.kind;
+ run.v07UpcomingWeather=null;
+ if(['storm','wild','rare','duel','ambush','hunt','fortress','swarm','elite'].includes(kind)){
+  if(kind==='storm')run.v07UpcomingWeather='rain';
+  else if(chance(.22))run.v07UpcomingWeather=pick(['sun','rain','sand','snow']);
+ }
+ advanceRoom(node);
+ v08WaveToast('PISO '+run.floor+' · '+(V07_DETAILS[kind]?.[1]||'Encuentro'));
+};
+const v08OldRefresh=refresh;
+refresh=function(){
+ v08OldRefresh();
+ if(!run)return;
+ const stamp='PISO '+run.floor+'/'+(zone().rooms+1)+(run.v08WaveActive?' · OLEADA '+run.v08Wave+'/'+run.v08WaveCount:'')+' · '+(run.turn||0)+' RONDAS';
+ $id('topStatus').innerHTML='<strong>'+stamp+'</strong>';
 };
 
 fitBoard();startMenu();requestAnimationFrame(render);
