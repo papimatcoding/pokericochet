@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#0a1121">
 <meta name="description" content="PokéRicochet: prototipo fan roguelite de rebotes, captura y progreso Pokémon.">
-<title>POKÉRICOCHET · Rogue Bounce v0.7</title>
+<title>POKÉRICOCHET · Rogue Bounce v0.8</title>
 <style>
 :root{color-scheme:dark;--bg:#080e1b;--panel:#101c32;--panel2:#142540;--line:#2b4262;--faint:#8c9fbb;--white:#f5f8ff;--aqua:#70f2d3;--yellow:#ffdb7c;--pink:#f6a1c4;--red:#ff7383;--blue:#85aaff}
 *{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--white);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}button{font:inherit;cursor:pointer;touch-action:manipulation}button:disabled{cursor:not-allowed;opacity:.4}button:focus-visible{outline:2px solid var(--aqua);outline-offset:3px}body:before{position:fixed;content:"";inset:0;pointer-events:none;background:radial-gradient(ellipse 65% 55% at 20% 0%,#22396383,transparent),radial-gradient(ellipse 43% 60% at 93% 90%,#0f4e5d40,transparent);z-index:0}.app{position:relative;display:flex;flex-direction:column;height:100vh;height:100dvh;max-width:1320px;margin:auto;padding:clamp(7px,1.5vh,14px) clamp(8px,1.5vw,22px);gap:clamp(6px,1vh,11px);min-height:0}.top{flex:0 0 auto;display:flex;align-items:center;gap:12px;min-height:46px}.brand{font-size:clamp(17px,2vw,23px);font-weight:950;line-height:1;letter-spacing:-.06em;white-space:nowrap}.brand b{color:var(--aqua)}.brand small{display:block;margin-top:5px;letter-spacing:.16em;font-size:9px;font-weight:800;color:#839cba}.top-right{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex:1;min-width:0}.mini-status{font-size:11px;color:#c2d1e5;background:#13243b;border:1px solid #284260;border-radius:9px;padding:9px 11px;white-space:nowrap}.mini-status strong{color:var(--yellow)}.iconbtn{color:#dce8f9;background:#14243a;border:1px solid #2c4360;border-radius:10px;min-width:34px;height:34px;display:grid;place-items:center;font-size:16px}.iconbtn:hover{background:#253d5d}
@@ -994,7 +994,7 @@ function v05TeamScreen(){
  const cards=[0,1,2].map(i=>{const p=prepared[i];return `<div class="v05-slot ${v05Slot===i?'current':''}"><button data-action="v05:slot:${i}" ${i>prepared.length?'disabled':''} class="v05-slot-main"><small>${i===0?'LÍDER':'RESERVA '+i}</small>${p?sImg(p.id,p.shiny):'<span class="v05-plus">＋</span>'}<b>${p?def(p.id).name:'VACÍO'}</b>${p?v05Name(p.id):'<small>Selecciona un compañero</small>'}</button>${p&&i>0?'<button class="v05-remove" data-action="v05:remove:'+i+'">QUITAR</button>':''}</div>`}).join('');
  const selectors=mons.map(({id,shiny})=>{const inTeam=prepared.some(x=>x.id===id),p=def(id);return `<button class="storage-mon ${inTeam?'chosen':''}" data-action="v05:pick:${id}:${shiny?1:0}">${sImg(id,shiny)}<b>${p.name}${shiny?' ✨':''}</b><small>${v05Name(id)} · ${v05HP(id,5)} PS Nv.5</small></button>`}).join('');
  v04Shell('equipo',`<div class="v05-lead"><b>Prepara tu expedición</b><p>Solo elegiste un inicial la primera vez. Ahora puedes empezar con <b>1, 2 o 3 Pokémon</b> que hayas conseguido. Cada uno comienza al nivel 5.</p></div><div class="v05-slots">${cards}</div><div class="subheading">TU PC · ELIGE PARA EL HUECO ${v05Slot+1}</div><div class="storage-grid v05-storage">${selectors||'<p>Aún no has capturado compañeros.</p>'}</div><div class="home-tip"><b>🎯 CONSEJO</b><span>Arriesgarte con un solo Pokémon deja huecos para reclutar durante la ruta; salir con tres ofrece más supervivencia.</span></div>`);
- modal.querySelector('.home-header .emblem').textContent='EQUIPO DE EXPEDICIÓN · V0.7';
+ modal.querySelector('.home-header .emblem').textContent='EQUIPO DE EXPEDICIÓN · V0.8';
  const footer=modal.querySelector('.home-footer');if(footer)footer.firstChild.textContent='ELIGE DE 1 A 3 POKÉMON';
 }
 function v05CandyScreen(){
@@ -1003,7 +1003,7 @@ function v05CandyScreen(){
  const bCost=[8,18,32][bond]||0,fCost=[14,30][focus]||0,tCost=tech?0:24;
  return `<div class="candy-card">${sImg(id)}<div><b>${def(id).name}</b><small>${count} 🍬 · Vínculo ${bond}/3 · Instinto ${focus}/2 ${tech?'· Técnica desbloqueada':''}</small><div class="candy-buy"><button data-action="v05:buy:bond:${id}" ${!owned||!bCost||count<bCost?'disabled':''}>❤️ +1 PS · ${bCost||'MAX'} 🍬</button><button data-action="v05:buy:focus:${id}" ${!owned||!fCost||count<fCost?'disabled':''}>🎯 +4 % crítico · ${fCost||'MAX'} 🍬</button><button data-action="v05:buy:tech:${id}" ${!owned||!tCost||count<tCost?'disabled':''}>⚡ Ataque inicial alternativo · ${tCost||'OK'} 🍬</button></div></div></div>`}).join('');
  v04Shell('caramelos',`<p class="home-lead">Los caramelos son <b>progreso permanente por familia</b>, no niveles gratis. Se consiguen capturando básicos (+2) o alcanzando Poké Balls de evoluciones (+6/+14). Compra pequeñas especializaciones, sin disparar los PS ni regalar ráfagas.</p><div class="candy-cards">${cards}</div>`);
- modal.querySelector('.home-header .emblem').textContent='LABORATORIO DE CARAMELOS · V0.7';
+ modal.querySelector('.home-header .emblem').textContent='LABORATORIO DE CARAMELOS · V0.8';
  const footer=modal.querySelector('.home-footer');if(footer)footer.firstChild.textContent='MEJORAS PERMANENTES MODERADAS';
 }
 showHome=function(tab='inicio'){
@@ -1023,10 +1023,10 @@ showHome=function(tab='inicio'){
     const x=card.querySelector('small');if(x){const id=+(x.textContent.match(/\d+/)||[])[0];if(DB[id])x.innerHTML+=` · ${v05Name(id)}`}
   });
  }
- modal.innerHTML=modal.innerHTML.replace(/V0\.4/g,'V0.7').replace('Solo puedes comenzar con un inicial: incorpora compañeros durante la ruta y reorganízalos en un Centro Pokémon.','Antes de salir puedes elegir hasta tres Pokémon básicos que hayas capturado. También puedes reorganizarlos en un Centro Pokémon.');
+ modal.innerHTML=modal.innerHTML.replace(/V0\.4/g,'V0.8').replace('Solo puedes comenzar con un inicial: incorpora compañeros durante la ruta y reorganízalos en un Centro Pokémon.','Antes de salir puedes elegir hasta tres Pokémon básicos que hayas capturado. También puedes reorganizarlos en un Centro Pokémon.');
 };
 const v05OldStarterDraft=showStarterDraft;
-showStarterDraft=function(){v05OldStarterDraft();modal.innerHTML=modal.innerHTML.replace(/V0\.4/g,'V0.7')};
+showStarterDraft=function(){v05OldStarterDraft();modal.innerHTML=modal.innerHTML.replace(/V0\.4/g,'V0.8')};
 const v05OldRegister=registerReward;
 registerReward=function(id,shiny=false,source='capture'){const out=v05OldRegister(id,shiny,source);if(source==='gacha'&&!out.isFirst){const root=rootOf(id);saved.candies[root]=(saved.candies[root]||0)+3;save();out.reward+=3}return out};
 function v05Roll(){
@@ -1594,15 +1594,23 @@ winBattle=function(){
  if(run?.v08WaveActive&&run.v08Wave<run.v08WaveCount){
   run.v08Wave++;
   const kind=run.v08WaveKind;
-  run.drops=[]; // Each wave has its own captures: only balls actually reached are registered.
+  const pendingDrops=run.drops.filter(d=>d.turns>0).map(d=>({...d,turns:Math.max(3,d.turns)}));
   v08OldStartBattle(kind);
+  run.drops.push(...pendingDrops);
   run.blocks.forEach(e=>{e.maxHp=Math.round(e.maxHp*(1+.065*(run.v08Wave-1)));e.hp=e.maxHp});
   run.turn=run.v08RoomTurns+1;
   mode='aim';
   v08WaveToast('⚔ OLEADA '+run.v08Wave+' / '+run.v08WaveCount);
   refresh();return;
  }
- if(run)run.v08WaveActive=false;
+ if(run?.v08WaveActive&&!run.v08CaptureBonus&&run.drops.length>0){
+  run.v08CaptureBonus=true;
+  mode='aim';run.pending=0;run.shots=[];run.turn++;
+  run.aim=-Math.PI/2;
+  v08WaveToast('🔴 ÚLTIMA OPORTUNIDAD · RECOGE LAS POKÉ BALLS');
+  refresh();return;
+ }
+ if(run){run.v08WaveActive=false;run.v08CaptureBonus=false}
  return v08OldWinBattle();
 };
 const v08OldEndVolley=endVolley;
