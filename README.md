@@ -1,25 +1,42 @@
-# POKÉRICOCHET · Rogue Bounce 0.7
+# POKÉRICOCHET · Rogue Bounce 0.8
 
-Juego fan experimental de rebotes con progresión roguelite, hecho en HTML, CSS y JavaScript, servido mediante GitHub Pages.
+Prototipo fan de Pokémon + rebotes con progresión roguelite, publicado directamente en GitHub Pages. HTML/CSS/JavaScript sin herramientas de compilación.
 
-## Novedades de la 0.7
+## Versión 0.8 — ritmo, tácticas y audio
 
-- **Menú a pantalla completa:** cuartel con navegación lateral en escritorio y pestañas horizontales en móvil; selección inaugural de un solo Pokémon y equipo de hasta tres en expediciones posteriores. Se conserva el guardado.
-- **Ruta preestablecida:** no hay que elegir bifurcaciones. Cada piso tiene un encuentro pre-generado aleatorio, con presentación y vista previa de los siguientes pisos. Se mantienen centros, combates especiales, tesoros, élites y jefe de la zona. Las paradas pacíficas están separadas.
-- **Clima visible y jugable:** lluvia con gotas (Agua mejor, Fuego peor), sol intenso (Fuego mejor, Agua peor), arena y nieve con partículas; bonificaciones moderadas para tipos adecuados.
-- **Activación de habilidades:** carteles y etiqueta visible del Pokémon activo para Espesura, Mar Llamas, Torrente, Intimidación, Clorofila, Robustez y Electricidad Estática, según la especie y condición. Más habilidades oficiales quedan pendientes.
-- **Tablero compacto:** menor espacio entre bloques, sprites grandes e indicadores pequeños en las esquinas, conservando física anti-grazing y un efecto especial máximo por bola.
-- **Especial apuntable:** pulsar el botón prepara el movimiento, y luego se apunta arrastrando o usando el disparador. Algunos movimientos reconocibles ya tienen efectos propios: Ascuas (salpicadura), Pistola Agua (perforación), Impactrueno (cadena), Látigo Cepa (recuperación al eliminar rivales). Otros usan un especial reforzado provisional. Requiere 20 impactos para cargar.
-- **Música y efectos:** temas chiptune **originales**, compuestos mediante WebAudio en tiempo real para menú y combate, con arpegios de victoria, niveles, gachapón y especiales. Se activan/desactivan desde el icono de audio. No se distribuyen grabaciones oficiales extraídas de Pokémon.
+### Estructura de expedición
+- Menos interrupciones: los pisos de combate comienzan automáticamente sin abrir una pantalla de ruta y, al vencer, se avanza al siguiente. Solo eventos, decisiones de mejora y jefes requieren confirmación.
+- Zonas de **6, 7, 8 y 8 pisos**, respectivamente, más un jefe. Cada encuentro normal incluye **3 oleadas**, los combates fuertes y jefes **4 oleadas**.
+- Bonificación pequeña de recuperación entre oleadas para primeros equipos de un solo Pokémon.
+- Al subir de nivel, la elección aparece **inmediatamente al terminar la ráfaga de proyectiles**, incluso a mitad de un piso; tras elegir, la ronda continúa.
+- Poké Balls sin recoger permanecen hasta la siguiente oleada. Si queda alguna después de acabar la última oleada, hay una oportunidad adicional de apuntar y recogerla.
 
-## Controles
+### Ataques y movimientos
+- Movimientos iniciales y repertorios de aprendizaje distintos para los 27 iniciales, repartidos en físicos, especiales y de estado.
+- **Drenadoras:** apuntar a fila o columna; 3 rondas de daño y recuperación limitada; inmune el tipo Planta.
+- **Onda Trueno:** apuntar a fila o columna, retrasa a los enemigos; inmunidad de tipos Tierra y Eléctrico.
+- **Pantalla Luz / Protección**, **Danza Espada / Desarrollo**, **Síntesis** y **Pantalla Humo** consumen una acción y proporcionan beneficios temporales.
+- Efectos secundarios por movimiento: quemaduras de Ascuas/Giro Fuego, descargas en cadena con Impactrueno, efectos ralentizadores de Burbuja/Disparo Lodo, recuperación de Absorber y efectos especiales diferenciados en otros movimientos.
+- **Un efecto secundario como máximo por bola**. Los proyectiles siguen rebotando y pueden realizar impactos posteriores.
+- Los ataques especiales requieren **70 impactos acumulados** en vez de 20; el especial se prepara, apunta y dispara, y depende del movimiento seleccionado, no solo de su tipo.
+- Habilidades como Torrente, Espesura y Mar Llamas avisan al cruzar el **50 % de PS**, umbral adaptado a este juego (en Pokémon principal activan con un tercio de PS).
 
-Ratón o dedo: arrastrar y soltar para apuntar/disparar. Teclas 1–3: movimientos, espacio: disparo, F: pantalla completa (en navegadores compatibles). Para el especial, primero pulsar su botón (con la barra llena), y luego apuntar.
+### UI y tipos
+- Pantalla principal completa, barra superior y HUD reforzados, selección de movimientos más clara y etiquetas para ambos tipos de amenaza enemiga: cuenta atrás a distancia y rondas hasta la zona de contacto.
+- **Tabla completa de los 18 tipos** accesible mediante el botón **◈ TIPOS**, con tabla 18×18 y calculadora para Pokémon de uno o dos tipos (incluidas inmunidades y multiplicadores x4 / x0,25).
+- Mejores opciones de subida de nivel: geometría letal, carga acelerada de especial, curación entre oleadas, escudo inicial y puntería crítica.
 
-## Guardado
+### Sonido
+- Eliminada la música chiptune repetitiva en bucle.
+- Los gritos de Pokémon se transmiten bajo demanda a volumen bajo desde los enlaces públicos de **[PokéAPI Cries](https://github.com/PokeAPI/cries)** al comenzar ciertos combates y hacer relevos. No se copian al repositorio. El audio depende del navegador y requiere activación desde el botón de sonido.
+- Efectos sintéticos originales y más suaves, con límite de frecuencia para evitar acumulación de pitidos.
+- Los gritos son materiales asociados a Pokémon: que se puedan consultar públicamente no equivale a una licencia libre de derechos ni garantiza autorización de uso. La música oficial de los videojuegos no se redistribuye.
 
-La partida persistente sigue usando el guardado anterior de v0.4/v0.5/v0.6: colección, caramelos y progreso no se reinician por esta actualización. Niveles y mejoras dentro de la expedición se reinician al comenzar una nueva run.
+## Guardado y controles
+- Se conserva el guardado local anterior: colección, equipo configurado, caramelos, progreso permanente y gachapón. Las mejoras y niveles de una expedición se reinician en cada nueva partida.
+- Ratón o dedo: apuntar arrastrando y disparar. Teclas 1–3: movimientos, espacio: disparar, F: pantalla completa en navegadores compatibles.
+- Movimientos de estado: selecciona fila/columna cuando corresponda; pierdes el turno de disparo.
+- Botón de especial: cuando esté cargado, púlsalo, apunta y dispara.
 
-## Estado y propiedad intelectual
-
-Versión de prototipo: balance y animaciones requieren pruebas completas en navegadores y dispositivos reales. No existe integración de música o efectos oficiales sin permiso; las melodías son originales. Los sprites de personajes accesibles a través de PokéAPI no están necesariamente bajo licencia libre y Pokémon pertenece a sus respectivos titulares.
+## Estado
+Sistema todavía en desarrollo: faltan bastantes movimientos oficiales, más habilidades por especie, IVs/EVs y más pruebas de equilibrio y acabado visual en navegadores reales. El programa es un proyecto fan no oficial y Pokémon y sus personajes pertenecen a sus respectivos titulares.
