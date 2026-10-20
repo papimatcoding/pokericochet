@@ -153,6 +153,22 @@
 .v08-status-choice button:hover{background:#276451;border-color:#afffe0}
 .v08-move-kind{font-weight:700;font-size:10px;opacity:.8}
 
+
+.v08-types-table{overflow:auto;max-height:min(66dvh,550px);border-radius:14px;border:1px solid #33566a;background:#0b1b2d}
+.v08-types-table table{border-collapse:separate;border-spacing:2px;font-size:11px;min-width:870px}
+.v08-types-table th{position:sticky;background:#152f45;color:#e7fffa;padding:5px 3px;z-index:2;min-width:29px;text-align:center}
+.v08-types-table th:first-child{left:0;z-index:3}
+.v08-types-table tr td:first-child{position:sticky;left:0;background:#193045;z-index:1;font-weight:850}
+.v08-types-table td{font-size:11px;min-width:32px;height:26px;text-align:center;border-radius:4px;color:#d8e8f2}
+.v08-types-table .good{background:#276b54;color:#caffde;font-weight:900}
+.v08-types-table .bad{background:#674a51;color:#ffd4dc}
+.v08-types-table .immune{background:#353846;color:#e9a9b6;font-weight:900}
+.v08-types-lookup{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin:13px 0}
+.v08-types-lookup select{background:#17354a;color:white;padding:9px;border-radius:10px;border:1px solid #588575;min-width:120px}
+.v08-types-lookup strong{font-size:19px;background:#255b54;padding:9px 15px;border-radius:10px}
+.v08-types-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:#b4cedd;margin:8px 0}
+.v08-type-btn{background:#1b4053;border:1px solid #477875;color:#d8fff6;border-radius:10px;padding:6px 11px;font-size:12px;font-weight:800;cursor:pointer}
+
 </style>
 </head>
 <body>
@@ -1885,6 +1901,45 @@ refresh=function(){
   buttons?.querySelectorAll('[data-move]').forEach(b=>{const mv=p.moves[+b.dataset.move];if(mv)b.title=mv.name+' · '+(mv.category==='status'?'Estado · consume una ronda':mv.category==='physical'?'Físico':'Especial')});
  }
 };
+
+
+/* v0.8 interactive 18×18 type effectiveness, incl. dual-type calculator */
+const V08_TYPES=['normal','fire','water','electric','grass','ice','fighting','poison','ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'];
+const v08TypeButton=document.createElement('button');
+v08TypeButton.className='v08-type-btn';v08TypeButton.textContent='◈ TIPOS';v08TypeButton.title='Tabla de tipos y calculadora de debilidades';
+$id('helpBtn').insertAdjacentElement('beforebegin',v08TypeButton);
+let v08TypeRestore=null;
+function v08TypeBadge(k){return '<span style="color:'+TYPE_COLOR[k]+'">'+TT[k]+'</span>'}
+function v08TypeOption(k){return '<option value="'+k+'">'+(TT[k]||'Sin segundo tipo')+'</option>'}
+function v08TypeSymbol(v){return v===0?'×0':v===2?'×2':v===.5?'½':'·'}
+function v08TypeGrid(){
+ const header='<tr><th>ATQ ↓ DEF →</th>'+V08_TYPES.map(t=>'<th title="'+TT[t]+'">'+TT[t].slice(0,3)+'</th>').join('')+'</tr>';
+ const rows=V08_TYPES.map(a=>'<tr><td>'+v08TypeBadge(a)+'</td>'+V08_TYPES.map(d=>{
+  const v=effectiveness(a,[d]),cl=v===2?'good':v===.5?'bad':v===0?'immune':'';
+  return '<td class="'+cl+'" title="'+TT[a]+' → '+TT[d]+' = ×'+v+'">'+v08TypeSymbol(v)+'</td>';
+ }).join('')+'</tr>').join('');
+ return '<div class="emblem">POKÉDEX · VENTAJAS DE TIPO</div><h2>Tabla de los 18 tipos</h2><p>Filas: tipo que ataca. Columnas: tipo que recibe. Las dos defensas se multiplican, incluso cuando hay inmunidad.</p><div class="v08-types-lookup"><label>Movimiento <select id="v08Atk">'+V08_TYPES.map(v08TypeOption).join('')+'</select></label><label>Defensa 1 <select id="v08Def1">'+V08_TYPES.map(v08TypeOption).join('')+'</select></label><label>Defensa 2 <select id="v08Def2">'+v08TypeOption('none')+V08_TYPES.map(v08TypeOption).join('')+'</select></label><strong id="v08Result">×1</strong></div><div class="v08-types-legend"><span>🟩 ×2 supereficaz</span><span>🟥 ×½ resistente</span><span>⬛ ×0 inmune</span><span>· ×1 normal</span></div><div class="v08-types-table"><table>'+header+rows+'</table></div><div class="actions"><button class="primary" id="v08TypeClose">VOLVER AL JUEGO</button></div>';
+}
+function v08OpenTypes(){
+ if(['shooting','descending','retaliating','statuspick'].includes(mode)){message('Abre la tabla antes de disparar');return}
+ v08TypeRestore={hidden:backdrop.classList.contains('hidden'),html:modal.innerHTML};
+ showModal(v08TypeGrid());
+ const selectors=['v08Atk','v08Def1','v08Def2'];
+ function recalc(){
+  const a=$id('v08Atk').value,d1=$id('v08Def1').value,d2=$id('v08Def2').value;
+  const n=effectiveness(a,d2==='none'?[d1]:[d1,d2]),node=$id('v08Result');
+  node.textContent='×'+n;node.style.color=n>1?'#a9ffd0':n===0?'#ff9bab':n<1?'#ffd2a9':'#e6f8fa';
+ }
+ selectors.forEach(id=>$id(id).addEventListener('change',recalc));
+ $id('v08Atk').value='electric';$id('v08Def1').value='water';$id('v08Def2').value='flying';
+ recalc();
+ $id('v08TypeClose').onclick=()=>{
+  if(!v08TypeRestore)return;
+  const was=v08TypeRestore;v08TypeRestore=null;
+  if(was.hidden)hideModal();else showModal(was.html);
+ };
+}
+v08TypeButton.onclick=v08OpenTypes;
 
 fitBoard();startMenu();requestAnimationFrame(render);
 })();
