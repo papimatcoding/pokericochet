@@ -1616,6 +1616,69 @@ refresh=function(){
  $id('topStatus').innerHTML='<strong>'+stamp+'</strong>';
 };
 
+
+/* 0.8 · movement-based movepools and status categories */
+const V08_MOVEDATA={
+ 'Látigo Cepa':['grass',7,7,'physical'],'Hoja Afilada':['grass',8,6,'physical'],'Follaje':['grass',7,7,'physical'],
+ 'Rama':['grass',7,7,'physical'],'Absorber':['grass',6,7,'special'],
+ 'Ascuas':['fire',7,7,'special'],'Giro Fuego':['fire',6,7,'special'],
+ 'Rueda Fuego':['fire',8,6,'physical'],'Nitrocarga':['fire',7,7,'physical'],'Lanzallamas':['fire',10,5,'special'],
+ 'Pistola Agua':['water',7,7,'special'],'Burbuja':['water',6,8,'special'],'Acua Jet':['water',7,7,'physical'],
+ 'Impactrueno':['electric',7,7,'special'],'Chispa':['electric',7,7,'physical'],
+ 'Disparo Lodo':['ground',7,7,'special'],'Mordisco':['dark',7,7,'physical'],
+ 'Confusión':['psychic',8,6,'special'],'Bola Sombra':['ghost',8,6,'special'],
+ 'Lanzarrocas':['rock',8,6,'physical'],'Placaje':['normal',7,7,'physical'],
+ 'Ataque Rápido':['normal',6,8,'physical'],'Pin Misil':['bug',5,9,'physical'],
+ 'Drenadoras':['grass',0,0,'status'],'Pantalla Luz':['psychic',0,0,'status'],
+ 'Danza Espada':['normal',0,0,'status'],'Onda Trueno':['electric',0,0,'status'],
+ 'Protección':['normal',0,0,'status'],'Síntesis':['grass',0,0,'status'],
+ 'Desarrollo':['normal',0,0,'status'],'Pantalla Humo':['normal',0,0,'status']
+};
+const V08_LEARNSETS={
+ 1:['Látigo Cepa','Drenadoras','Hoja Afilada','Síntesis'],152:['Hoja Afilada','Pantalla Luz','Drenadoras'],
+ 252:['Absorber','Hoja Afilada','Danza Espada'],387:['Hoja Afilada','Drenadoras','Síntesis'],
+ 495:['Látigo Cepa','Desarrollo','Hoja Afilada'],650:['Látigo Cepa','Pin Misil','Drenadoras'],
+ 722:['Follaje','Hoja Afilada','Síntesis'],810:['Rama','Danza Espada','Hoja Afilada'],
+ 906:['Follaje','Hoja Afilada','Danza Espada'],
+ 4:['Ascuas','Giro Fuego','Lanzallamas'],155:['Ascuas','Rueda Fuego','Pantalla Humo'],
+ 255:['Ascuas','Nitrocarga','Lanzallamas'],390:['Ascuas','Rueda Fuego','Danza Espada'],
+ 498:['Ascuas','Nitrocarga','Giro Fuego'],653:['Ascuas','Giro Fuego','Lanzallamas'],
+ 725:['Ascuas','Giro Fuego','Nitrocarga'],813:['Ascuas','Nitrocarga','Rueda Fuego'],
+ 909:['Ascuas','Giro Fuego','Lanzallamas'],
+ 7:['Pistola Agua','Burbuja','Pantalla Luz'],158:['Pistola Agua','Mordisco','Danza Espada'],
+ 258:['Pistola Agua','Disparo Lodo','Protección'],393:['Burbuja','Acua Jet','Pistola Agua'],
+ 501:['Pistola Agua','Acua Jet','Danza Espada'],656:['Burbuja','Ataque Rápido','Pistola Agua'],
+ 728:['Burbuja','Pantalla Luz','Pistola Agua'],816:['Pistola Agua','Disparo Lodo','Pantalla Humo'],
+ 912:['Pistola Agua','Acua Jet','Danza Espada']
+};
+function v08Move(name){const m=V08_MOVEDATA[name];return m?{name,type:m[0],power:m[1],balls:m[2],category:m[3],blast:0,pierce:0,chain:0}:null}
+const v08Maker=mkMon;
+mkMon=function(id,lvl=5,shiny=false){
+ const p=v08Maker(id,lvl,shiny),pool=V08_LEARNSETS[rootOf(id)];
+ if(pool?.length){let name=pool[0];if(saved.tech?.[rootOf(id)]&&pool[1]&&V08_MOVEDATA[pool[1]]?.[3]!=='status')name=pool[1];p.moves=[v08Move(name)]}
+ return p;
+};
+const v08OldLevelOptions=levelOptions;
+levelOptions=function(p){
+ let options=v08OldLevelOptions(p),available=(V08_LEARNSETS[rootOf(p.id)]||[]).find(n=>!p.moves.some(m=>m.name===n));
+ if(available&&p.moves.length<4){
+  const data=V08_MOVEDATA[available],learn={key:'v08learn',title:'Aprender '+available,desc:data[3]==='status'?'Estado: invierte una ronda para conseguir una ventaja':TT[data[0]]+' · '+data[2]+' bolas · '+(data[3]==='physical'?'Físico':'Especial'),emoji:data[3]==='status'?'🌟':'📘'};
+  const pos=options.findIndex(o=>o.key==='learn');options[pos>=0?pos:0]=learn;
+ }
+ return options;
+};
+const v08OldLearnAction=handleAction;
+handleAction=function(action){
+ if(action==='level:v08learn'){
+  if(mode!=='upgrade'||!run.levelOptions?.some(o=>o.key==='v08learn'))return;
+  const p=run.team[run.upgrading],name=(V08_LEARNSETS[rootOf(p.id)]||[]).find(n=>!p.moves.some(m=>m.name===n));
+  if(!name||p.moves.length>=4)return;
+  p.moves.push(v08Move(name));p.chosen=p.moves.length-1;
+  hideModal();afterUpgrades();return;
+ }
+ return v08OldLearnAction(action);
+};
+
 fitBoard();startMenu();requestAnimationFrame(render);
 })();
 </script>
