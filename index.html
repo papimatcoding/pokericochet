@@ -1252,6 +1252,204 @@ handleAction=function(action){
  return v07RouteAction(action);
 };
 
+
+/* v0.7: weather fields, official-style starter abilities and aimable signature specials */
+const v07FlashNode=document.createElement('div');
+v07FlashNode.className='v07-ability-toast';v07FlashNode.style.display='none';
+$id('boardFrame').appendChild(v07FlashNode);
+let v07FlashTimer=0;
+function v07Flash(title,detail=''){
+ v07FlashNode.textContent=title+(detail?' · '+detail:'');
+ v07FlashNode.style.display='block';
+ clearTimeout(v07FlashTimer);
+ v07FlashTimer=setTimeout(()=>{v07FlashNode.style.display='none'},1450);
+}
+const v07StarterSet=new Set(STARTER_GENERATIONS.flatMap(x=>x[1]));
+function v07Ability(p){
+ if(!p)return null;
+ const root=rootOf(p.id);
+ if(v07StarterSet.has(root)){
+  const t=def(root).types[0];
+  if(t==='grass')return {name:'Espesura',type:'grass'};
+  if(t==='fire')return {name:'Mar Llamas',type:'fire'};
+  if(t==='water')return {name:'Torrente',type:'water'};
+ }
+ if([58,59].includes(p.id))return {name:'Intimidación',type:'enter'};
+ if([43,44,45,69,70,71].includes(p.id))return {name:'Clorofila',type:'sun'};
+ if([74,75,76].includes(p.id))return {name:'Robustez',type:'sturdy'};
+ if(p.id===25)return {name:'Electricidad Estática',type:'static'};
+ return null;
+}
+const v07NameTag=document.createElement('div');v07NameTag.className='v07-ability-label';
+$id('activeLevel').insertAdjacentElement('afterend',v07NameTag);
+function v07RefreshAbility(){
+ const a=v07Ability(active());v07NameTag.textContent=a?'HABILIDAD · '+a.name:'HABILIDAD · POR DESCUBRIR';
+}
+function v07EnterAbility(p){
+ if(!p)return;
+ const a=v07Ability(p);if(!a)return;
+ if(a.type==='enter'){
+  for(const e of run.blocks)e.attack=Math.max(1,e.attack-1);
+  v07Flash('✨ '+a.name.toUpperCase(),'Daño enemigo −1');
+ }
+}
+const v07PreviousStart=startBattle;
+startBattle=function(kind){
+ v07PreviousStart(kind);
+ run.weather=run.v07UpcomingWeather||(run.weather||null);
+ run.v07UpcomingWeather=null;
+ run.v07SpecialArmed=false;run.v07SpecialType=null;
+ run.v07SpecialKOs=0;
+ v07EnterAbility(active());v07RefreshAbility();
+ if(run.weather){
+  const names={rain:'🌧 LLUVIA',sun:'☀️ SOL INTENSO',sand:'🌪 TORMENTA ARENA',snow:'❄️ NIEVE'};
+  log((names[run.weather]||'CLIMA')+' · Las condiciones afectan al combate.');
+ }
+};
+const v07PrevAttack=attackInfo;
+attackInfo=function(m,e){
+ const v=v07PrevAttack(m,e),p=active(),a=v07Ability(p);
+ if(v.dmg>0&&p&&a&&a.type===m.type&&p.hp>0&&p.hp<=p.maxHp/3){
+  v.dmg=Math.max(1,Math.ceil(v.dmg*1.30));
+  if(p.v07AbilityTurn!==run.turn){p.v07AbilityTurn=run.turn;v07Flash('✦ '+a.name.toUpperCase(),'Daño '+m.type+' +30 %')}
+ }
+ if(v.dmg>0&&a?.type==='sun'&&run.weather==='sun'&&m.type==='grass'){
+  v.dmg=Math.ceil(v.dmg*1.20);
+  if(p.v07AbilityTurn!==run.turn){p.v07AbilityTurn=run.turn;v07Flash('☀ CLOROFILA','Ataque de Planta potenciado')}
+ }
+ if(v.dmg>0&&run.weather==='sun')v.dmg=Math.max(1,Math.round(v.dmg*(m.type==='fire'?1.3:m.type==='water'?.76:1)));
+ if(v.dmg>0&&run.weather==='sand'&&['rock','ground'].includes(m.type))v.dmg=Math.ceil(v.dmg*1.15);
+ if(v.dmg>0&&run.weather==='snow'&&m.type==='ice')v.dmg=Math.ceil(v.dmg*1.2);
+ return v;
+};
+const v07BeforeTakeDamage=takeDamage;
+takeDamage=function(amount,label){
+ const p=active(),before=run.active,preHp=p?.hp||0;
+ if(p&&v07Ability(p)?.type==='sturdy'&&preHp===p.maxHp&&amount>=preHp&&!(p.v07SturdyUsed)){
+  p.v07SturdyUsed=true;amount=Math.max(0,preHp-1);v07Flash('🪨 ROBUSTEZ','Sobrevive a 1 PS');
+ }
+ const ret=v07BeforeTakeDamage(amount,label);
+ if(run.active!==before&&active()){v07EnterAbility(active());v07RefreshAbility()}
+ if(p&&p===active()&&v07Ability(p)?.type==='static'&&label==='Ataque cuerpo a cuerpo'&&preHp>p.hp&&Math.random()<.3){
+  for(const e of run.blocks.filter(x=>x.ranged).slice(0,1)){e.cooldown=Math.max(e.cooldown,2);v07Flash('⚡ ELECTRICIDAD ESTÁTICA','Ataque rival retrasado')}
+ }
+ return ret;
+};
+const V07_SPECIALS={
+ 'Ascuas':['🔥','Lluvia de Ascuas','fire'],'Giro Fuego':['🔥','Anillo Ígneo','fire'],
+ 'Pistola Agua':['🌊','Chorro Penetrante','water'],'Burbuja':['🫧','Marea de Burbujas','water'],
+ 'Látigo Cepa':['🌱','Tormenta de Lianas','grass'],'Hoja Afilada':['🍃','Bosque de Hojas','grass'],
+ 'Impactrueno':['⚡','Descarga Encadenada','electric'],'Chispa':['⚡','Red Eléctrica','electric']
+};
+function v07SpecialFor(p){
+ const m=p?.moves?.[p?.chosen||0];return V07_SPECIALS[m?.name]||[
+  ({rock:'🪨',ground:'🌍',ghost:'👻',poison:'☠️',normal:'✦',psychic:'🔮'})[m?.type]||'✦',
+  m?.name?m.name+' MAX':'Ataque reforzado',m?.type||'normal'];
+}
+const v07ActionBefore=handleAction;
+handleAction=function(action){
+ if(action==='ui:special'){
+  if(mode!=='aim'||!active()||(active().ult||0)<20)return;
+  run.v07SpecialArmed=!run.v07SpecialArmed;
+  const [icon,name]=v07SpecialFor(active());
+  message(run.v07SpecialArmed?icon+' '+name+': apunta y dispara para activarlo.':'Especial cancelado');
+  refresh();return;
+ }
+ return v07ActionBefore(action);
+};
+const v07ShootBefore=shoot;
+shoot=function(){
+ const armed=mode==='aim'&&!!run.v07SpecialArmed&&(active()?.ult||0)>=20;
+ const mon=active(),spec=armed?v07SpecialFor(mon):null,move=mon?.moves?.[mon.chosen];
+ if(armed){
+  mon.ult=0;run.v07SpecialArmed=false;
+  run.v07SpecialType=spec[2];run.v07SpecialKOs=0;
+  run.v07SpecialVisual={angle:run.aim,at:performance.now(),type:spec[2],name:spec[1]};
+  run.specialShot=false;
+  mon.globalBalls+=spec[2]==='water'?2:3;
+ }
+ v07ShootBefore();
+ if(armed){
+  mon.globalBalls-=spec[2]==='water'?2:3;
+  const f=run.firingMove;
+  if(f){
+   if(spec[2]==='fire'){f.blast=Math.max(.48,f.blast||0);f.power+=1}
+   else if(spec[2]==='water'){f.pierce=Math.max(.95,f.pierce||0);f.power+=1}
+   else if(spec[2]==='grass'){f.blast=Math.max(.24,f.blast||0);f.power+=1}
+   else if(spec[2]==='electric'){f.chain=Math.max(2,f.chain||0)}
+   else{f.power+=3;f.pierce=Math.max(.38,f.pierce||0)}
+  }
+  v07Flash(spec[0]+' '+spec[1].toUpperCase(),'¡ESPECIAL!');
+  [880,1100,1320].forEach((freq,i)=>setTimeout(()=>playTone(freq,.10,'triangle',.025),i*70));
+ }
+};
+$id('fireBtn').addEventListener('click',e=>{
+ if(run?.v07SpecialArmed){e.stopImmediatePropagation();e.preventDefault();shoot()}
+},true);
+const v07RefreshPrevious=refresh;
+refresh=function(){
+ v07RefreshPrevious();
+ if(!run)return;
+ v07RefreshAbility();
+ if(typeof SPECIAL_BUTTON!=='undefined'){
+  if(run.v07SpecialArmed){
+   const spec=v07SpecialFor(active());
+   SPECIAL_BUTTON.textContent=spec[0]+' '+spec[1]+' · APUNTA';
+   SPECIAL_BUTTON.disabled=false;SPECIAL_BUTTON.style.borderColor='#ffe19a';
+  }else SPECIAL_BUTTON.style.borderColor='';
+ }
+};
+const v07EnemyDownPrevious=enemyDown;
+enemyDown=function(e){
+ const present=run.blocks.includes(e);
+ v07EnemyDownPrevious(e);
+ if(present&&!run.blocks.includes(e)&&run.v07SpecialType==='grass'&&mode==='shooting'&&active()?.hp>0){
+  run.v07SpecialKOs=(run.v07SpecialKOs||0)+1;
+  if(run.v07SpecialKOs<=2){active().hp=Math.min(active().maxHp,active().hp+1);textFx(run.shooter,SHOOT_Y-39,'🌱 +1 PS','#a3f4b3')}
+ }
+};
+const v07EndVolleyPrevious=endVolley;
+endVolley=function(){run.v07SpecialType=null;return v07EndVolleyPrevious()};
+const v07DrawBefore=renderBoard;
+renderBoard=function(now){
+ v07DrawBefore(now);
+ if(!run||!['aim','shooting','descending','retaliating'].includes(mode))return;
+ const t=now*.001,weather=run.weather;
+ ctx.save();
+ if(weather==='rain'){
+  ctx.strokeStyle='#9bdcfc';ctx.lineWidth=1.3;ctx.globalAlpha=.25;
+  for(let i=0;i<75;i++){const x=(i*101.7+t*90)%W,y=(i*49.3+t*285)%FLOOR_Y;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-7,y+18);ctx.stroke()}
+ }else if(weather==='sun'){
+  const x=W*.81,y=TOP+35;const glow=ctx.createRadialGradient(x,y,2,x,y,260);
+  glow.addColorStop(0,'#ffe8a350');glow.addColorStop(1,'#ffcc4400');ctx.fillStyle=glow;ctx.fillRect(0,TOP,W,FLOOR_Y-TOP);
+  ctx.globalAlpha=.21;ctx.fillStyle='#ffecae';
+  for(let i=0;i<5;i++){const a=i*1.05+Math.sin(t*.25)*.1;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(a)*440,y+Math.sin(a)*440);ctx.lineTo(x+Math.cos(a+.11)*440,y+Math.sin(a+.11)*440);ctx.fill()}
+ }else if(weather==='sand'){
+  ctx.fillStyle='#e8c284';ctx.globalAlpha=.24;
+  for(let i=0;i<65;i++){const x=(i*97.3+t*145)%W,y=(i*37.8+Math.sin(t+i)*8+FLOOR_Y*3)%FLOOR_Y;ctx.fillRect(x,y,2.5,1.4)}
+ }else if(weather==='snow'){
+  ctx.fillStyle='#d6f5ff';ctx.globalAlpha=.54;
+  for(let i=0;i<44;i++){const x=(i*67.3+Math.sin(t+i)*11+W*3)%W,y=(i*43.5+t*39)%FLOOR_Y;ctx.beginPath();ctx.arc(x,y,1.3+(i%3)*.38,0,Math.PI*2);ctx.fill()}
+ }
+ if(weather){
+  const words={rain:'🌧 LLUVIA',sun:'☀ SOL INTENSO',sand:'🌪 ARENA',snow:'❄ NIEVE'};
+  ctx.globalAlpha=1;ctx.textAlign='right';ctx.font='bold 10px system-ui';ctx.fillStyle='#f7e7c3';
+  ctx.fillText(words[weather]||'',W-15,36);
+ }
+ if(run.v07SpecialArmed&&mode==='aim'){
+  ctx.strokeStyle='#ffe388';ctx.shadowColor='#ffcd5a';ctx.shadowBlur=13;ctx.lineWidth=3;ctx.setLineDash([8,7]);
+  ctx.beginPath();ctx.moveTo(run.shooter,SHOOT_Y);ctx.lineTo(run.shooter+Math.cos(run.aim)*400,SHOOT_Y+Math.sin(run.aim)*400);ctx.stroke();ctx.setLineDash([]);ctx.shadowBlur=0;
+  ctx.fillStyle='#ffe2a0';ctx.textAlign='center';ctx.font='bold 12px system-ui';ctx.fillText('ESPECIAL PREPARADO · APUNTA',W/2,SHOOT_Y-70);
+ }
+ const fx=run.v07SpecialVisual;
+ if(fx&&now-fx.at<680){
+  const age=(now-fx.at)/680,colors={fire:'#ff8e64',water:'#72dbff',grass:'#91eca8',electric:'#ffe67a',normal:'#e0d9ff'};
+  ctx.strokeStyle=colors[fx.type]||'#eff5ff';ctx.globalAlpha=(1-age)*.65;ctx.lineWidth=5+age*18;ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=24;
+  ctx.beginPath();ctx.moveTo(run.shooter,SHOOT_Y);ctx.lineTo(run.shooter+Math.cos(fx.angle)*470,SHOOT_Y+Math.sin(fx.angle)*470);ctx.stroke();
+ }
+ ctx.restore();
+};
+
 fitBoard();startMenu();requestAnimationFrame(render);
 })();
 </script>
