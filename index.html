@@ -2001,6 +2001,84 @@ playTone=function(freq=500,dur=.06,type='sine',vol=.03){
 $id('audioBtn').title='Sonidos discretos y gritos Pokémon de PokéAPI (sin música en bucle)';
 $id('audioBtn').setAttribute('aria-label','Activar gritos Pokémon y efectos de sonido');
 
+
+/* v0.8 upgrades that modify shot physics and persistent battle tactics */
+const V08_UNIQUE_UPGRADES=[
+ {key:'v08bounce',title:'Geometría letal',desc:'Cada impacto después de un rebote en la pared hace +1 de daño, máximo +2',emoji:'↩️'},
+ {key:'v08charge',title:'Resonancia del núcleo',desc:'Cada tercer impacto añade +1 punto adicional a la carga del especial',emoji:'💠'},
+ {key:'v08recovery',title:'Segundo aliento',desc:'Al superar cada oleada, recuperas 2 PS si sigues en pie',emoji:'💚'},
+ {key:'v08opening',title:'Escudo de vanguardia',desc:'Empiezas cada nuevo piso con un escudo adicional',emoji:'🛡️'},
+ {key:'v08sharpshot',title:'Precisión crítica',desc:'Los golpes críticos tienen +7 % de probabilidad',emoji:'🎯'}
+];
+const v08UpgradeOptionsPrevious=levelOptions;
+levelOptions=function(p){
+ const opts=v08UpgradeOptionsPrevious(p);
+ const unlearned=opts.some(x=>x.key==='v08learn');
+ const options=V08_UNIQUE_UPGRADES.filter(o=>{
+  if(o.key==='v08bounce')return (p.v08Bankshots||0)<2;
+  if(o.key==='v08charge')return !p.v08ChargeMastery;
+  if(o.key==='v08recovery')return (p.v08Recovery||0)<2;
+  if(o.key==='v08opening')return !p.v08OpeningShield;
+  if(o.key==='v08sharpshot')return (p.crit||0)<.35;
+  return true;
+ });
+ if(options.length){
+  const pickUpgrade=options[Math.floor(Math.random()*options.length)];
+  const slot=unlearned?1:Math.floor(Math.random()*2);
+  opts[slot]=pickUpgrade;
+ }
+ return opts;
+};
+const v08UpgradesActionBefore=handleAction;
+handleAction=function(action){
+ if(action.startsWith('level:v08')&&action!=='level:v08learn'){
+  if(mode!=='upgrade'||!run.levelOptions?.some(o=>'level:'+o.key===action))return;
+  const p=run.team[run.upgrading],key=action.substring(6);
+  if(key==='v08bounce')p.v08Bankshots=Math.min(2,(p.v08Bankshots||0)+1);
+  else if(key==='v08charge')p.v08ChargeMastery=true;
+  else if(key==='v08recovery')p.v08Recovery=Math.min(2,(p.v08Recovery||0)+1);
+  else if(key==='v08opening')p.v08OpeningShield=true;
+  else if(key==='v08sharpshot')p.crit=Math.min(.55,(p.crit||0)+.07);
+  else return;
+  hideModal();afterUpgrades();return;
+ }
+ return v08UpgradesActionBefore(action);
+};
+const v08UpgradesHitBefore=hit;
+hit=function(e,b){
+ const before=e.hp,was=run.blocks.includes(e),p=active();
+ v08UpgradesHitBefore(e,b);
+ if(!p||!was||e.hp>=before)return;
+ if(p.v08ChargeMastery){
+  p.v08ChargeHits=(p.v08ChargeHits||0)+1;
+  if(p.v08ChargeHits%3===0)p.ult=Math.min(70,(p.ult||0)+1);
+ }
+ if(run.blocks.includes(e)&&(p.v08Bankshots||0)>0&&(b.wallBounces||0)>0&&effectiveness(b.move.type,e.types)>0){
+  e.hp-=p.v08Bankshots;textFx(b.x,b.y-18,'↩ +'+p.v08Bankshots,'#a5eede');
+  if(e.hp<=0)enemyDown(e);
+ }
+};
+const v08UpgradesStartBefore=startBattle;
+startBattle=function(kind){
+ const first=!run.v08WaveActive;
+ v08UpgradesStartBefore(kind);
+ if(first)for(const p of run.team)if(p.v08OpeningShield&&p.hp>0)p.shield++;
+};
+const v08UpgradesWinBefore=winBattle;
+winBattle=function(){
+ if(run?.v08WaveActive&&run.v08Wave<run.v08WaveCount){
+  const p=active();
+  if(p?.v08Recovery&&p.hp>0){
+   const amount=2*p.v08Recovery;
+   p.hp=Math.min(p.maxHp,p.hp+amount);
+   textFx(run.shooter,SHOOT_Y-38,'+'+amount+' PS','#a7ffd1');
+  }else if(p?.hp>0&&run.team.length===1&&run.zone===0){
+   p.hp=Math.min(p.maxHp,p.hp+2); // New solo players get a small breather between waves.
+  }
+ }
+ return v08UpgradesWinBefore();
+};
+
 fitBoard();startMenu();requestAnimationFrame(render);
 })();
 </script>
