@@ -169,6 +169,30 @@
 .v08-types-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:#b4cedd;margin:8px 0}
 .v08-type-btn{background:#1b4053;border:1px solid #477875;color:#d8fff6;border-radius:10px;padding:6px 11px;font-size:12px;font-weight:800;cursor:pointer}
 
+
+/* v0.8 HUD: clearer hierarchy, legible move selection and no unnecessary clutter */
+.top{border-bottom:1px solid #3f6d715c;padding:0 6px 8px}
+.brand{letter-spacing:-.03em}.brand small{font-size:9px;color:#91cbbd;letter-spacing:.18em}
+.arena{background:linear-gradient(145deg,#0b2530,#0b182b);border-color:#426968;border-radius:15px}
+.board-frame{border-color:#739a91;border-radius:10px;box-shadow:0 10px 35px #0008,0 0 0 1px #87d0b02b}
+.arena-bottom{gap:9px;background:#0c2130;min-height:70px;border-top-color:#4c8075}
+.moves{gap:7px}.move{min-width:0;border-radius:10px;border-color:#467570;background:#173747;padding:9px 10px}
+.move.selected{border-color:#a2ffde;background:#245d56;box-shadow:inset 0 0 0 1px #b0ffda50,0 0 10px #6cffb91e}
+.move strong{font-size:12px;color:#effff5}.move span{color:#add0d3;font-size:10px}
+.fire-btn{background:linear-gradient(135deg,#a9ffdb,#5be5bc);font-weight:950;box-shadow:0 3px 0 #22695b}
+.special-btn{font-weight:900;letter-spacing:.02em;border-color:#a98b58}.special-btn:disabled{opacity:.65}
+.side-card{border:1px solid #385d67;background:linear-gradient(130deg,#173345,#122433);border-radius:13px}
+.active-sprite{border-color:#4f9e8c;background:radial-gradient(circle,#32645d,#1b3440 78%);padding:4px}
+.profile-name{font-size:18px}
+.mini-status{background:#173641;border-color:#3a6d70;color:#d6f7eb}
+@media(max-width:775px){
+ .top{min-height:34px;gap:5px;padding:0 2px 3px}.brand{font-size:15px}.mini-status{font-size:9px;padding:5px 6px}
+ .arena-bottom{padding:5px;gap:4px;min-height:59px}
+ .move{padding:7px 5px;gap:3px}.move strong{font-size:10px}.move span{font-size:9px}
+ .fire-btn,.special-btn{font-size:10px;padding:9px 6px}
+ .v08-type-btn{padding:5px 7px;font-size:10px}
+}
+
 </style>
 </head>
 <body>
@@ -1940,6 +1964,42 @@ function v08OpenTypes(){
  };
 }
 v08TypeButton.onclick=v08OpenTypes;
+
+
+/* v0.8 audio: use distinct Pokémon cries on entry instead of repetitive background music */
+let v08LastCryAt=0,v08CurrentCry=null,v08ToneTime=0;
+function v08Cry(id){
+ if(!sound||!Number.isInteger(+id)||+id<=0||document.hidden)return;
+ const now=performance.now();if(now-v08LastCryAt<1250)return;
+ v08LastCryAt=now;
+ try{
+  if(v08CurrentCry){v08CurrentCry.pause();v08CurrentCry.src=''}
+  const audio=new Audio('https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/'+id+'.ogg');
+  audio.volume=.14;audio.playbackRate=1;v08CurrentCry=audio;
+  audio.play().catch(()=>{});
+ }catch(e){/* Audio may be blocked or unavailable. The game continues silently. */}
+}
+const v08CryBattleStart=startBattle;
+startBattle=function(kind){
+ const isNew=!run.v08WaveActive;
+ v08CryBattleStart(kind);
+ if(isNew){v08Cry(active()?.id);if(kind==='boss')setTimeout(()=>v08Cry(zone().boss),1800)}
+};
+const v08CryDamageBefore=takeDamage;
+takeDamage=function(dmg,reason){
+ const old=run?.active;const out=v08CryDamageBefore(dmg,reason);
+ if(run&&run.active!==old&&active())v08Cry(active().id);
+ return out;
+};
+// Throttle rapid hit noises and lower their volume; no melody loops or relentless beeps.
+const v08OriginalTone=playTone;
+playTone=function(freq=500,dur=.06,type='sine',vol=.03){
+ const now=performance.now();if(now-v08ToneTime<82)return;
+ v08ToneTime=now;
+ v08OriginalTone(freq,Math.min(dur,.12),type==='sawtooth'?'triangle':type,Math.min(.011,vol*.37));
+};
+$id('audioBtn').title='Sonidos discretos y gritos Pokémon de PokéAPI (sin música en bucle)';
+$id('audioBtn').setAttribute('aria-label','Activar gritos Pokémon y efectos de sonido');
 
 fitBoard();startMenu();requestAnimationFrame(render);
 })();
