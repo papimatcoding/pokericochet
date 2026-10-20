@@ -625,7 +625,7 @@ handleAction=function(action){
 const SPECIAL_BUTTON=document.createElement('button');SPECIAL_BUTTON.id='specialBtn';SPECIAL_BUTTON.className='special-btn';SPECIAL_BUTTON.dataset.action='ui:special';SPECIAL_BUTTON.textContent='✦ ESPECIAL · 0/70';
 $id('fireBtn').insertAdjacentElement('beforebegin',SPECIAL_BUTTON);
 SPECIAL_BUTTON.addEventListener('click',()=>handleAction('ui:special'));
-refresh=function(){_origRefresh();if(!run)return;const p=active();if(p){SPECIAL_BUTTON.disabled=mode!=='aim'||(p.ult||0)<70;SPECIAL_BUTTON.textContent=(p.ult||0)>=70?'✦ ESPECIAL LISTO':`✦ ESPECIAL ${p.ult||0}/20`}
+refresh=function(){_origRefresh();if(!run)return;const p=active();if(p){SPECIAL_BUTTON.disabled=mode!=='aim'||(p.ult||0)<70;SPECIAL_BUTTON.textContent=(p.ult||0)>=70?'✦ ESPECIAL LISTO':`✦ ESPECIAL ${p.ult||0}/70`}
  if(mode==='menu'){$id('topStatus').innerHTML=`🪙 <strong>${saved.tokens||0}</strong> · ${collectionCount()} especies`}
 };
 renderBoard=function(now){_origRenderBoard(now);if(!run)return;
@@ -1378,7 +1378,7 @@ handleAction=function(action){
 };
 const v07ShootBefore=shoot;
 shoot=function(){
- const armed=mode==='aim'&&!!run.v07SpecialArmed&&(active()?.ult||0)>=20;
+ const armed=mode==='aim'&&!!run.v07SpecialArmed&&(active()?.ult||0)>=70;
  const mon=active(),spec=armed?v07SpecialFor(mon):null,move=mon?.moves?.[mon.chosen];
  if(armed){
   mon.ult=0;run.v07SpecialArmed=false;
@@ -1767,6 +1767,123 @@ endVolley=function(){
  if(run.v08Light>0)run.v08Light--;
  run.team.forEach(p=>{if(p.v08Power>0)p.v08Power--});
  return v08StatusEndBefore();
+};
+
+
+/* v0.8 named signature moves, secondary effects once per ball, passive activation */
+const V08_SIGNATURES={
+ 'Ascuas':['🔥','Tormenta de Ascuas','fire'],
+ 'Giro Fuego':['🔥','Círculo de Fuego','fire'],
+ 'Lanzallamas':['🔥','Lanzallamas Total','fire'],
+ 'Nitrocarga':['🔥','Carga Ígnea','fire'],
+ 'Rueda Fuego':['🔥','Rueda Incandescente','fire'],
+ 'Pistola Agua':['🌊','Chorro a Presión','water'],
+ 'Burbuja':['🫧','Diluvio de Burbujas','water'],
+ 'Acua Jet':['💦','Arremetida Acuática','water'],
+ 'Látigo Cepa':['🌱','Lianas Voraces','grass'],
+ 'Hoja Afilada':['🍃','Tormenta de Hojas','grass'],
+ 'Follaje':['🍃','Vendaval de Follaje','grass'],
+ 'Impactrueno':['⚡','Descarga Encadenada','electric'],
+ 'Chispa':['⚡','Sobrecarga de Chispas','electric'],
+ 'Disparo Lodo':['🟤','Alud de Lodo','ground'],
+ 'Confusión':['🔮','Psicoonda','psychic'],
+ 'Bola Sombra':['👻','Sombras Resonantes','ghost'],
+ 'Lanzarrocas':['🪨','Lluvia de Rocas','rock'],
+ 'Mordisco':['🦷','Fauces Implacables','dark'],
+ 'Absorber':['🌿','Raíces Insaciables','grass']
+};
+v07SpecialFor=function(p){const m=p?.moves?.[p.chosen];return m&&m.category!=='status'?V08_SIGNATURES[m.name]||null:null};
+const v08SignatureBeforeAction=handleAction;
+handleAction=function(action){
+ if(action==='ui:special'&&!v07SpecialFor(active())){message('Este movimiento no tiene un especial desbloqueado');return}
+ return v08SignatureBeforeAction(action);
+};
+const v08SignatureOldShoot=shoot;
+shoot=function(){
+ const wasArmed=mode==='aim'&&run.v07SpecialArmed&&!!v07SpecialFor(active()),m=active()?.moves?.[active()?.chosen],name=m?.name;
+ v08SignatureOldShoot();
+ if(!wasArmed||mode!=='shooting'||!run.firingMove)return;
+ const f=run.firingMove;
+ f.v08Signature=name;
+ if(['Giro Fuego','Ascuas','Lanzallamas','Rueda Fuego','Nitrocarga'].includes(name))f.v08Burn=true;
+ if(['Burbuja','Disparo Lodo','Acua Jet'].includes(name))f.v08Slow=true;
+ if(['Pistola Agua','Acua Jet'].includes(name))f.pierce=Math.max(.90,f.pierce||0);
+ if(['Impactrueno','Chispa'].includes(name))f.chain=2;
+ if(['Látigo Cepa','Hoja Afilada','Follaje','Absorber'].includes(name))f.v08Seed=true;
+ if(['Confusión','Bola Sombra'].includes(name))f.v08Confuse=true;
+ if(['Lanzarrocas','Mordisco'].includes(name))f.v08Flinch=true;
+};
+const v08SignatureLaunchBefore=launchBall;
+launchBall=function(){
+ v08SignatureLaunchBefore();
+ const b=run.shots[run.shots.length-1];if(!b)return;
+ if(b.move.name==='Impactrueno'&&!b.move.chain&&chance(.25))b.move={...b.move,chain:1};
+};
+const v08SignatureHitBefore=hit;
+hit=function(e,b){
+ const before=e.hp,name=b.move.name,wasActive=!!run.blocks.includes(e);
+ v08SignatureHitBefore(e,b);
+ if(!wasActive||!run.blocks.includes(e)||e.hp>=before||b.effectUsed)return;
+ if((b.move.v08Burn||name==='Giro Fuego'||name==='Ascuas'&&chance(.16)||name==='Lanzallamas'&&chance(.23))&&!e.types.includes('fire')){
+  e.v08Burn=Math.max(3,e.v08Burn||0);b.effectUsed=true;textFx(b.x,b.y-12,'🔥 QUEMADO','#ffae82');
+ }else if((b.move.v08Slow||name==='Burbuja'&&chance(.23)||name==='Disparo Lodo'&&chance(.29))&&e.ranged){
+  e.cooldown=Math.max(2,e.cooldown+1);b.effectUsed=true;textFx(b.x,b.y-12,'💧 LENTO','#b1ebfa');
+ }else if((b.move.v08Seed||name==='Absorber'&&chance(.24))&&!e.types.includes('grass')){
+  e.v08Leech=Math.max(3,e.v08Leech||0);b.effectUsed=true;textFx(b.x,b.y-12,'🌱 DRENA','#b3ffc4');
+ }else if((b.move.v08Confuse||name==='Confusión'&&chance(.23))&&e.ranged){
+  e.cooldown++;b.effectUsed=true;textFx(b.x,b.y-12,'🔮 CONFUSO','#e4d0ff');
+ }else if((b.move.v08Flinch||name==='Mordisco'&&chance(.20))&&e.ranged){
+  e.cooldown++;b.effectUsed=true;textFx(b.x,b.y-12,'✦ RETROCESO','#fff0b8');
+ }
+};
+const v08SignatureHpBefore=takeDamage;
+takeDamage=function(amount,label){
+ const p=active(),hp=p?.hp;
+ const ret=v08SignatureHpBefore(amount,label);
+ if(p&&active()===p&&p.hp>0&&hp>p.maxHp*.5&&p.hp<=p.maxHp*.5){
+  const a=v07Ability(p);
+  if(a&&['water','grass','fire'].includes(a.type)){
+    v07Flash('✨ '+a.name.toUpperCase(),'Activada: PS ≤ 50 %');
+    p.v07AbilityTurn=run.turn;
+  }
+ }
+ return ret;
+};
+const v08HudDrawBefore=renderBoard;
+renderBoard=function(now){
+ v08HudDrawBefore(now);
+ if(!run||!['aim','shooting','descending','retaliating'].includes(mode))return;
+ ctx.save();
+ // Both danger sources stay visible: upper badge = ranged attack, lower = turns to floor.
+ for(const e of run.blocks){
+  if(!e.ranged)continue;
+  const x=enemyX(e),y=enemyY(e),h=enemyH(e);
+  const remaining=Math.max(1,Math.ceil((FLOOR_Y-(TOP+e.row*STEP+4+h))/STEP));
+  ctx.fillStyle='#071925db';ctx.fillRect(x+2,y+h-19,30,13);
+  ctx.fillStyle=remaining<=2?'#ffa6a6':'#c6e9ec';
+  ctx.font='bold 10px system-ui';ctx.textAlign='left';
+  ctx.fillText('↓ '+remaining,x+6,y+h-9);
+ }
+ if(run?.v08WaveActive){
+  ctx.textAlign='right';ctx.font='bold 11px system-ui';ctx.fillStyle='#e7f4ec';
+  ctx.fillText('OLEADA '+run.v08Wave+'/'+run.v08WaveCount,W-12,H-13);
+ }
+ ctx.restore();
+};
+const v08HudOldRefresh=refresh;
+refresh=function(){
+ v08HudOldRefresh();
+ if(!run)return;
+ if(typeof SPECIAL_BUTTON!=='undefined'){
+  const p=active(),s=v07SpecialFor(p);
+  SPECIAL_BUTTON.disabled=mode!=='aim'||(p?.ult||0)<70||!s;
+  SPECIAL_BUTTON.textContent=s?(run.v07SpecialArmed?'✦ '+s[1]+' · APUNTA':('✦ ESPECIAL '+(p?.ult||0)+'/70')):'✦ SIN ESPECIAL';
+ }
+ const p=active(),m=p?.moves?.[p.chosen];
+ if(m){$id('fireBtn').textContent=m.category==='status'?'USAR ESTADO':'DISPARAR';
+  const buttons=$id('moveButtons');
+  buttons?.querySelectorAll('[data-move]').forEach(b=>{const mv=p.moves[+b.dataset.move];if(mv)b.title=mv.name+' · '+(mv.category==='status'?'Estado · consume una ronda':mv.category==='physical'?'Físico':'Especial')});
+ }
 };
 
 fitBoard();startMenu();requestAnimationFrame(render);
