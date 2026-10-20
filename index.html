@@ -436,7 +436,7 @@ newEnemy=function(id,col,row,boss=false,elite=false){
  return e;
 };
 attackInfo=function(m,e){const out=_origAttackInfo(m,e);if(e.armor&&out.dmg)out.dmg=Math.max(1,Math.ceil(out.dmg*(1-e.armor)));return out};
-hit=function(e,b){const before=e.hp;_origHit(e,b);const mon=active();if(mon&&mode!=='menu'&&before>e.hp)mon.ult=Math.min(24,(mon.ult||0)+1)};
+hit=function(e,b){const before=e.hp;_origHit(e,b);const mon=active();if(mon&&mode!=='menu'&&before>e.hp)mon.ult=Math.min(70,(mon.ult||0)+1)};
 endVolley=function(){
  // Support enemies heal one nearby wounded ally; elite tanks absorb damage instead of only adding HP.
  if(run&&run.blocks.length){for(const e of [...run.blocks]){
@@ -612,14 +612,14 @@ handleAction=function(action){
   if(action==='event:trademoney'){saved.tokens+=7;save()}
   hideModal();if(run.expQueue.length){run.afterReward=()=>nextRoute();run.pendingGlobal=false;showLevelUp()}else nextRoute();return;
  }
- if(action==='ui:special'){if(mode!=='aim'||(active().ult||0)<20)return;active().ult=0;run.specialShot=true;shoot();refresh();return}
+ if(action==='ui:special'){if(mode!=='aim'||(active().ult||0)<70)return;active().ult=0;run.specialShot=true;shoot();refresh();return}
  if(action==='menu:home'){homeTab='inicio';return _menuAction(action)}
  return _menuAction(action)
 };
-const SPECIAL_BUTTON=document.createElement('button');SPECIAL_BUTTON.id='specialBtn';SPECIAL_BUTTON.className='special-btn';SPECIAL_BUTTON.dataset.action='ui:special';SPECIAL_BUTTON.textContent='✦ ESPECIAL · 0/20';
+const SPECIAL_BUTTON=document.createElement('button');SPECIAL_BUTTON.id='specialBtn';SPECIAL_BUTTON.className='special-btn';SPECIAL_BUTTON.dataset.action='ui:special';SPECIAL_BUTTON.textContent='✦ ESPECIAL · 0/70';
 $id('fireBtn').insertAdjacentElement('beforebegin',SPECIAL_BUTTON);
 SPECIAL_BUTTON.addEventListener('click',()=>handleAction('ui:special'));
-refresh=function(){_origRefresh();if(!run)return;const p=active();if(p){SPECIAL_BUTTON.disabled=mode!=='aim'||(p.ult||0)<20;SPECIAL_BUTTON.textContent=(p.ult||0)>=20?'✦ ESPECIAL LISTO':`✦ ESPECIAL ${p.ult||0}/20`}
+refresh=function(){_origRefresh();if(!run)return;const p=active();if(p){SPECIAL_BUTTON.disabled=mode!=='aim'||(p.ult||0)<70;SPECIAL_BUTTON.textContent=(p.ult||0)>=70?'✦ ESPECIAL LISTO':`✦ ESPECIAL ${p.ult||0}/20`}
  if(mode==='menu'){$id('topStatus').innerHTML=`🪙 <strong>${saved.tokens||0}</strong> · ${collectionCount()} especies`}
 };
 renderBoard=function(now){_origRenderBoard(now);if(!run)return;
@@ -1322,7 +1322,7 @@ startBattle=function(kind){
 const v07PrevAttack=attackInfo;
 attackInfo=function(m,e){
  const v=v07PrevAttack(m,e),p=active(),a=v07Ability(p);
- if(v.dmg>0&&p&&a&&a.type===m.type&&p.hp>0&&p.hp<=p.maxHp/3){
+ if(v.dmg>0&&p&&a&&a.type===m.type&&p.hp>0&&p.hp<=p.maxHp*.5){
   v.dmg=Math.max(1,Math.ceil(v.dmg*1.30));
   if(p.v07AbilityTurn!==run.turn){p.v07AbilityTurn=run.turn;v07Flash('✦ '+a.name.toUpperCase(),'Daño '+m.type+' +30 %')}
  }
@@ -1362,7 +1362,7 @@ function v07SpecialFor(p){
 const v07ActionBefore=handleAction;
 handleAction=function(action){
  if(action==='ui:special'){
-  if(mode!=='aim'||!active()||(active().ult||0)<20)return;
+  if(mode!=='aim'||!active()||(active().ult||0)<70)return;
   run.v07SpecialArmed=!run.v07SpecialArmed;
   const [icon,name]=v07SpecialFor(active());
   message(run.v07SpecialArmed?icon+' '+name+': apunta y dispara para activarlo.':'Especial cancelado');
