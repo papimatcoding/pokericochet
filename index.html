@@ -147,6 +147,12 @@
 .v08-wave-banner{position:absolute;left:50%;top:10%;transform:translate(-50%,-9px);z-index:6;background:linear-gradient(90deg,#153c42ef,#163442ef);color:#e8fff7;border:1px solid #78ddbc;border-radius:12px;padding:8px 15px;font-size:12px;letter-spacing:.09em;font-weight:900;white-space:nowrap;max-width:96%;overflow:hidden;text-overflow:ellipsis;box-shadow:0 8px 32px #0008;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
 .v08-wave-banner.visible{opacity:1;transform:translate(-50%,0)}
 
+
+.v08-status-choice{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin:8px 0 18px}
+.v08-status-choice button{background:#173a45;color:#e4fff2;border:1px solid #507e7b;border-radius:9px;min-height:42px;min-width:0;font-size:12px;font-weight:850;cursor:pointer}
+.v08-status-choice button:hover{background:#276451;border-color:#afffe0}
+.v08-move-kind{font-weight:700;font-size:10px;opacity:.8}
+
 </style>
 </head>
 <body>
@@ -1677,6 +1683,90 @@ handleAction=function(action){
   hideModal();afterUpgrades();return;
  }
  return v08OldLearnAction(action);
+};
+
+
+/* v0.8 status techniques: one real turn, targeted lanes, limited secondary effects */
+function v08StatusApply(m,p,targets=[]){
+ const name=m.name;
+ if(name==='Drenadoras'){
+  let hits=0;for(const e of targets){if(e.types.includes('grass'))continue;e.v08Leech=Math.max(e.v08Leech||0,4);hits++}
+  v08WaveToast('🌱 DRENADORAS · '+hits+' rivales durante 3 rondas');
+ }else if(name==='Onda Trueno'){
+  let hits=0;for(const e of targets){if(e.types.includes('ground')||e.types.includes('electric'))continue;e.cooldown=Math.max(2,e.cooldown+1);e.v08Paralyzed=2;hits++}
+  v08WaveToast('⚡ ONDA TRUENO · '+hits+' enemigos frenados');
+ }else if(name==='Pantalla Luz'||name==='Protección'){
+  run.v08Light=name==='Protección'?1:4;v08WaveToast('🛡 '+name.toUpperCase()+' · DEFENSA');
+ }else if(name==='Danza Espada'||name==='Desarrollo'){
+  p.v08Power=4;v08WaveToast('⚔ '+name.toUpperCase()+' · POTENCIA +30 %');
+ }else if(name==='Síntesis'){
+  let heal=Math.ceil(p.maxHp*(run.weather==='sun'?.44:.25));
+  p.hp=Math.min(p.maxHp,p.hp+heal);v08WaveToast('🌿 SÍNTESIS · +'+heal+' PS');
+ }else if(name==='Pantalla Humo'){
+  run.blocks.forEach(e=>{if(e.ranged)e.cooldown++});v08WaveToast('💨 PANTALLA HUMO · DISPAROS RETRASADOS');
+ }
+ log(p.name+' utiliza '+name+'.');refresh();
+}
+const v08StatusOldHandle=handleAction;
+handleAction=function(action){
+ if(action.startsWith('v08:aimstatus:')){
+  if(mode!=='statuspick'||!run.v08PendingStatus)return;
+  const [, ,axis,txt]=action.split(':'),n=Number(txt);
+  if(!['c','r'].includes(axis)||!Number.isInteger(n)||n<0||n>(axis==='c'?COLS-1:6))return;
+  const hits=run.blocks.filter(e=>(axis==='c'?e.col:e.row)===n);
+  v08StatusApply(run.v08PendingStatus,active(),hits);
+  run.v08PendingStatus=null;hideModal();mode='shooting';run.pending=0;run.shots=[];run.landing=run.shooter;
+  endVolley();return;
+ }
+ if(action==='v08:cancelstatus'){
+  if(mode==='statuspick'){run.v08PendingStatus=null;hideModal();mode='aim';refresh()}return;
+ }
+ return v08StatusOldHandle(action);
+};
+const v08StatusOldShoot=shoot;
+shoot=function(){
+ if(mode!=='aim')return;
+ const m=active()?.moves?.[active()?.chosen];
+ if(m?.category!=='status')return v08StatusOldShoot();
+ if(['Drenadoras','Onda Trueno'].includes(m.name)){
+  mode='statuspick';run.v08PendingStatus=m;
+  const col=Array.from({length:COLS},(_,i)=>'<button data-action="v08:aimstatus:c:'+i+'">C'+(i+1)+'</button>').join('');
+  const row=Array.from({length:7},(_,i)=>'<button data-action="v08:aimstatus:r:'+i+'">F'+(i+1)+'</button>').join('');
+  showModal('<div class="emblem">MOVIMIENTO DE ESTADO · '+TT[m.type]+'</div><h2>'+m.name+'</h2><p>Elige una fila o columna. Consumirá toda la ronda sin disparar. Las Drenadoras no afectan a Pokémon Planta; Onda Trueno no afecta a Eléctrico ni Tierra.</p><b>COLUMNAS</b><div class="v08-status-choice">'+col+'</div><b>FILAS</b><div class="v08-status-choice">'+row+'</div><div class="actions"><button class="secondary" data-action="v08:cancelstatus">CANCELAR</button></div>');
+ }else{
+  v08StatusApply(m,active(),run.blocks);mode='shooting';run.pending=0;run.shots=[];run.landing=run.shooter;endVolley();
+ }
+};
+const v08StatusAttackBefore=attackInfo;
+attackInfo=function(m,e){
+ const info=v08StatusAttackBefore(m,e);
+ if(active()?.v08Power>0&&m.category==='physical'&&info.dmg>0)info.dmg=Math.max(1,Math.ceil(info.dmg*1.3));
+ if(m.name==='Hoja Afilada'&&info.dmg>0&&chance(.16)){info.dmg=Math.ceil(info.dmg*1.65);info.crit=1.65}
+ if(m.name==='Bola Sombra'&&e.armor&&info.dmg>0)info.dmg=Math.ceil(info.dmg*1.2);
+ return info;
+};
+const v08StatusDamageBefore=takeDamage;
+takeDamage=function(amount,label){
+ if(run?.v08Light>0&&label!=='Ataque cuerpo a cuerpo')amount=Math.max(0,Math.ceil(amount*.55));
+ return v08StatusDamageBefore(amount,label);
+};
+const v08StatusEndBefore=endVolley;
+endVolley=function(){
+ if(mode!=='shooting')return;
+ let healed=0;
+ for(const e of [...run.blocks]){
+  if(e.v08Leech>0&&e.hp>0){
+   e.v08Leech--;const dmg=Math.min(3,Math.max(1,Math.ceil(e.maxHp*.018)));e.hp-=dmg;
+   const p=active();if(p?.hp>0&&healed<3){p.hp=Math.min(p.maxHp,p.hp+1);healed++}
+   textFx(enemyX(e)+enemyW(e)/2,enemyY(e)+9,'🌱 -'+dmg,'#a1f1a1');
+   if(e.hp<=0)enemyDown(e);
+  }
+  if(e.v08Burn>0&&e.hp>0){e.v08Burn--;e.hp-=Math.max(1,Math.ceil(e.maxHp*.014));if(e.hp<=0)enemyDown(e)}
+  if(e.v08Paralyzed>0)e.v08Paralyzed--;
+ }
+ if(run.v08Light>0)run.v08Light--;
+ run.team.forEach(p=>{if(p.v08Power>0)p.v08Power--});
+ return v08StatusEndBefore();
 };
 
 fitBoard();startMenu();requestAnimationFrame(render);
