@@ -3273,6 +3273,203 @@ v07Ability=function(p){
  return v10AbilityPrevious(p);
 };
 
+
+/* ==== 1.0 — recipient-based item shop, extra tiers, compatible TMs ==== */
+Object.assign(PK9_ITEMS,{
+ 'black-sludge':{name:'Lodo Negro',icon:'🟣',price:115,desc:'Cura a Pokémon Veneno; perjudica a otros tipos',kind:'hold',tier:'rare'},
+ 'shell-bell':{name:'Campana Concha',icon:'🔔',price:125,desc:'Recupera 1 PS al derrotar cuatro enemigos',kind:'hold',tier:'rare'},
+ 'focus-sash':{name:'Banda Focus',icon:'🎗️',price:180,desc:'Resiste un golpe mortal a PS completos una vez',kind:'hold',tier:'epic'},
+ 'life-orb':{name:'Vidasfera',icon:'🔮',price:155,desc:'Ataques +18 %, pero −1 PS tras disparar',kind:'hold',tier:'epic'},
+ 'choice-band':{name:'Cinta Elegida',icon:'🥊',price:145,desc:'Potencia daño físico +20 %; restringe a un movimiento',kind:'hold',tier:'rare'},
+ 'choice-specs':{name:'Gafas Elegidas',icon:'👓',price:145,desc:'Potencia daño especial +20 %; restringe a un movimiento',kind:'hold',tier:'rare'},
+ 'expert-belt':{name:'Cinta Experto',icon:'🥋',price:125,desc:'Golpes supereficaces +15 %',kind:'hold',tier:'uncommon'},
+ 'lum-berry':{name:'Baya Ziuela',icon:'🍋',price:65,desc:'Cura una alteración de estado',kind:'hold',tier:'uncommon'},
+ 'tm-protect':{name:'MT Protección',icon:'💿',price:80,desc:'Permite aprender Protección',kind:'tm',move:'Protección',tier:'uncommon'},
+ 'tm-thunder-wave':{name:'MT Onda Trueno',icon:'💿',price:90,desc:'Permite aprender Onda Trueno',kind:'tm',move:'Onda Trueno',tier:'uncommon'},
+ 'tm-swords-dance':{name:'MT Danza Espada',icon:'💿',price:110,desc:'Permite aprender Danza Espada',kind:'tm',move:'Danza Espada',tier:'rare'},
+ 'tm-flamethrower':{name:'MT Lanzallamas',icon:'💿',price:130,desc:'Permite aprender Lanzallamas',kind:'tm',move:'Lanzallamas',tier:'rare'},
+ 'tm-shadow-ball':{name:'MT Bola Sombra',icon:'💿',price:135,desc:'Permite aprender Bola Sombra',kind:'tm',move:'Bola Sombra',tier:'rare'},
+ 'tm-light-screen':{name:'MT Pantalla Luz',icon:'💿',price:95,desc:'Permite aprender Pantalla Luz',kind:'tm',move:'Pantalla Luz',tier:'uncommon'}
+});
+const V10_TM_RULES={
+ 'tm-protect':p=>true,
+ 'tm-thunder-wave':p=>p.types.some(t=>['electric','psychic'].includes(t))||[25,26,133,92,93,94].includes(p.id),
+ 'tm-swords-dance':p=>(p.stats?.[1]||PK9_STATS(p.id)[1])>(p.stats?.[3]||PK9_STATS(p.id)[3])&&p.types.some(t=>['normal','grass','fighting','fire','steel','bug','dark','ground'].includes(t)),
+ 'tm-flamethrower':p=>p.types.some(t=>['fire','dragon'].includes(t))||[58,59,143,133].includes(p.id),
+ 'tm-shadow-ball':p=>p.types.some(t=>['ghost','psychic'].includes(t))||[25,133,146,150].includes(p.id),
+ 'tm-light-screen':p=>p.types.some(t=>['psychic','electric','fairy'].includes(t))||[1,2,3,7,8,9].includes(p.id)
+};
+function v10TMCompatible(item,p){
+ const meta=PK9_ITEMS[item];
+ return meta?.kind==='tm'&&!!V08_MOVEDATA[meta.move]&&
+ !!V10_TM_RULES[item]?.(p)&&!p.moves.some(m=>m.name===meta.move);
+}
+function v10CanUse(item,p){
+ const meta=PK9_ITEMS[item];if(!meta||!p)return false;
+ if(meta.kind==='tm')return v10TMCompatible(item,p);
+ if(meta.kind==='revive')return p.hp===0;
+ if(meta.kind==='heal')return p.hp>0&&p.hp<p.maxHp;
+ if(meta.kind==='hold')return p.hp>0;
+ return false;
+}
+const v10ShopStockBefore=pk9CampStock;
+pk9CampStock=function(){
+ const offer=v10ShopStockBefore();
+ const compatible=['tm-protect','tm-thunder-wave','tm-swords-dance','tm-flamethrower','tm-shadow-ball','tm-light-screen']
+   .filter(id=>run.team.some(p=>v10TMCompatible(id,p)));
+ const extra=['black-sludge','shell-bell','focus-sash','life-orb','choice-band','choice-specs','expert-belt','lum-berry']
+   .filter(id=>id!=='black-sludge'||run.team.some(p=>p.types.includes('poison')));
+ const pool=[...compatible,...extra].filter(id=>!offer.stock.includes(id));
+ const weighted=pool.map(id=>({id,weight:({uncommon:48,rare:15,epic:3})[PK9_ITEMS[id].tier]||25}));
+ for(let i=0;i<2&&weighted.length;i++){
+  const chosen=v10Weighted(weighted);offer.stock.push(chosen.id);
+  weighted.splice(weighted.indexOf(chosen),1);
+ }
+ return offer;
+};
+const v10ShopViewBefore=pk9ShowShop;
+pk9ShowShop=function(){
+ v10ShopViewBefore();
+ const marker=modal.querySelector('.v09-shop .emblem');
+ if(marker)marker.textContent='🛍️ POKÉTIENDA · ELIGE OBJETO Y DESTINATARIO';
+};
+function v10RecipientPicker(item){
+ const meta=PK9_ITEMS[item],evo=run.v09Camp?.special;
+ const evolution=evo?.item===item,price=evolution?150:meta.price;
+ if(!run.v09Camp||run.money<price)return;
+ const candidates=run.team.map((p,i)=>{
+  const ok=evolution?(i===evo.i&&p.id===evo.e.from):v10CanUse(item,p);
+  const current=p.heldItem&&PK9_ITEMS[p.heldItem]?.name;
+  const detail=evolution?'Evoluciona a '+(DB[evo.e.to]?.[0]||V10_LABEL(evo.e.to)):
+    meta.kind==='hold'?(current?'⚠ Sustituye '+current+' (se pierde)':'Hueco libre'):
+    meta.kind==='tm'?(p.moves.length===4?'Olvidará un movimiento':'Aprenderá '+meta.move):
+    meta.kind==='revive'?'Revive al 50 % de PS':'PS: '+p.hp+'/'+p.maxHp;
+  return '<button class="v10-recipient" data-action="v10:recipient:'+item+':'+i+'" '+(!ok?'disabled':'')+'>'+
+   sImg(p.id,p.shiny)+'<span><b>'+p.name+' <small>NV. '+p.level+'</small></b><small>'+detail+'</small></span>'+
+   '<strong>'+p.hp+'/'+p.maxHp+' PS</strong></button>';
+ }).join('');
+ showModal('<div class="v10-recipient-screen"><div class="emblem">🎒 '+(meta?.name||PK9_ITEM_NAMES[item]||item).toUpperCase()+'</div>'+
+ '<h2>¿A quién se lo das?</h2><p>₽'+price+' · '+(meta?.desc||'Evolución mediante objeto')+'. Los objetos no se guardan: el cambio o descarte hace perder el anterior.</p>'+
+ '<div class="v10-recipients">'+candidates+'</div><div class="actions"><button class="secondary" data-action="v09:shop">CANCELAR SIN GASTAR</button></div></div>');
+}
+function v10ApplyPurchase(item,slot,forget=null){
+ const meta=PK9_ITEMS[item],offer=run.v09Camp,evo=offer?.special,p=run.team[slot];
+ const evolution=evo?.item===item,price=evolution?150:meta?.price;
+ if(!offer||!p||!price||run.money<price||!offer.stock.includes(item)&&!evolution)return false;
+ if(evolution&&!(slot===evo.i&&p.id===evo.e.from))return false;
+ if(!evolution&&!v10CanUse(item,p))return false;
+ if(meta?.kind==='tm'&&p.moves.length>=4&&(!Number.isInteger(forget)||forget<0||forget>=p.moves.length))return false;
+ run.money-=price;
+ if(evolution){
+  const result=pk9ApplyEvo(p,evo.e);offer.special=null;
+  mode='evolving';
+  showModal('<div class="v09-evolution"><div class="emblem">EVOLUCIÓN · '+(PK9_ITEM_NAMES[item]||item)+'</div>'+
+   '<h2>¡'+result.before+' está evolucionando!</h2>'+
+   '<div class="v09-evo-scene"><img class="v09-evo-old" src="'+sprite(result.beforeId,p.shiny)+'"><span class="v09-evo-core">✦</span><img class="v09-evo-new" src="'+sprite(result.afterId,p.shiny)+'"></div>'+
+   '<h2>¡Ahora es '+result.after+'!</h2><p>Conserva nivel, EVs, IVs y movimientos.</p>'+
+   '<button class="big-play" data-action="v09:evofinish">VOLVER AL CAMPAMENTO</button></div>');
+  return true;
+ }
+ if(meta.kind==='hold'){
+  p.heldItem=item;p.v09HeldUsed=false;
+  v08WaveToast('🎒 '+p.name+' EQUIPA '+meta.name.toUpperCase());
+ }else if(meta.kind==='heal')p.hp=Math.min(p.maxHp,p.hp+meta.heal);
+ else if(meta.kind==='revive')p.hp=Math.ceil(p.maxHp*.5);
+ else if(meta.kind==='tm'){
+  const move=v08Move(meta.move);if(!move)return false;
+  if(forget!==null)p.moves.splice(forget,1,move);
+  else p.moves.push(move);
+  p.chosen=p.moves.length-1;
+  v08WaveToast('💿 '+p.name+' APRENDE '+meta.move);
+ }
+ offer.stock=offer.stock.filter(x=>x!==item);
+ pk9ShowShop();refresh();return true;
+}
+function v10ForgetForTM(item,slot){
+ const p=run.team[slot],meta=PK9_ITEMS[item];
+ const cards=p.moves.map((m,i)=>'<button class="v10-recipient" data-action="v10:tmforget:'+item+':'+slot+':'+i+'"><b>'+m.name+'</b><small>'+TT[m.type]+' · '+(m.category==='status'?'ESTADO':m.balls+' BOLAS')+'</small><span>OLVIDAR ›</span></button>').join('');
+ showModal('<div class="v10-recipient-screen"><div class="emblem">💿 MT · '+meta.name+'</div><h2>'+p.name+' ya conoce cuatro movimientos</h2>'+
+ '<p>Elige cuál olvidar. La MT se consume al confirmar y el movimiento olvidado se pierde.</p><div class="v10-recipients">'+cards+'</div>'+
+ '<div class="actions"><button class="secondary" data-action="v09:shop">VOLVER SIN GASTAR</button></div></div>');
+}
+const v10ShopActionsPrevious=handleAction;
+handleAction=function(action){
+ if(action.startsWith('v09:buy:')){
+  if(mode!=='event'||!run.v09Camp)return;
+  const item=action.slice(8),evo=run.v09Camp.special;
+  if(!PK9_ITEMS[item]&&evo?.item!==item)return;
+  if(!run.v09Camp.stock.includes(item)&&evo?.item!==item)return;
+  v10RecipientPicker(item);return;
+ }
+ if(action.startsWith('v10:recipient:')){
+  const parts=action.split(':'),item=parts[2],i=Number(parts[3]),p=run?.team[i],meta=PK9_ITEMS[item];
+  if(mode!=='event'||!p)return;
+  if(meta?.kind==='tm'&&v10TMCompatible(item,p)&&p.moves.length>=4){v10ForgetForTM(item,i);return}
+  v10ApplyPurchase(item,i);return;
+ }
+ if(action.startsWith('v10:tmforget:')){
+  const p=action.split(':'),item=p[2],slot=Number(p[3]),forget=Number(p[4]);
+  if(mode==='event')v10ApplyPurchase(item,slot,forget);
+  return;
+ }
+ if(action==='v10:forgetopen'){
+  if(mode!=='aim')return;
+  const p=active();
+  if(p.moves.length<=1){message('Tu Pokémon debe conocer al menos un movimiento.');return}
+  mode='moveforget';
+  showModal('<div class="emblem">📕 MOVIMIENTOS · '+p.name+'</div><h2>Olvidar un movimiento</h2>'+
+   '<p>No consume una ronda. Debes conservar al menos un movimiento.</p>'+
+   '<div class="v10-recipients">'+p.moves.map((m,i)=>'<button class="v10-recipient" data-action="v10:forget:'+i+'"><b>'+m.name+'</b><small>'+TT[m.type]+' · '+(m.category==='status'?'Estado':'Ataque')+'</small><strong>OLVIDAR ›</strong></button>').join('')+
+   '</div><div class="actions"><button class="secondary" data-action="v10:forgetcancel">CANCELAR</button></div>');
+  return;
+ }
+ if(action==='v10:forgetcancel'){if(mode==='moveforget'){hideModal();mode='aim';refresh()}return}
+ if(action.startsWith('v10:forget:')&&mode==='moveforget'){
+  const i=Number(action.split(':')[2]),p=active();
+  if(p?.moves.length<=1||!Number.isInteger(i)||i<0||i>=p.moves.length)return;
+  const old=p.moves.splice(i,1)[0];p.chosen=0;hideModal();mode='aim';
+  log('📕 '+p.name+' olvidó '+old.name);refresh();return;
+ }
+ return v10ShopActionsPrevious(action);
+};
+const v10ItemAttackBefore=attackInfo;
+attackInfo=function(m,e){
+ const info=v10ItemAttackBefore(m,e),p=active();if(!p||info.dmg<=0)return info;
+ const held=p.heldItem;
+ if(held==='life-orb')info.dmg=Math.max(1,Math.ceil(info.dmg*1.18));
+ if(held==='choice-band'&&m.category==='physical')info.dmg=Math.ceil(info.dmg*1.20);
+ if(held==='choice-specs'&&m.category==='special')info.dmg=Math.ceil(info.dmg*1.20);
+ if(held==='expert-belt'&&info.mult>1)info.dmg=Math.ceil(info.dmg*1.15);
+ return info;
+};
+const v10ItemDamageBefore=takeDamage;
+takeDamage=function(amount,label){
+ const p=active(),full=p?.hp===p?.maxHp;
+ if(p?.heldItem==='focus-sash'&&!p.v09HeldUsed&&full&&amount>=p.hp&&p.hp>1){
+  p.v09HeldUsed=true;amount=p.hp-1;v07Flash('🎗 ¡BANDA FOCUS!');
+ }
+ return v10ItemDamageBefore(amount,label);
+};
+const v10ItemTurnBefore=endVolley;
+endVolley=function(){
+ const p=active();
+ if(p&&mode==='shooting'){
+  if(p.heldItem==='life-orb'&&p.hp>1){p.hp--;textFx(run.shooter,SHOOT_Y-26,'VIDASFERA −1','#ffb6ac')}
+  if(p.heldItem==='black-sludge'&&run.turn%2===0)p.hp=Math.max(0,Math.min(p.maxHp,p.hp+(p.types.includes('poison')?1:-1)));
+  if(p.heldItem==='lum-berry'&&!p.v09HeldUsed&&p.v10Paralyzed){p.v10Paralyzed=0;p.v09HeldUsed=true;v07Flash('🍋 ¡BAYA ZIUELA!')}
+ }
+ return v10ItemTurnBefore();
+};
+const v10ShellBellKill=enemyDown;
+enemyDown=function(e){
+ const present=run.blocks.includes(e),p=active();
+ v10ShellBellKill(e);
+ if(p&&present&&!run.blocks.includes(e)&&p.heldItem==='shell-bell'){
+  p.v10ShellKills=(p.v10ShellKills||0)+1;
+  if(p.v10ShellKills%4===0&&p.hp>0)p.hp=Math.min(p.maxHp,p.hp+1);
+ }
+};
+
 fitBoard();startMenu();requestAnimationFrame(render);
 })();
 </script>
