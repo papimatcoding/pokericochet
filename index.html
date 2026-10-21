@@ -3470,6 +3470,141 @@ enemyDown=function(e){
  }
 };
 
+
+/* ==== v1.0 — a deliberate fixed route, minibosses, switches and floor recaps ==== */
+PATH_TYPES.miniboss={icon:'👹',name:'Minijefe',desc:'Pokémon alfa con habilidades reforzadas'};
+V07_DETAILS.miniboss=['👹','¡Minijefe!','Un encuentro de alta presión con Pokémon alfa'];
+ZONES[3].rooms=5;
+generateMap=function(){
+ const rooms=zone().rooms,rows=[];
+ const dangerous=['wild','hunt','duel','storm','ambush','fortress','rare','swarm'];
+ for(let floor=1;floor<=rooms;floor++){
+  let kind=floor===1?'wild':floor===3?'camp':floor===rooms?'miniboss':pick(dangerous);
+  rows.push(Array.from({length:3},(_,lane)=>({floor,lane,kind,edges:floor===1?[]:[lane]})));
+ }
+ return {zone:run.zone,rows};
+};
+const v10NextFloorBefore=nextRoute;
+nextRoute=function(){
+ if(run){
+  run.v10FloorCaptures=[];
+  run.v10FloorStartMoney=run.money||0;
+  run.v10CoinsGained=0;
+ }
+ return v10NextFloorBefore();
+};
+const v10EncounterBefore=startBattle;
+startBattle=function(kind){
+ v10EncounterBefore(kind);
+ if(run.v10ChallengeNext){
+  for(const e of run.blocks){e.maxHp=Math.ceil(e.maxHp*1.16);e.hp=e.maxHp}
+  run.v10ChallengeNext=false;v08WaveToast('⚔ RETO DEL ENTRENADOR · HP ENEMIGO +16 %');
+ }
+};
+const v10IncomingRows=pk9EmitRow;
+pk9EmitRow=function(row=0){
+ const emitted=v10IncomingRows(row);
+ if(emitted&&[5,10,14].includes(run.v09RowsEmitted)&&chance(.27)){
+  const weather=pick(['sun','rain','sand','snow']);
+  run.weather=weather;
+  const label={sun:'☀️ EL SOL SE INTENSIFICA',rain:'🌧️ EMPIEZA A LLOVER',sand:'🌪️ TORMENTA ARENA',snow:'❄️ EMPIEZA A NEVAR'}[weather];
+  v08WaveToast(label);log(label);
+ }
+ return emitted;
+};
+const v10PreviousEfficacy=attackInfo;
+attackInfo=function(m,e){
+ const a=v10PreviousEfficacy(m,e);
+ if(e.v10Skill==='sturdy'&&!e.v10SturdyUsed&&e.hp===e.maxHp&&a.dmg>=e.hp&&e.hp>1){
+  a.dmg=e.hp-1;e.v10SturdyUsed=true;v08WaveToast('🪨 ¡ROBUSTEZ DE '+e.name.toUpperCase()+'!');
+ }
+ return a;
+};
+// Sturdy is resolved in the attack calculation, never resurrect a defeated monster.
+const v10SturdyHitOriginal=hit;
+hit=function(e,b){
+ // Older collision-handler fallback is bypassed by having v10SturdyUsed set by attackInfo.
+ if(e.v10Skill==='sturdy'&&!e.v10SturdyUsed&&e.hp===e.maxHp)e.v10SturdyUsed=true;
+ return v10SturdyHitOriginal(e,b);
+};
+function v10PartySwitch(){
+ if(!run||mode!=='aim'||run.team.filter(p=>p.hp>0).length<2)return;
+ mode='switchpick';
+ const cards=run.team.map((p,i)=>{
+  const current=i===run.active,dead=p.hp<=0;
+  return '<button class="v10-recipient" data-action="v10:switch:'+i+'" '+(current||dead?'disabled':'')+'>'+sImg(p.id,p.shiny)+
+  '<span><b>'+p.name+' · Nv. '+p.level+'</b><small>'+(current?'EN CAMPO':dead?'DEBILITADO':'Entra en combate · consume una ronda')+'</small></span>'+
+  '<strong>'+p.hp+'/'+p.maxHp+' PS</strong></button>';
+ }).join('');
+ showModal('<div class="v10-recipient-screen"><div class="emblem">⚔ RELEVO POKÉMON</div><h2>Elige quién entra</h2><p>El cambio consume una ronda completa: los enemigos pueden atacarte y acercarse. Las habilidades de entrada se activan.</p><div class="v10-recipients">'+cards+'</div><div class="actions"><button class="secondary" data-action="v10:switchcancel">VOLVER A DISPARAR</button></div></div>');
+}
+const v10SwitchHandlerBefore=handleAction;
+handleAction=function(action){
+ if(action==='v10:switchopen'){v10PartySwitch();return}
+ if(action==='v10:switchcancel'){if(mode==='switchpick'){hideModal();mode='aim';refresh()}return}
+ if(action.startsWith('v10:switch:')){
+  if(mode!=='switchpick')return;
+  const index=Number(action.split(':')[2]);
+  if(!Number.isInteger(index)||index<0||index>=run.team.length||run.team[index].hp<=0||index===run.active)return;
+  const p=run.team[index];run.active=index;
+  run.v07SpecialArmed=false;run.shots=[];run.pending=0;run.landing=run.shooter;
+  hideModal();mode='shooting';
+  v07EnterAbility(p);v07RefreshAbility();
+  log('🔄 ¡Adelante, '+p.name+'! El cambio consume una ronda.');
+  v08WaveToast('🔄 ¡ADELANTE '+p.name.toUpperCase()+'!');
+  endVolley();return;
+ }
+ return v10SwitchHandlerBefore(action);
+};
+const v10SwitchButton=document.createElement('button');
+v10SwitchButton.className='v10-hud-control';v10SwitchButton.textContent='🔄 CAMBIAR';
+v10SwitchButton.title='Cambiar de Pokémon consume una ronda completa';
+$id('helpBtn').insertAdjacentElement('beforebegin',v10SwitchButton);
+v10SwitchButton.onclick=()=>handleAction('v10:switchopen');
+const v10ForgetButton=document.createElement('button');
+v10ForgetButton.className='v10-hud-control';v10ForgetButton.textContent='📘 MVS';
+v10ForgetButton.title='Revisar y olvidar movimientos antes de disparar';
+$id('helpBtn').insertAdjacentElement('beforebegin',v10ForgetButton);
+v10ForgetButton.onclick=()=>handleAction('v10:forgetopen');
+const v10RefreshHUD=refresh;
+refresh=function(){
+ v10RefreshHUD();
+ if(!run)return;
+ v10SwitchButton.disabled=mode!=='aim'||run.team.filter(p=>p.hp>0).length<2;
+ v10ForgetButton.disabled=mode!=='aim'||!active()||active().moves.length<=1;
+ if(mode!=='menu'){
+  const status=$id('topStatus');
+  if(status)status.innerHTML+='<span class="v10-money">₽ '+(run.money||0)+'</span>';
+ }
+};
+function v10FloorRecap(boss=false){
+ mode='reward';const captures=run.v10FloorCaptures||[],won=(run.money||0)-(run.v10FloorStartMoney||0);
+ const entries=captures.map(c=>'<div class="v10-capture">'+sImg(c.id,c.shiny)+
+ '<span><b>'+def(c.id).name+(c.shiny?' ✨':'')+'</b><small>+'+c.candies+' 🍬 · '+c.ivs+' IV mejorados'+(c.joined?' · AL EQUIPO':'')+'</small></span></div>').join('');
+ const chanceEvent=!boss&&run.floor<zone().rooms&&Math.random()<.22;
+ run.v10NextChoice=chanceEvent;
+ const choice=chanceEvent?'<div class="v10-between-event"><div><b>📜 Un entrenador te propone un desafío</b><p>Recibe ₱20 ahora, pero los enemigos del próximo combate tendrán un 16 % más de PS.</p></div><button class="v10-event-button" data-action="v10:challenge">ACEPTAR RETO · +₽20</button></div>':'';
+ showModal('<div class="v10-floor-summary"><div class="emblem">'+(boss?'👑 JEFE DERROTADO':'✦ PISO COMPLETADO')+'</div>'+
+ '<h2>'+(boss?'¡Victoria en '+zone().name+'!':'Piso '+run.floor+' superado')+'</h2>'+
+ '<div class="v10-results"><div><small>POKÉDÓLARES OBTENIDOS</small><strong>₽ +'+Math.max(0,won)+'</strong><em>Enemigos derrotados y recompensas</em></div><div><small>CAPTURAS DE ESTE PISO</small><strong>'+captures.length+'</strong><em>'+((run.v10ShinyLuck||0)*100).toFixed(0)+' % bonificación por shinies</em></div></div>'+
+ '<div class="v10-recap-captures">'+(entries||'<p>Sin capturas. Sigue buscando Poké Balls entre los bloques.</p>')+'</div>'+choice+
+ '<button class="big-play" data-action="v10:continue">'+(boss?'CONTINUAR A LA SIGUIENTE ZONA':'SIGUIENTE PISO')+' →</button></div>');
+};
+showBattleClear=function(boss){v10FloorRecap(boss)};
+const v10ProgressAction=handleAction;
+handleAction=function(action){
+ if(action==='v10:challenge'&&mode==='reward'&&run.v10NextChoice){
+  run.v10NextChoice=false;run.money+=20;run.v10ChallengeNext=true;
+  v08WaveToast('📜 RETO ACEPTADO · +₽20');
+  v10FloorRecap(run.encounter==='boss');return;
+ }
+ if(action==='v10:continue'&&mode==='reward'){
+  hideModal();const next=run.afterReward;run.afterReward=null;
+  if(next)next();return;
+ }
+ return v10ProgressAction(action);
+};
+
 fitBoard();startMenu();requestAnimationFrame(render);
 })();
 </script>
