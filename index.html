@@ -1747,15 +1747,15 @@ handleAction=function(action){
 function v08StatusApply(m,p,targets=[]){
  const name=m.name;
  if(name==='Drenadoras'){
-  let hits=0;for(const e of targets){if(e.types.includes('grass'))continue;e.v08Leech=Math.max(e.v08Leech||0,4);hits++}
+  let hits=0;for(const e of targets){if(e.types.includes('grass'))continue;e.v08Leech=Math.max(e.v08Leech||0,4+(p.v09StatusLevel||0));hits++}
   v08WaveToast('🌱 DRENADORAS · '+hits+' rivales durante 3 rondas');
  }else if(name==='Onda Trueno'){
-  let hits=0;for(const e of targets){if(e.types.includes('ground')||e.types.includes('electric'))continue;e.cooldown=Math.max(2,e.cooldown+1);e.v08Paralyzed=2;hits++}
+  let hits=0;for(const e of targets){if(e.types.includes('ground')||e.types.includes('electric'))continue;e.cooldown=Math.max(2,e.cooldown+1);e.v08Paralyzed=2+(p.v09StatusLevel||0);hits++}
   v08WaveToast('⚡ ONDA TRUENO · '+hits+' enemigos frenados');
  }else if(name==='Pantalla Luz'||name==='Protección'){
-  run.v08Light=name==='Protección'?1:4;v08WaveToast('🛡 '+name.toUpperCase()+' · DEFENSA');
+  run.v08Light=(name==='Protección'?1:4)+(p.v09StatusLevel||0);v08WaveToast('🛡 '+name.toUpperCase()+' · DEFENSA');
  }else if(name==='Danza Espada'||name==='Desarrollo'){
-  p.v08Power=4;v08WaveToast('⚔ '+name.toUpperCase()+' · POTENCIA +30 %');
+  p.v08Power=4+(p.v09StatusLevel||0);v08WaveToast('⚔ '+name.toUpperCase()+' · POTENCIA +30 %');
  }else if(name==='Síntesis'){
   let heal=Math.ceil(p.maxHp*(run.weather==='sun'?.44:.25));
   p.hp=Math.min(p.maxHp,p.hp+heal);v08WaveToast('🌿 SÍNTESIS · +'+heal+' PS');
@@ -2395,7 +2395,12 @@ winBattle=function(){
   }
   return;
  }
- if(run)run.v09Active=false;
+ if(run?.v09Active&&run.v09RowsEmitted>=run.v09RowsTotal&&run.blocks.length===0&&run.drops.length>0&&!run.v09CatchChance){
+  run.v09CatchChance=true;mode='aim';run.shots=[];run.pending=0;run.aim=-Math.PI/2;
+  v08WaveToast('🔴 ÚLTIMO TIRO · RECUPERA TUS POKÉ BALLS');
+  refresh();return;
+ }
+ if(run){run.v09Active=false;run.v09CatchChance=false}
  return pk9BeforeWin();
 };
 const pk9BeforeHUD=refresh;
@@ -2420,7 +2425,7 @@ renderBoard=function(now){
  ctx.fillText('FILAS  '+(run.v09RowsEmitted||0)+' / '+(run.v09RowsTotal||15),14,35);
  if(run.blocks.some(e=>e.row>=6)){
   ctx.fillStyle='#ffb7a5';ctx.textAlign='center';ctx.font='900 12px system-ui';
-  ctx.fillText('⚠ ¡BLOQUES CERCA!',W/2,FLOOR_Y+12);
+  ctx.fillText('⚠ ¡PELIGRO! ENEMIGOS CERCA',W/2,FLOOR_Y+12);
  }
  ctx.restore();
 };
