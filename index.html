@@ -1733,7 +1733,7 @@ const v08OldLearnAction=handleAction;
 handleAction=function(action){
  if(action==='level:v08learn'){
   if(mode!=='upgrade'||!run.levelOptions?.some(o=>o.key==='v08learn'))return;
-  const p=run.team[run.upgrading],name=(V08_LEARNSETS[rootOf(p.id)]||[]).find(n=>!p.moves.some(m=>m.name===n));
+  const p=run.team[run.upgrading],name=pk9LearnsetFor(p).find(n=>n.level<=p.level&&!p.moves.some(m=>m.name===n.name))?.name;
   if(!name||p.moves.length>=4)return;
   p.moves.push(v08Move(name));p.chosen=p.moves.length-1;
   hideModal();afterUpgrades();return;
@@ -2148,6 +2148,7 @@ mkMon=function(id,lvl=5,shiny=false){
  p.abilityOfficial=ab.find(a=>!a.hidden)?.name||'';
  p.abilityHidden=ab.find(a=>a.hidden)?.name||'';
  p.heldItem=null;
+ pk9PrefetchLearnset(id);
  return p;
 };
 v05HP=function(id,level){
@@ -2165,6 +2166,7 @@ addXP=function(base){
   while(p.level<100&&p.xp>=neededXP(p.level)&&gained++<5){
    p.xp-=neededXP(p.level);p.level++;
    pk9Recacl(p,false);
+   pk9AcquireMoves(p);
    p.hp=Math.min(p.maxHp,p.hp+Math.max(1,Math.ceil(p.maxHp*.12)));
    run.expQueue.push(i);
    log('✨ '+p.name+' alcanza el nivel '+p.level);
@@ -2257,9 +2259,22 @@ function pk9PrefetchLearnset(id){
    if(label&&typeof V08_MOVEDATA[label]!=='undefined')found.push({name:label,level:l.level_learned_at});
   }
   found.sort((a,b)=>a.level-b.level);
-  return found.filter((r,i,arr)=>arr.findIndex(x=>x.name===r.name)===i);
+  const curated=found.filter((r,i,arr)=>arr.findIndex(x=>x.name===r.name)===i);
+  pk9LearnCache.set(id,curated);
+  for(const p of run?.team||[])if(p.id===id&&p.level>5)pk9AcquireMoves(p);
+  return curated;
  }).catch(()=>[]);
  pk9LearnCache.set(id,promise);
+}
+function pk9AcquireMoves(p){
+ if(!p||p.level<=5)return;
+ const pool=pk9LearnsetFor(p).filter(x=>x.level<=p.level);
+ for(const candidate of pool){
+  if(p.moves.length>=4)break;
+  if(p.moves.some(m=>m.name===candidate.name))continue;
+  const move=v08Move(candidate.name);if(!move)continue;
+  p.moves.push(move);log('📘 '+p.name+' aprendió '+candidate.name+' (Nv. '+p.level+')');
+ }
 }
 function pk9LearnsetFor(p){
  const family=V08_LEARNSETS[rootOf(p.id)]||[];
@@ -2580,6 +2595,115 @@ const pk9ItemsVolleyBefore=endVolley;
 endVolley=function(){
  if(run?.v09Active)for(const p of run.team)if(p.hp>0&&p.heldItem==='leftovers'&&run.turn%2===0)p.hp=Math.min(p.maxHp,p.hp+1);
  return pk9ItemsVolleyBefore();
+};
+
+
+/* v0.9 polish: official identity, mapped hidden abilities, real offensive/defensive stats */
+for(const [id,name] of Object.entries({
+  134:'Vaporeon',135:'Jolteon',136:'Flareon',196:'Espeon',197:'Umbreon',470:'Leafeon',471:'Glaceon',700:'Sylveon'
+})){
+ if(!DB[id])DB[id]=[name,PK9.types[id]||['normal'],'rare',7,'✦'];
+ FAMILY_ROOT[id]=133;FAMILY_STAGE[id]=1;
+}
+const PK9_ABILITY_NAMES={
+ overgrow:'Espesura',blaze:'Mar Llamas',torrent:'Torrente',intimidate:'Intimidación',
+ chlorophyll:'Clorofila',static:'Electricidad Estática',sturdy:'Robustez',levitate:'Levitación',
+ 'thick-fat':'Sebo','swift-swim':'Nado Rápido','water-absorb':'Absorbe Agua',
+ 'flash-fire':'Absorbe Fuego','lightning-rod':'Pararrayos','solar-power':'Poder Solar',
+ 'battle-armor':'Armadura Batalla','shell-armor':'Caparazón','compound-eyes':'Ojo Compuesto'
+};
+const pk9AbilityBefore=v07Ability;
+v07Ability=function(p){
+ if(!p)return null;
+ const abilities=PK9.abilities[p.id]||PK9.abilities[rootOf(p.id)]||[];
+ const unlocked=!!saved.abilityUnlocked?.[rootOf(p.id)];
+ const selected=abilities.find(a=>a.hidden===unlocked)||abilities.find(a=>!a.hidden);
+ const english=selected?.name;
+ if(!english)return pk9AbilityBefore(p);
+ const spanish=PK9_ABILITY_NAMES[english]||english.replaceAll('-',' ').toUpperCase();
+ const kind={overgrow:'grass',blaze:'fire',torrent:'water',intimidate:'enter',chlorophyll:'sun',static:'static',sturdy:'sturdy',
+ levitate:'levitate','flash-fire':'fire-immune','lightning-rod':'electric-immune','water-absorb':'water-immune',
+ 'swift-swim':'rain','solar-power':'sun','thick-fat':'defense'}[english]||'passive';
+ return {name:spanish,type:kind,original:english};
+};
+v07Flash=function(title){v07FlashNode.textContent=title;v07FlashNode.style.display='block';clearTimeout(v07FlashTimer);v07FlashTimer=setTimeout(()=>{v07FlashNode.style.display='none'},1300)};
+const pk9BeforeTakeAbility=takeDamage;
+takeDamage=function(amount,source){
+ const p=active(),ab=v07Ability(p);
+ if(p&&ab?.type==='defense')amount=Math.max(1,Math.ceil(amount*.86));
+ return pk9BeforeTakeAbility(amount,source);
+};
+const pk9OfficialAttack=attackInfo;
+attackInfo=function(m,e){
+ const v=pk9OfficialAttack(m,e),p=active();
+ if(v.dmg<=0||!p||m.category==='status')return v;
+ const category=m.category==='physical'?'physical':'special';
+ const a=category==='physical'?1:3,d=category==='physical'?2:4;
+ const atk=p.stats?.[a]||pk9OneStat(p,a);
+ const enemyStats={id:e.id,level:e.level||Math.max(4,p.level),ivs:[12,12,12,12,12,12],evs:[0,0,0,0,0,0]};
+ const defStat=pk9OneStat(enemyStats,d);
+ const statFactor=Math.max(.67,Math.min(1.55,(atk+7)/(defStat+7)));
+ v.dmg=Math.max(1,Math.round(v.dmg*statFactor));
+ return v;
+};
+const pk9PrevLaunchVelocity=launchBall;
+launchBall=function(){
+ pk9PrevLaunchVelocity();
+ const b=run.shots?.[run.shots.length-1],p=active();
+ if(!b||!p)return;
+ const speed=p.stats?.[5]||pk9OneStat(p,5);
+ const mod=Math.max(.96,Math.min(1.12,1+(speed-20)/600));
+ b.vx*=mod;b.vy*=mod;
+};
+const pk9PriorNewEnemy=newEnemy;
+newEnemy=function(id,col,row,boss=false,elite=false){
+ const e=pk9PriorNewEnemy(id,col,row,boss,elite);
+ const partyAverage=Math.round((run.team||[]).reduce((n,p)=>n+p.level,0)/Math.max(1,run.team.length));
+ e.level=Math.max(3,Math.min(100,partyAverage+(elite?2:0)+(boss?4:0)));
+ return e;
+};
+const pk9OldLevelCards=levelOptions;
+levelOptions=function(p){
+ const options=pk9OldLevelCards(p);
+ // Officially learned moves no longer consume an upgrade reward.
+ return options.map(o=>o.key==='v08learn'?{
+  key:'crit',title:'Concentración',desc:'Mejora la precisión de los golpes críticos',emoji:'🎯'
+ }:o);
+};
+const pk9BeforeMenuActions=handleAction;
+handleAction=function(action){
+ if(action.startsWith('v04:starter:')){
+  const was=saved.hasStarter,ret=pk9BeforeMenuActions(action);
+  if(!was&&saved.hasStarter){pk9RollIV(saved.leader,false);pk9PrefetchLearnset(saved.leader);}
+  return ret;
+ }
+ if(action.startsWith('v09:unlockability:')){
+  const id=Number(action.split(':')[2]),root=rootOf(id),hidden=(PK9.abilities[id]||[]).find(a=>a.hidden);
+  if(!hidden||saved.abilityUnlocked?.[root])return;
+  if((saved.candies[root]||0)<30)return;
+  saved.candies[root]-=30;saved.abilityUnlocked??={};saved.abilityUnlocked[root]=true;save();
+  showHome('caramelos');message('Habilidad oculta desbloqueada: '+(PK9_ABILITY_NAMES[hidden.name]||hidden.name));return;
+ }
+ return pk9BeforeMenuActions(action);
+};
+const pk9BeforeCandyScreen=v05CandyScreen;
+// Override the candy display through the home router, preserving the underlying UI.
+const pk9BeforeShowHome=showHome;
+showHome=function(tab='inicio'){
+ const out=pk9BeforeShowHome(tab);
+ if(tab==='caramelos'){
+  for(const card of modal.querySelectorAll('.candy-card')){
+   const img=card.querySelector('img'),match=img?.src?.match(/pokemon\/(?:shiny\/)?(\d+)\.png/);
+   if(!match)continue;
+   const id=Number(match[1]),root=rootOf(id);
+   const hidden=(PK9.abilities[id]||[]).find(a=>a.hidden);
+   if(!hidden)continue;
+   const label=PK9_ABILITY_NAMES[hidden.name]||hidden.name;
+   const bar=card.querySelector('.candy-buy');
+   if(bar)bar.insertAdjacentHTML('beforeend','<button data-action="v09:unlockability:'+id+'" '+(saved.abilityUnlocked?.[root]||candiesOf(root)<30?'disabled':'')+'>✨ '+label+' · '+(saved.abilityUnlocked?.[root]?'DESBLOQUEADO':'30 🍬')+'</button>');
+  }
+ }
+ return out;
 };
 
 fitBoard();startMenu();requestAnimationFrame(render);
