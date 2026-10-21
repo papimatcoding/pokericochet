@@ -2164,7 +2164,7 @@ addXP=function(base){
  const reserve=living.filter(x=>x.i!==run.active);
  for(const {p,i} of living){
   const share=i===run.active?(reserve.length?.6:1):(.4/reserve.length);
-  p.xp+=Math.max(1,Math.round(base*share*(run.expBoost||1)));
+  p.xp+=Math.max(1,Math.round(base*share*(run.expBoost||1)*.38));
   let gained=0;
   while(p.level<100&&p.xp>=neededXP(p.level)&&gained++<5){
    p.xp-=neededXP(p.level);p.level++;
@@ -2322,7 +2322,7 @@ function pk9EmitRow(targetRow=0){
  if(!run?.v09Active||run.v09RowsEmitted>=run.v09RowsTotal)return false;
  const number=++run.v09RowsEmitted;
  const isHorde=number===8||number===13||run.encounter==='swarm'&&number%4===0;
- const base=number<4?3:number<8?4:number<12?5:6;
+ const base=number<4?3:number<8?4:number<12?5:5;
  const density=isHorde?7:Math.max(2,Math.min(7,base+Math.floor(Math.random()*3)-1));
  const cols=[0,1,2,3,4,5,6].sort(()=>Math.random()-.5).slice(0,density).sort();
  const species=typeof pool==='function'?pool(run.encounter==='elite'?'rare':run.encounter==='hunt'?'rare':'wild'):zone().normal;
