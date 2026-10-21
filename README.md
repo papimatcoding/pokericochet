@@ -1,42 +1,43 @@
-# POKÉRICOCHET · Rogue Bounce 0.8
+# POKÉRICOCHET 0.9 — Expedition Edition
 
-Prototipo fan de Pokémon + rebotes con progresión roguelite, publicado directamente en GitHub Pages. HTML/CSS/JavaScript sin herramientas de compilación.
+[▶ Jugar en GitHub Pages](https://papimatcoding.github.io/the-last-menagerie/?v=0.9.0)
 
-## Versión 0.8 — ritmo, tácticas y audio
+Juego fan roguelite de Pokémon y rebotes, en HTML/CSS/JavaScript sin servidor ni compilación.
 
-### Estructura de expedición
-- Menos interrupciones: los pisos de combate comienzan automáticamente sin abrir una pantalla de ruta y, al vencer, se avanza al siguiente. Solo eventos, decisiones de mejora y jefes requieren confirmación.
-- Zonas de **6, 7, 8 y 8 pisos**, respectivamente, más un jefe. Cada encuentro normal incluye **3 oleadas**, los combates fuertes y jefes **4 oleadas**.
-- Bonificación pequeña de recuperación entre oleadas para primeros equipos de un solo Pokémon.
-- Al subir de nivel, la elección aparece **inmediatamente al terminar la ráfaga de proyectiles**, incluso a mitad de un piso; tras elegir, la ronda continúa.
-- Poké Balls sin recoger permanecen hasta la siguiente oleada. Si queda alguna después de acabar la última oleada, hay una oportunidad adicional de apuntar y recogerla.
+## Nueva experiencia en la 0.9
 
-### Ataques y movimientos
-- Movimientos iniciales y repertorios de aprendizaje distintos para los 27 iniciales, repartidos en físicos, especiales y de estado.
-- **Drenadoras:** apuntar a fila o columna; 3 rondas de daño y recuperación limitada; inmune el tipo Planta.
-- **Onda Trueno:** apuntar a fila o columna, retrasa a los enemigos; inmunidad de tipos Tierra y Eléctrico.
-- **Pantalla Luz / Protección**, **Danza Espada / Desarrollo**, **Síntesis** y **Pantalla Humo** consumen una acción y proporcionan beneficios temporales.
-- Efectos secundarios por movimiento: quemaduras de Ascuas/Giro Fuego, descargas en cadena con Impactrueno, efectos ralentizadores de Burbuja/Disparo Lodo, recuperación de Absorber y efectos especiales diferenciados en otros movimientos.
-- **Un efecto secundario como máximo por bola**. Los proyectiles siguen rebotando y pueden realizar impactos posteriores.
-- Los ataques especiales requieren **70 impactos acumulados** en vez de 20; el especial se prepara, apunta y dispara, y depende del movimiento seleccionado, no solo de su tipo.
-- Habilidades como Torrente, Espesura y Mar Llamas avisan al cruzar el **50 % de PS**, umbral adaptado a este juego (en Pokémon principal activan con un tercio de PS).
+**Tablero continuo:** desaparecen las oleadas. Un encuentro normal genera **15 filas** de enemigos (18 en jefes), tres iniciales y una fila nueva cada turno, bajando hacia la zona de contacto. Algunas filas son **hordas** completas. El combate nunca se reinicia entre filas. La arena tiene siete columnas que llenan la anchura física; se han reducido los huecos junto a las paredes.
 
-### UI y tipos
-- Pantalla principal completa, barra superior y HUD reforzados, selección de movimientos más clara y etiquetas para ambos tipos de amenaza enemiga: cuenta atrás a distancia y rondas hasta la zona de contacto.
-- **Tabla completa de los 18 tipos** accesible mediante el botón **◈ TIPOS**, con tabla 18×18 y calculadora para Pokémon de uno o dos tipos (incluidas inmunidades y multiplicadores x4 / x0,25).
-- Mejores opciones de subida de nivel: geometría letal, carga acelerada de especial, curación entre oleadas, escudo inicial y puntería crítica.
+**Rutas:** cuatro zonas con 4, 5, 5 y 6 pisos respectivamente más sus jefes. El avance sigue siendo lineal con encuentros aleatorios. Hay campamentos en pisos seleccionados y Centros Pokémon durante la expedición.
 
-### Sonido
-- Eliminada la música chiptune repetitiva en bucle.
-- Los gritos de Pokémon se transmiten bajo demanda a volumen bajo desde los enlaces públicos de **[PokéAPI Cries](https://github.com/PokeAPI/cries)** al comenzar ciertos combates y hacer relevos. No se copian al repositorio. El audio depende del navegador y requiere activación desde el botón de sonido.
-- Efectos sintéticos originales y más suaves, con límite de frecuencia para evitar acumulación de pitidos.
-- Los gritos son materiales asociados a Pokémon: que se puedan consultar públicamente no equivale a una licencia libre de derechos ni garantiza autorización de uso. La música oficial de los videojuegos no se redistribuye.
+**Estadísticas oficiales:** el archivo separado `pokemon-data.js` integra las estadísticas base, recompensas EV, habilidades y requisitos evolutivos de PokéAPI; las estadísticas se calculan con nivel, IVs, EVs y naturaleza. Fórmulas habituales de Pokémon para seis estadísticas, adaptando el daño final al sistema multigolpe de rebotes.
 
-## Guardado y controles
-- Se conserva el guardado local anterior: colección, equipo configurado, caramelos, progreso permanente y gachapón. Las mejoras y niveles de una expedición se reinician en cada nueva partida.
-- Ratón o dedo: apuntar arrastrando y disparar. Teclas 1–3: movimientos, espacio: disparar, F: pantalla completa en navegadores compatibles.
-- Movimientos de estado: selecciona fila/columna cuando corresponda; pierdes el turno de disparo.
-- Botón de especial: cuando esté cargado, púlsalo, apunta y dispara.
+**IVs y EVs:** cada captura o cápsula revela seis IVs (0–31). Los mejores valores **por atributo y familia** se guardan permanentemente y se aplican a nuevas expediciones. Los EVs se ganan derrotando especies concretas y se reinician al comienzo de cada run, con límites de 252 por estadística y 510 en total. Naturalezas persistentes por familia. La nueva ficha de Pokémon (botón **▤ FICHA**) muestra estadísticas, base, IVs, EVs, naturaleza, habilidad, objeto y próxima evolución.
 
-## Estado
-Sistema todavía en desarrollo: faltan bastantes movimientos oficiales, más habilidades por especie, IVs/EVs y más pruebas de equilibrio y acabado visual en navegadores reales. El programa es un proyecto fan no oficial y Pokémon y sus personajes pertenecen a sus respectivos titulares.
+**Evoluciones reales:** evoluciones por nivel desde los datos de Pokémon, sin bonificaciones arbitrarias. Piedras, enlaces de intercambio y otras condiciones se adaptan mediante objetos escasos; nunca se ofrece un objeto evolutivo en tienda si nadie del equipo puede usarlo. Una evolución conserva IVs, EVs, nivel y movimientos. Nueva animación de transformación.
+
+**Pokétienda y campamentos:** Pokédólares de expedición (₽), obtenidos derrotando rivales; no son las fichas permanentes del gachapón. En campamentos hay objetos de curación, bayas, objetos equipables (Carbón, Agua Mística, Restos, Mineral Evol, etc.) y una probabilidad baja (**13 % por visita, si hay un Pokémon compatible**) de ofrecer un objeto evolutivo. Descanso y entrenamiento EV están limitados a una vez por campamento. Las monedas no se venden ni se compran con dinero real.
+
+**Movimientos:** aprendizaje automático de repertorio según el nivel: durante la partida se consultan los datos de movimientos por nivel de **Escarlata/Púrpura** en PokéAPI y se guardan localmente por especie. Los efectos actualmente jugables cubren un subconjunto de movimientos y existe un repertorio de respaldo si el servicio no responde o esa especie no tiene datos de novena generación. Las mejoras al subir de nivel se aplican al movimiento aprendido o al Pokémon: Fuego, Agua, Planta, Eléctrico y movimientos de estado tienen opciones específicas, además de recompensas generales.
+
+**Habilidades:** se muestra únicamente el nombre cuando se activan. Las habilidades oficiales aparecen en la ficha; ya hay una selección de efectos programados y opciones de habilidad oculta desbloqueable con caramelos. No todas las habilidades oficiales tienen efecto adaptado todavía.
+
+**Arte e interfaz:** nueva hoja `v09.css`, estilo de expedición y mejoras de la arena y HUD, campamentos visuales, tarjetas de objetos con sprites, evolución animada y tabla de tipos ampliada para escritorio y móvil. Los sprites del juego se sirven desde los recursos públicos de PokéAPI, y los gritos opcionales desde PokéAPI Cries.
+
+## Controles
+
+Apunta arrastrando con el ratón o el dedo y suelta para disparar. Teclas 1–3: seleccionar movimiento; espacio: disparar; F: pantalla completa (según el navegador). El especial se prepara con su botón cuando está cargado. **◈ TIPOS** abre la tabla de enfrentamientos y **▤ FICHA** muestra estadísticas y entrenamientos.
+
+## Guardado y compatibilidad
+
+Se sigue usando `pokeRicochet-v04` en el almacenamiento local del navegador. Se mantienen las capturas, caramelos, monedas de cápsulas y equipo preparado de la versión anterior. El esquema se amplía sin borrarlo. Los IVs obtenidos a partir de ahora se guardan en `ivBest`; si no hay IVs previos se parte de valores neutrales de 10. Las expediciones nuevas empiezan al nivel 5, pero conservan las mejoras permanentes.
+
+## Fuentes, derechos y límites
+
+- [PokéAPI](https://pokeapi.co/) y [datos CSV públicos](https://github.com/PokeAPI/pokeapi/tree/master/data/v2/csv): estadísticas, tipos, evolución, habilidades y datos de nivel. El código de PokéAPI tiene licencia BSD-3-Clause (ver `THIRD_PARTY_NOTICES.md`).
+- [PokéAPI Sprites](https://github.com/PokeAPI/sprites): imágenes remotas de Pokémon, objetos y tipos.
+- [PokéAPI Cries](https://github.com/PokeAPI/cries): gritos remotos opcionales a bajo volumen.
+
+**Proyecto fan no oficial.** Pokémon y los personajes, sprites y sonidos asociados pertenecen a sus titulares. Que los recursos estén disponibles en internet no los convierte en contenido libre de derechos. No hay monetización.
+
+El juego continúa siendo un prototipo: falta implementar todos los movimientos, habilidades, formas y condiciones evolutivas, así como más pruebas visuales y de balance en navegadores reales. Los datos referenciados se seleccionan con Escarlata/Púrpura como generación objetivo; se usan alternativas compatibles cuando esa versión no tiene información.
