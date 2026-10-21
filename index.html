@@ -215,10 +215,10 @@ function effectiveness(attack,defTypes){const m=TYPE_MAP[attack]||{};return defT
 const DB={
 1:['Bulbasaur',['grass','poison'],'common',13,'🌱'],2:['Ivysaur',['grass','poison'],'uncommon',12,'🌿'],3:['Venusaur',['grass','poison'],'boss',7,'🌺'],4:['Charmander',['fire'],'common',12,'🔥'],5:['Charmeleon',['fire'],'uncommon',11,'🔥'],6:['Charizard',['fire','flying'],'boss',6,'🐉'],7:['Squirtle',['water'],'common',13,'💧'],8:['Wartortle',['water'],'uncommon',12,'💦'],9:['Blastoise',['water'],'boss',6,'🐢'],10:['Caterpie',['bug'],'common',28,'🐛'],13:['Weedle',['bug','poison'],'common',28,'🐛'],15:['Beedrill',['bug','poison'],'boss',8,'🐝'],16:['Pidgey',['normal','flying'],'common',25,'🪶'],19:['Rattata',['normal'],'common',29,'🐭'],25:['Pikachu',['electric'],'rare',6,'⚡'],27:['Sandshrew',['ground'],'common',24,'🟤'],37:['Vulpix',['fire'],'uncommon',17,'🦊'],41:['Zubat',['poison','flying'],'common',27,'🦇'],43:['Oddish',['grass','poison'],'common',26,'🍃'],54:['Psyduck',['water'],'uncommon',17,'🦆'],58:['Growlithe',['fire'],'rare',8,'🐕'],60:['Poliwag',['water'],'common',25,'💧'],69:['Bellsprout',['grass','poison'],'common',27,'🌱'],72:['Tentacool',['water','poison'],'common',23,'🪼'],74:['Geodude',['rock','ground'],'common',24,'🪨'],77:['Ponyta',['fire'],'rare',7,'🔥'],81:['Magnemite',['electric','steel'],'uncommon',14,'🧲'],92:['Gastly',['ghost','poison'],'uncommon',16,'👻'],94:['Gengar',['ghost','poison'],'boss',6,'👻'],95:['Onix',['rock','ground'],'rare',8,'🐍'],100:['Voltorb',['electric'],'uncommon',18,'⚡'],104:['Cubone',['ground'],'uncommon',18,'💀'],129:['Magikarp',['water'],'common',28,'🐟'],130:['Gyarados',['water','flying'],'boss',5,'🐉'],133:['Eevee',['normal'],'rare',7,'🦊'],218:['Slugma',['fire'],'common',25,'🌋']};
 const ZONES=[
-{name:'Bosque Viridian',tag:'KANTO · LA PRIMERA SENDA',rooms:6,boss:15,normal:[10,13,16,19,43,69,27,41],uncommon:[25,1,2],theme:['#0b2631','#124b3c']},
-{name:'Cueva Eco',tag:'KANTO · TÚNELES PROFUNDOS',rooms:7,boss:94,normal:[41,74,27,92,104,19],uncommon:[95,81,133],theme:['#151e3b','#42406d']},
-{name:'Costa Brumosa',tag:'KANTO · OLEAJE',rooms:8,boss:130,normal:[129,60,72,54,7,16],uncommon:[25,81,133],theme:['#092d43','#18587b']},
-{name:'Cumbre Ígnea',tag:'KANTO · CIELO ESCARLATA',rooms:8,boss:6,normal:[218,37,77,58,74,100],uncommon:[5,25,133],theme:['#361f36','#78443d']}];
+{name:'Bosque Viridian',tag:'KANTO · LA PRIMERA SENDA',rooms:4,boss:15,normal:[10,13,16,19,43,69,27,41],uncommon:[25,1,2],theme:['#0b2631','#124b3c']},
+{name:'Cueva Eco',tag:'KANTO · TÚNELES PROFUNDOS',rooms:5,boss:94,normal:[41,74,27,92,104,19],uncommon:[95,81,133],theme:['#151e3b','#42406d']},
+{name:'Costa Brumosa',tag:'KANTO · OLEAJE',rooms:5,boss:130,normal:[129,60,72,54,7,16],uncommon:[25,81,133],theme:['#092d43','#18587b']},
+{name:'Cumbre Ígnea',tag:'KANTO · CIELO ESCARLATA',rooms:6,boss:6,normal:[218,37,77,58,74,100],uncommon:[5,25,133],theme:['#361f36','#78443d']}];
 const BASE_MOVES={normal:[['Placaje','normal',7,7],['Ataque Rápido','normal',5,11]],fire:[['Ascuas','fire',8,7],['Giro Fuego','fire',6,10]],water:[['Pistola Agua','water',7,8],['Burbuja','water',5,12]],grass:[['Látigo Cepa','grass',8,7],['Hoja Afilada','grass',6,10]],electric:[['Impactrueno','electric',8,8],['Chispa','electric',6,11]],rock:[['Lanzarrocas','rock',9,6],['Pedrada','rock',5,12]],ground:[['Disparo Lodo','ground',8,7],['Bofetón Lodo','ground',5,11]],poison:[['Picotazo Veneno','poison',7,8],['Ácido','poison',5,11]],bug:[['Picadura','bug',7,8],['Disparo Demora','bug',5,11]],ghost:[['Lengüetazo','ghost',8,7],['Bola Sombra','ghost',6,10]],flying:[['Tornado','flying',7,9],['Ataque Ala','flying',6,10]],psychic:[['Confusión','psychic',8,7],['Psicorrayo','psychic',6,11]],steel:[['Garra Metal','steel',8,7],['Bomba Imán','steel',6,10]]};
 function def(id){let a=DB[id]||DB[19];return {id,name:a[0],types:a[1],rarity:a[2],drop:a[3]/100,icon:a[4]}}
 function sprite(id,shiny=false){return 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/'+(shiny?'shiny/':'')+id+'.png'}
@@ -2396,6 +2396,190 @@ renderBoard=function(now){
   ctx.fillText('⚠ ¡BLOQUES CERCA!',W/2,FLOOR_Y+12);
  }
  ctx.restore();
+};
+
+
+/* v0.9 — a fixed, short route with meaningful camps and weather encounters */
+PATH_TYPES.camp={icon:'🏕️',name:'Campamento',desc:'Descansar, entrenar o visitar al vendedor'};
+V07_DETAILS.camp=['🏕️','Campamento Pokémon','Curaciones, objetos y un mercado pequeño'];
+generateMap=function(){
+ const rooms=zone().rooms,rows=[];
+ const ordinary=['wild','wild','hunt','swarm','rare','ambush','storm','duel','fortress'];
+ for(let f=1;f<=rooms;f++){
+  let kind;
+  if(f===1)kind='wild';
+  else if(f===3||rooms>=6&&f===5)kind=f===3?'camp':'center';
+  else if(f===rooms)kind='elite';
+  else kind=ordinary[Math.floor(Math.random()*ordinary.length)];
+  rows.push([0,1,2].map(lane=>({floor:f,lane,kind,edges:f===1?[]:[lane]})));
+ }
+ return {zone:run.zone,rows};
+};
+const pk9PrevNewState=newState;
+newState=function(team){
+ const r=pk9PrevNewState(team);
+ r.money=25;r.inventory=[];r.v09Active=false;r.v09RowsTotal=0;r.v09RowsEmitted=0;
+ return r;
+};
+const PK9_ITEMS={
+ 'potion':{name:'Poción',icon:'🧪',price:28,desc:'Cura 20 PS al instante',kind:'heal',heal:20},
+ 'super-potion':{name:'Superpoción',icon:'💖',price:65,desc:'Cura 50 PS al instante',kind:'heal',heal:50},
+ 'revive':{name:'Revivir',icon:'✨',price:100,desc:'Revive un compañero al 50 % de PS',kind:'revive'},
+ 'oran-berry':{name:'Baya Aranja',icon:'🫐',price:32,desc:'Se activa una vez al bajar del 50 % de PS',kind:'hold'},
+ 'sitrus-berry':{name:'Baya Zidra',icon:'🍊',price:62,desc:'Cura 25 % de PS una vez',kind:'hold'},
+ 'leftovers':{name:'Restos',icon:'🍎',price:115,desc:'Regenera 1 PS cada 2 rondas',kind:'hold'},
+ 'charcoal':{name:'Carbón',icon:'🔥',price:85,desc:'Potencia movimientos de Fuego un 15 %',kind:'hold',type:'fire'},
+ 'mystic-water':{name:'Agua Mística',icon:'💧',price:85,desc:'Potencia movimientos de Agua un 15 %',kind:'hold',type:'water'},
+ 'miracle-seed':{name:'Semilla Milagro',icon:'🌿',price:85,desc:'Potencia movimientos de Planta un 15 %',kind:'hold',type:'grass'},
+ 'magnet':{name:'Imán',icon:'🧲',price:85,desc:'Potencia movimientos Eléctricos un 15 %',kind:'hold',type:'electric'},
+ 'eviolite':{name:'Mineral Evol',icon:'🪨',price:120,desc:'Reduce daño recibido en un Pokémon sin evolucionar',kind:'hold'},
+ 'scope-lens':{name:'Periscopio',icon:'🎯',price:100,desc:'Mayor probabilidad de golpe crítico',kind:'hold'}
+};
+const PK9_ITEM_NAMES={'link-cable':'Cable Link','friendship-ribbon':'Cinta Amistad',
+ 'thunder-stone':'Piedra Trueno','fire-stone':'Piedra Fuego',
+ 'water-stone':'Piedra Agua','leaf-stone':'Piedra Hoja','ice-stone':'Piedra Hielo',
+ 'moon-stone':'Piedra Lunar','sun-stone':'Piedra Solar','shiny-stone':'Piedra Día',
+ 'dusk-stone':'Piedra Noche','dawn-stone':'Piedra Alba',
+ 'metal-coat':'Revestimiento Metálico','kings-rock':'Roca del Rey',
+ 'deep-sea-tooth':'Diente Marino','deep-sea-scale':'Escama Marina'};
+function pk9EvoOffers(){
+ const eligible=[];
+ for(let i=0;i<run.team.length;i++){
+  const p=run.team[i];
+  if(p.hp<=0)continue;
+  for(const e of pk9EvoChoices(p)){
+   const item=pk9ItemFor(e);
+   if(item&&DB[e.to])eligible.push({i,item,e});
+  }
+ }
+ return eligible;
+}
+function pk9CampStock(){
+ const favorites=[];
+ const teamTypes=new Set(run.team.flatMap(p=>p.types));
+ if(teamTypes.has('fire'))favorites.push('charcoal');
+ if(teamTypes.has('water'))favorites.push('mystic-water');
+ if(teamTypes.has('grass'))favorites.push('miracle-seed');
+ if(teamTypes.has('electric'))favorites.push('magnet');
+ if(run.team.some(p=>pk9EvoChoices(p).length))favorites.push('eviolite');
+ const base=['potion','super-potion','oran-berry','sitrus-berry','leftovers','scope-lens','revive',...favorites];
+ const unique=[...new Set(base)].sort(()=>Math.random()-.5).slice(0,4);
+ const evo=pk9EvoOffers();
+ let special=null;
+ // Stones and trade replacements: available only when somebody can evolve with them.
+ if(evo.length&&Math.random()<.13)special=evo[Math.floor(Math.random()*evo.length)];
+ return {stock:unique,special};
+}
+function pk9CampHeader(){
+ return '<div class="v09-camp-hero"><div><span class="emblem">REFUGIO · '+zone().name.toUpperCase()+'</span><h2>Campamento Pokémon</h2><p>Descansa, prepara tu equipo y compra objetos antes de la siguiente zona de peligro.</p></div><div class="v09-camp-fire">🔥<span>✦</span></div></div>';
+}
+function pk9ItemArt(item){
+ if(item==='link-cable'||item==='friendship-ribbon')return '<span class="v09-item-emoji">'+(item==='link-cable'?'🔗':'🎗️')+'</span>';
+ return '<img loading="lazy" onerror="this.style.display=\'none\'" alt="" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/'+item+'.png">';
+}
+function pk9ShowCamp(){
+ mode='event';
+ run.v09Camp??=pk9CampStock();
+ const members=run.team.map((p,i)=>'<div class="v09-party-mini">'+sImg(p.id,p.shiny)+'<b>'+p.name+'</b><small>Nv.'+p.level+' · '+p.hp+'/'+p.maxHp+' PS</small>'+(p.heldItem?'<small>🎒 '+(PK9_ITEMS[p.heldItem]?.name||p.heldItem)+'</small>':'')+'</div>').join('');
+ showModal('<div class="v09-camp">'+pk9CampHeader()+'<div class="v09-purse">₽ '+(run.money||0)+' <small>POKÉDÓLARES DE ESTA EXPEDICIÓN</small></div><div class="v09-party-row">'+members+'</div><div class="v09-camp-actions"><button class="v09-camp-choice" data-action="v09:rest"><b>💚 Descansar</b><small>Recuperar el 28 % de PS de todo el equipo · gratis</small></button><button class="v09-camp-choice" data-action="v09:train"><b>🥋 Entrenamiento</b><small>+8 EVs en un atributo del Pokémon activo · gratis</small></button><button class="v09-camp-choice" data-action="v09:shop"><b>🛍️ Pokétienda</b><small>Objetos, bayas y rarísimas oportunidades de evolución</small></button></div><div class="actions"><button class="primary" data-action="v09:leave">CONTINUAR LA EXPEDICIÓN →</button></div></div>');
+}
+function pk9ShowShop(){
+ mode='event';const offer=run.v09Camp||pk9CampStock(),ids=offer.stock.slice();
+ if(offer.special)ids.push(offer.special.item);
+ const cards=ids.map(item=>{
+  const meta=PK9_ITEMS[item]||{name:PK9_ITEM_NAMES[item]||item,price:150,desc:'Permite evolucionar a un Pokémon compatible',kind:'evolution'};
+  const evo=offer.special?.item===item;
+  const price=evo?150:meta.price;
+  const desc=evo?'EVOLUCIÓN RARA · '+run.team[offer.special.i].name+' → '+(DB[offer.special.e.to]?.[0]||PK9.names[offer.special.e.to]):meta.desc;
+  return '<button class="v09-shop-item" data-action="v09:buy:'+item+'" '+(run.money<price?'disabled':'')+'>'+pk9ItemArt(item)+'<span><b>'+meta.name+'</b><small>'+desc+'</small></span><strong>₽'+price+'</strong></button>';
+ }).join('');
+ showModal('<div class="v09-shop"><div class="emblem">POKÉTIENDA · '+zone().name+'</div><h2>La mochila del viajero</h2><p>El dinero de expedición se gana derrotando rivales. Los objetos equipados duran hasta que termine la run.</p><div class="v09-purse">₽ '+(run.money||0)+'</div><div class="v09-shop-grid">'+cards+'</div><div class="actions"><button class="primary" data-action="v09:camp">VOLVER AL CAMPAMENTO</button></div></div>');
+}
+const pk9PriorAdvanceRoom=advanceRoom;
+advanceRoom=function(node){
+ if(node.kind==='camp'){
+  hideModal();run.floor++;run.v09Active=false;run.v09Camp=pk9CampStock();
+  run.branchHistory.push({floor:run.floor,lane:1,kind:'camp'});
+  run.routeHistory.push('🏕️');pk9ShowCamp();return;
+ }
+ return pk9PriorAdvanceRoom(node);
+};
+const pk9PriorEnemyCoin=enemyDown;
+enemyDown=function(e){
+ const was=run.blocks.includes(e);
+ pk9PriorEnemyCoin(e);
+ if(was&&!run.blocks.includes(e))run.money=(run.money||0)+Math.max(1,Math.ceil((run.zone+1)*1.5));
+};
+const pk9PriorNewRoom=nextRoute;
+nextRoute=function(){if(run){run.v09Camp=null;run.v09Active=false}return pk9PriorNewRoom()};
+const pk9PriorCampHandle=handleAction;
+handleAction=function(action){
+ if(action==='v09:camp'){pk9ShowCamp();return}
+ if(action==='v09:shop'){pk9ShowShop();return}
+ if(action==='v09:rest'){
+  for(const p of run.team)if(p.hp>0)p.hp=Math.min(p.maxHp,p.hp+Math.max(1,Math.ceil(p.maxHp*.28)));
+  v08WaveToast('💚 ¡EQUIPO RECUPERADO!');pk9ShowCamp();return;
+ }
+ if(action==='v09:train'){
+  const p=active(),i=p?.stats?.[1]>=p?.stats?.[3]?1:3;
+  if(p){p.evs??=[0,0,0,0,0,0];p.evs[i]=Math.min(252,p.evs[i]+8);pk9Recacl(p,false)}
+  v08WaveToast('🥋 ENTRENAMIENTO · +8 EV');pk9ShowCamp();return;
+ }
+ if(action==='v09:leave'){hideModal();run.v09Camp=null;nextRoute();return}
+ if(action.startsWith('v09:buy:')){
+  if(mode!=='event'||!run.v09Camp)return;
+  const item=action.slice(8),meta=PK9_ITEMS[item],evo=run.v09Camp.special;
+  const isEvo=!!evo&&evo.item===item,price=isEvo?150:meta?.price;
+  if(!price||run.money<price||!run.v09Camp.stock.includes(item)&&!isEvo)return;
+  if(isEvo){
+   const p=run.team[evo.i];if(!p||p.id!==evo.e.from)return;
+   run.money-=price;
+   const changed=pk9ApplyEvo(p,evo.e);
+   run.v09Camp.special=null;
+   mode='evolving';
+   showModal('<div class="v09-evolution"><div class="emblem">OBJETO EVOLUTIVO · '+(PK9_ITEM_NAMES[item]||item).toUpperCase()+'</div><h2>¡'+changed.before+' está evolucionando!</h2><div class="v09-evo-scene"><img class="v09-evo-old" src="'+sprite(changed.beforeId,p.shiny)+'"><div class="v09-evo-core">✦</div><img class="v09-evo-new" src="'+sprite(changed.afterId,p.shiny)+'"></div><h2>¡Ahora es '+changed.after+'!</h2><p>Conserva sus IVs, EVs, movimientos y nivel. PS: '+changed.oldHp+' → '+changed.newHp+'</p><button class="big-play" data-action="v09:evofinish">VOLVER AL CAMPAMENTO →</button></div>');
+   return;
+  }
+  run.money-=price;
+  if(meta.kind==='heal'||meta.kind==='revive'){
+   const p=run.team.find(x=>meta.kind==='revive'?x.hp===0:x.hp>0&&x.hp<x.maxHp)||active();
+   if(meta.kind==='revive'){if(p&&p.hp===0)p.hp=Math.ceil(p.maxHp*.5)}
+   else if(p?.hp>0)p.hp=Math.min(p.maxHp,p.hp+meta.heal);
+   v08WaveToast(meta.icon+' '+meta.name.toUpperCase()+' UTILIZADA');
+  }else{
+   const p=run.team.find(x=>x.hp>0&&!x.heldItem)||active();
+   if(p){p.heldItem=item;p.v09HeldUsed=false;v08WaveToast('🎒 '+p.name+': '+meta.name)}
+  }
+  run.v09Camp.stock=run.v09Camp.stock.filter(x=>x!==item);
+  pk9ShowShop();refresh();return;
+ }
+ if(action==='v09:evofinish'){pk9ShowCamp();return}
+ return pk9PriorCampHandle(action);
+};
+const pk9ItemsDamageBefore=attackInfo;
+attackInfo=function(m,e){
+ const a=pk9ItemsDamageBefore(m,e),p=active(),item=PK9_ITEMS[p?.heldItem];
+ if(item?.type===m.type&&a.dmg>0)a.dmg=Math.max(1,Math.ceil(a.dmg*1.15));
+ return a;
+};
+const pk9ItemsHitBefore=takeDamage;
+takeDamage=function(damage,source){
+ const p=active();
+ if(p?.heldItem==='eviolite'&&pk9EvoChoices(p).length)damage=Math.max(1,Math.ceil(damage*.80));
+ const result=pk9ItemsHitBefore(damage,source);
+ if(p&&p===active()&&p.hp>0&&!p.v09HeldUsed&&p.hp<=p.maxHp*.5){
+  if(p.heldItem==='oran-berry'||p.heldItem==='sitrus-berry'){
+   const heal=p.heldItem==='oran-berry'?Math.max(2,Math.ceil(p.maxHp*.10)):Math.max(3,Math.ceil(p.maxHp*.25));
+   p.hp=Math.min(p.maxHp,p.hp+heal);p.v09HeldUsed=true;
+   v07Flash('🍓 '+(PK9_ITEMS[p.heldItem]?.name||'Baya').toUpperCase());
+  }
+ }
+ return result;
+};
+const pk9ItemsVolleyBefore=endVolley;
+endVolley=function(){
+ if(run?.v09Active)for(const p of run.team)if(p.hp>0&&p.heldItem==='leftovers'&&run.turn%2===0)p.hp=Math.min(p.maxHp,p.hp+1);
+ return pk9ItemsVolleyBefore();
 };
 
 fitBoard();startMenu();requestAnimationFrame(render);
