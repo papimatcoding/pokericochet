@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#0a1121">
 <meta name="description" content="PokéRicochet: prototipo fan roguelite de rebotes, captura y progreso Pokémon.">
-<title>POKÉRICOCHET · Rogue Bounce v0.8</title>
+<title>POKÉRICOCHET · Rogue Bounce v0.9</title>
 <style>
 :root{color-scheme:dark;--bg:#080e1b;--panel:#101c32;--panel2:#142540;--line:#2b4262;--faint:#8c9fbb;--white:#f5f8ff;--aqua:#70f2d3;--yellow:#ffdb7c;--pink:#f6a1c4;--red:#ff7383;--blue:#85aaff}
 *{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--white);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}button{font:inherit;cursor:pointer;touch-action:manipulation}button:disabled{cursor:not-allowed;opacity:.4}button:focus-visible{outline:2px solid var(--aqua);outline-offset:3px}body:before{position:fixed;content:"";inset:0;pointer-events:none;background:radial-gradient(ellipse 65% 55% at 20% 0%,#22396383,transparent),radial-gradient(ellipse 43% 60% at 93% 90%,#0f4e5d40,transparent);z-index:0}.app{position:relative;display:flex;flex-direction:column;height:100vh;height:100dvh;max-width:1320px;margin:auto;padding:clamp(7px,1.5vh,14px) clamp(8px,1.5vw,22px);gap:clamp(6px,1vh,11px);min-height:0}.top{flex:0 0 auto;display:flex;align-items:center;gap:12px;min-height:46px}.brand{font-size:clamp(17px,2vw,23px);font-weight:950;line-height:1;letter-spacing:-.06em;white-space:nowrap}.brand b{color:var(--aqua)}.brand small{display:block;margin-top:5px;letter-spacing:.16em;font-size:9px;font-weight:800;color:#839cba}.top-right{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex:1;min-width:0}.mini-status{font-size:11px;color:#c2d1e5;background:#13243b;border:1px solid #284260;border-radius:9px;padding:9px 11px;white-space:nowrap}.mini-status strong{color:var(--yellow)}.iconbtn{color:#dce8f9;background:#14243a;border:1px solid #2c4360;border-radius:10px;min-width:34px;height:34px;display:grid;place-items:center;font-size:16px}.iconbtn:hover{background:#253d5d}
@@ -194,6 +194,7 @@
 }
 
 </style>
+<link rel="stylesheet" href="./v09.css">
 </head>
 <body>
 <div class="app" id="app">
@@ -392,7 +393,7 @@ if(action.startsWith('level:')){let p=run.team[run.upgrading],k=action.split(':'
 if(action.startsWith('global:')){let k=action.split(':')[1];if(!run.globalOptions?.some(o=>o[0]===k))return;if(k==='balls')run.team.forEach(p=>p.globalBalls++);else if(k==='damage')run.globalBonus++;else if(k==='heal')run.team.forEach(p=>p.hp=Math.min(p.maxHp,p.hp>0?p.hp+Math.round(p.maxHp*.42):Math.round(p.maxHp*.35)));else if(k==='armor')run.armor++;else if(k==='exp')run.expBoost*=1.2;else if(k==='crit')run.crit+=.06;else if(k==='luck')run.lucky*=1.5;else if(k==='relay')run.relayHeal+=.22;run.relics.push(k);playTone(800,.16,'triangle',.05);afterUpgrades();return}
 if(action==='closebattle'){hideModal();run.afterReward?.();return}if(action==='nextzone'){run.zone++;run.floor=0;run.turn=0;hideModal();nextRoute();return}}
 modal.addEventListener('click',e=>{let el=e.target.closest('[data-action]');if(el)handleAction(el.dataset.action)});$id('moveButtons').addEventListener('click',e=>{const b=e.target.closest('[data-move]');if(b)chooseMove(+b.dataset.move)});$id('fireBtn').addEventListener('click',shoot);
-$id('helpBtn').onclick=()=>{showModal(`<div class="emblem">GUÍA RÁPIDA · V0.8</div><h2>Elige, apunta, rebota</h2><p>El líder dispara un movimiento; las dos reservas entran automáticamente cuando cae. Cada Pokémon comienza con <b>un movimiento</b> y aprende otros al subir de nivel. Los enemigos muestran <b>✦ N</b> (rondas hasta el ataque a distancia) o <b>⬇ N</b> (rondas hasta golpear el suelo). Cuando atacan, sus proyectiles viajan visiblemente hasta tu Pokémon.</p><p><b>Capturas:</b> derrotar un enemigo puede soltar su Poké Ball, cada vez menos probable cuanto más raro. Necesitas tocarla con una de tus bolas. Los shiny (1/4096) siempre dejan una.</p><p><b>Progresión:</b> 60/20/20 de XP compartida, cada nivel da una mejora individual aleatoria; cada 3 victorias, mejora global. Centro Pokémon = curación y PC. El gachapón usa fichas ganadas en salas.</p><div class="actions"><button class="primary" data-action="helpexit">ENTENDIDO</button>${mode==='menu'?'':'<button class="secondary" data-action="menu:confirm">SALIR AL MENÚ</button>'}</div>`) };
+$id('helpBtn').onclick=()=>{showModal(`<div class="emblem">GUÍA RÁPIDA · V0.9</div><h2>Elige, apunta, rebota</h2><p>El líder dispara un movimiento; las dos reservas entran automáticamente cuando cae. Cada Pokémon comienza con <b>un movimiento</b> y aprende otros al subir de nivel. Los enemigos muestran <b>✦ N</b> (rondas hasta el ataque a distancia) o <b>⬇ N</b> (rondas hasta golpear el suelo). Cuando atacan, sus proyectiles viajan visiblemente hasta tu Pokémon.</p><p><b>Capturas:</b> derrotar un enemigo puede soltar su Poké Ball, cada vez menos probable cuanto más raro. Necesitas tocarla con una de tus bolas. Los shiny (1/4096) siempre dejan una.</p><p><b>Progresión:</b> 60/20/20 de XP compartida, cada nivel da una mejora individual aleatoria; cada 3 victorias, mejora global. Centro Pokémon = curación y PC. El gachapón usa fichas ganadas en salas.</p><div class="actions"><button class="primary" data-action="helpexit">ENTENDIDO</button>${mode==='menu'?'':'<button class="secondary" data-action="menu:confirm">SALIR AL MENÚ</button>'}</div>`) };
 $id('fastBtn').onclick=()=>{run.fast=!run.fast;$id('fastBtn').textContent=run.fast?'×3':'×1';message(run.fast?'Ráfaga acelerada ×3':'Velocidad normal ×1')};
 $id('audioBtn').onclick=()=>{sound=!sound;$id('audioBtn').textContent=sound?'♫':'♪';message(sound?'Sonido activado':'Sonido desactivado');if(sound)playTone(550)};
 $id('fullscreenBtn').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen()}catch{message('Pantalla completa no disponible en este navegador')}setTimeout(fitBoard,80)};
@@ -523,7 +524,7 @@ function showHome(tab='inicio'){
  const nav=['inicio','equipo','pc','dex','gacha','historial'];const ico=['⌂','⚔','▦','◉','✦','▤'];const names=['Inicio','Equipo','PC','Pokédex','Gachapón','Registro'];
  const mons=ownedUnique();const total=saved.tokens||0;
  let content='';
- if(tab==='inicio')content=`<div class="hub-welcome"><div><div class="overline">UNA EXPEDICIÓN, MIL REBOTES</div><h2>Haz que cada<br><em>bola cuente.</em></h2><p>Traza tu propio camino, captura criaturas, descubre reliquias y derrota a los jefes de cada zona.</p><button class="big-play" data-action="newrun">▶ INICIAR EXPEDICIÓN <span>→</span></button></div><div class="hero-trio">${starterTeam.map((id,i)=>`<div class="hero-mon" style="--glow:${TYPE_COLOR[def(id).types[0]]}">${sImg(id,starterShiny[i])}<small>${i?'RESERVA '+i:'LÍDER'}</small><b>${def(id).name}</b></div>`).join('')}</div></div><div class="home-tip"><b>✦ NOVEDADES DE LA V0.8</b><span>Mapa conectado · Enemigos con roles · Especiales por impactos · Nuevas reliquias</span></div>`;
+ if(tab==='inicio')content=`<div class="hub-welcome"><div><div class="overline">UNA EXPEDICIÓN, MIL REBOTES</div><h2>Haz que cada<br><em>bola cuente.</em></h2><p>Traza tu propio camino, captura criaturas, descubre reliquias y derrota a los jefes de cada zona.</p><button class="big-play" data-action="newrun">▶ INICIAR EXPEDICIÓN <span>→</span></button></div><div class="hero-trio">${starterTeam.map((id,i)=>`<div class="hero-mon" style="--glow:${TYPE_COLOR[def(id).types[0]]}">${sImg(id,starterShiny[i])}<small>${i?'RESERVA '+i:'LÍDER'}</small><b>${def(id).name}</b></div>`).join('')}</div></div><div class="home-tip"><b>✦ NOVEDADES DE LA V0.9</b><span>Mapa conectado · Enemigos con roles · Especiales por impactos · Nuevas reliquias</span></div>`;
  if(tab==='equipo')content=`<p class="home-lead">Selecciona un hueco y sustitúyelo por cualquier Pokémon de tu colección. Al iniciar cada partida todos vuelven al nivel 5.</p><div class="prep-slots new-slots">${starterTeam.map((id,i)=>`<button class="prep-slot ${selectingSlot===i?'chosen':''}" data-action="ui:slot:${i}"><small>${i?'RESERVA '+i:'LÍDER ACTIVO'}</small>${sImg(id,starterShiny[i])}<b>${def(id).name}${starterShiny[i]?' ✨':''}</b></button>`).join('')}</div><div class="subheading">COLECCIÓN · ${mons.length} VARIANTES</div><div class="storage-grid">${mons.map(({id,shiny})=>`<button class="storage-mon" data-action="ui:mon:${id}:${shiny?1:0}">${sImg(id,shiny)}<b>${def(id).name}</b>${shiny?'<small>✨ SHINY</small>':''}</button>`).join('')}</div><button class="big-play smaller" data-action="newrun">▶ INICIAR CON ESTE EQUIPO</button>`;
  if(tab==='pc')content=`<p class="home-lead">Tu colección permanente. Puedes cambiar el equipo aquí antes de una expedición y en los Centros Pokémon que encuentres.</p><div class="subheading">CAJA 01 · ${mons.length} VARIANTES ENCONTRADAS</div><div class="storage-grid">${mons.map(({id,shiny,count})=>`<div class="storage-mon storage-static">${sImg(id,shiny)}<b>${def(id).name}</b><small>${shiny?'✧ shiny · ':''}×${count}</small></div>`).join('')}</div><div class="home-tip"><b>CONSEJO</b><span>Captura Poké Balls que sueltan los enemigos, abre cápsulas y visita Centros Pokémon para incorporar refuerzos.</span></div>`;
  if(tab==='dex'){
@@ -532,7 +533,7 @@ function showHome(tab='inicio'){
  }
  if(tab==='gacha')content=`<div class="gacha-show"><div class="gacha-orb">◉<span>✧</span></div><div><div class="overline">CAPSULAS DE EXPLORACIÓN</div><h2>Una cápsula.<br><em>Una sorpresa.</em></h2><p>Las fichas se consiguen jugando. Las cápsulas pueden desbloquear Pokémon nuevos y variantes shiny.</p><div class="gacha-rates">Común 70 % · Poco común 25 % · Raro 5 %<br>Shiny: 1/4096 de base.</div><button class="big-play ${total<4?'disabled':''}" data-action="ui:roll" ${total<4?'disabled':''}>✦ ABRIR CÁPSULA · 4 FICHAS</button><div class="tiny">Saldo actual: ${total} fichas</div></div></div>`;
  if(tab==='historial')content=`<div class="stats-grid"><div><strong>${saved.runs||0}</strong><small>EXPEDICIONES</small></div><div><strong>${saved.best||0}</strong><small>RÉCORD DE PISOS</small></div><div><strong>${collectionCount()}</strong><small>ESPECIES EN EL PC</small></div><div><strong>${Object.values(saved.collection).reduce((a,c)=>a+(c.shiny||0),0)}</strong><small>SHINIES</small></div></div><div class="home-tip"><b>PROGRESIÓN DE TEMPORADA</b><span>Esta versión comienza con un guardado nuevo. Tu progreso anterior sigue intacto en el navegador.</span></div>`;
- showModal(`<div class="home-screen"><div class="home-header"><span class="emblem">${title} · V0.8</span><div class="home-currency">🪙 ${total} <span>FICHAS</span></div></div><div class="hero-logo">POKÉ<span>RICOCHET</span></div><div class="nav-grid">${nav.map((n,i)=>buttonNav(n,names[i],ico[i])).join('')}</div><div class="home-content">${content}</div><div class="home-footer">ROGUE BOUNCE · PROTOTIPO FAN NO OFICIAL <span>${collectionCount()} ESPECIES · ${saved.runs||0} EXPEDICIONES</span></div></div>`);
+ showModal(`<div class="home-screen"><div class="home-header"><span class="emblem">${title} · V0.9</span><div class="home-currency">🪙 ${total} <span>FICHAS</span></div></div><div class="hero-logo">POKÉ<span>RICOCHET</span></div><div class="nav-grid">${nav.map((n,i)=>buttonNav(n,names[i],ico[i])).join('')}</div><div class="home-content">${content}</div><div class="home-footer">ROGUE BOUNCE · PROTOTIPO FAN NO OFICIAL <span>${collectionCount()} ESPECIES · ${saved.runs||0} EXPEDICIONES</span></div></div>`);
 }
 
 // A connected, generated graph makes the route a choice with consequences.
@@ -759,11 +760,11 @@ function v04Shell(tab,content){
  const titles=['Inicio','Equipo','PC','Caramelos','Pokédex','Gachapón','Registro'];
  const icons=['⌂','⚔','▦','🍬','◉','✦','▤'];
  const total=saved.tokens||0;
- showModal(`<div class="home-screen"><div class="home-header"><span class="emblem">${tab==='equipo'?'PREPARA TU INICIAL':'LABORATORIO DE CARAMELOS'} · V0.8</span><div class="home-currency">🍬 ${Object.values(saved.candies).reduce((a,b)=>a+b,0)} · 🪙 ${total}</div></div><div class="hero-logo">POKÉ<span>RICOCHET</span></div><div class="nav-grid">${nav.map((n,i)=>buttonNav(n,titles[i],icons[i])).join('')}</div><div class="home-content">${content}</div><div class="home-footer">UN INICIAL · FORMA TU EQUIPO DURANTE LA RUTA <span>${collectionCount()} ESPECIES · ${saved.runs||0} EXPEDICIONES</span></div></div>`);
+ showModal(`<div class="home-screen"><div class="home-header"><span class="emblem">${tab==='equipo'?'PREPARA TU INICIAL':'LABORATORIO DE CARAMELOS'} · V0.9</span><div class="home-currency">🍬 ${Object.values(saved.candies).reduce((a,b)=>a+b,0)} · 🪙 ${total}</div></div><div class="hero-logo">POKÉ<span>RICOCHET</span></div><div class="nav-grid">${nav.map((n,i)=>buttonNav(n,titles[i],icons[i])).join('')}</div><div class="home-content">${content}</div><div class="home-footer">UN INICIAL · FORMA TU EQUIPO DURANTE LA RUTA <span>${collectionCount()} ESPECIES · ${saved.runs||0} EXPEDICIONES</span></div></div>`);
 }
 showStarterDraft=function(){
  mode='menu';const gen=STARTER_GENERATIONS[starterGeneration]||STARTER_GENERATIONS[0];
- showModal(`<div class="single-draft"><div class="home-header"><span class="emblem">TU PRIMER COMPAÑERO · V0.8</span><span class="pill">27 INICIALES · 9 GENERACIONES</span></div><div class="hero-logo">POKÉ<span>RICOCHET</span></div><h2>Todo empieza con uno.</h2><p class="home-subtitle">Elige <b>un solo Pokémon inicial</b>. No tendrás reservas: consigue tus próximos compañeros capturándolos en combate. Los Pokémon evolucionan por nivel, pero nunca se capturan evolucionados.</p><div class="generation-grid">${STARTER_GENERATIONS.map(([name],i)=>`<button class="gen-chip ${i===starterGeneration?'on':''}" data-action="ui:gen:${i}">${name}</button>`).join('')}</div><div class="draft-grid">${gen[1].map(id=>{const p=def(id);return `<button class="draft-poke" data-action="v04:starter:${id}">${sImg(id)}<b>${p.name}</b><small class="type-mini" style="color:${TYPE_COLOR[p.types[0]]}">${TT[p.types[0]]}</small></button>`}).join('')}</div><div class="home-tip" style="margin-top:12px"><b>💡 PROGRESIÓN</b><span>Las Poké Balls de Pokémon evolucionados dan caramelos extra a su especie básica. Úsalos para conseguir pequeñas ventajas permanentes.</span></div></div>`);
+ showModal(`<div class="single-draft"><div class="home-header"><span class="emblem">TU PRIMER COMPAÑERO · V0.9</span><span class="pill">27 INICIALES · 9 GENERACIONES</span></div><div class="hero-logo">POKÉ<span>RICOCHET</span></div><h2>Todo empieza con uno.</h2><p class="home-subtitle">Elige <b>un solo Pokémon inicial</b>. No tendrás reservas: consigue tus próximos compañeros capturándolos en combate. Los Pokémon evolucionan por nivel, pero nunca se capturan evolucionados.</p><div class="generation-grid">${STARTER_GENERATIONS.map(([name],i)=>`<button class="gen-chip ${i===starterGeneration?'on':''}" data-action="ui:gen:${i}">${name}</button>`).join('')}</div><div class="draft-grid">${gen[1].map(id=>{const p=def(id);return `<button class="draft-poke" data-action="v04:starter:${id}">${sImg(id)}<b>${p.name}</b><small class="type-mini" style="color:${TYPE_COLOR[p.types[0]]}">${TT[p.types[0]]}</small></button>`}).join('')}</div><div class="home-tip" style="margin-top:12px"><b>💡 PROGRESIÓN</b><span>Las Poké Balls de Pokémon evolucionados dan caramelos extra a su especie básica. Úsalos para conseguir pequeñas ventajas permanentes.</span></div></div>`);
 };
 showHome=function(tab='inicio'){
  if(tab==='equipo'){
@@ -780,7 +781,7 @@ showHome=function(tab='inicio'){
  }
  _v04ShowHome(tab);
  const grid=modal.querySelector('.nav-grid');if(grid){grid.style.gridTemplateColumns='repeat(7,minmax(0,1fr))';const b=document.createElement('button');b.className='nav-card';b.dataset.action='ui:tab:caramelos';b.innerHTML='<span>🍬</span>Caramelos';grid.insertBefore(b,grid.children[3]);}
- modal.innerHTML=modal.innerHTML.replace(/V0\.3/g,'V0.8').replace(/NOVEDADES DE LA V0.8/g,'NOVEDADES DE LA V0.8').replace('Mapa conectado · Enemigos con roles · Especiales por impactos · Nuevas reliquias','Un solo inicial · Capturas para formar equipo · Evoluciones · Caramelos de especie');
+ modal.innerHTML=modal.innerHTML.replace(/V0\.3/g,'V0.9').replace(/NOVEDADES DE LA V0.9/g,'NOVEDADES DE LA V0.9').replace('Mapa conectado · Enemigos con roles · Especiales por impactos · Nuevas reliquias','Un solo inicial · Capturas para formar equipo · Evoluciones · Caramelos de especie');
  if(tab==='inicio')modal.innerHTML=modal.innerHTML.replace('Traza tu propio camino, captura criaturas, descubre reliquias y derrota a los jefes de cada zona.','Empieza con un único Pokémon. Recluta compañeros con capturas, evoluciónalos y mejora sus habilidades.');
  if(tab==='gacha')modal.innerHTML=modal.innerHTML.replace('Las cápsulas pueden desbloquear Pokémon nuevos y variantes shiny.','Las cápsulas contienen únicamente Pokémon básicos, variantes shiny y caramelos por duplicados.');
  if(tab==='dex'){for(const id of Object.keys(saved.evolved).filter(k=>saved.evolved[k])){const tag='#'+String(id).padStart(4,'0');for(const item of modal.querySelectorAll('.dex-grid .storage-mon')){if(item.querySelector('small')?.textContent.startsWith(tag)){item.classList.remove('locked');item.innerHTML=`${sImg(+id)}<b>${def(+id).name}</b><small>${tag} · EVOLUCIÓN</small>`;break}}}}
@@ -995,7 +996,7 @@ function v05TeamScreen(){
  const cards=[0,1,2].map(i=>{const p=prepared[i];return `<div class="v05-slot ${v05Slot===i?'current':''}"><button data-action="v05:slot:${i}" ${i>prepared.length?'disabled':''} class="v05-slot-main"><small>${i===0?'LÍDER':'RESERVA '+i}</small>${p?sImg(p.id,p.shiny):'<span class="v05-plus">＋</span>'}<b>${p?def(p.id).name:'VACÍO'}</b>${p?v05Name(p.id):'<small>Selecciona un compañero</small>'}</button>${p&&i>0?'<button class="v05-remove" data-action="v05:remove:'+i+'">QUITAR</button>':''}</div>`}).join('');
  const selectors=mons.map(({id,shiny})=>{const inTeam=prepared.some(x=>x.id===id),p=def(id);return `<button class="storage-mon ${inTeam?'chosen':''}" data-action="v05:pick:${id}:${shiny?1:0}">${sImg(id,shiny)}<b>${p.name}${shiny?' ✨':''}</b><small>${v05Name(id)} · ${v05HP(id,5)} PS Nv.5</small></button>`}).join('');
  v04Shell('equipo',`<div class="v05-lead"><b>Prepara tu expedición</b><p>Solo elegiste un inicial la primera vez. Ahora puedes empezar con <b>1, 2 o 3 Pokémon</b> que hayas conseguido. Cada uno comienza al nivel 5.</p></div><div class="v05-slots">${cards}</div><div class="subheading">TU PC · ELIGE PARA EL HUECO ${v05Slot+1}</div><div class="storage-grid v05-storage">${selectors||'<p>Aún no has capturado compañeros.</p>'}</div><div class="home-tip"><b>🎯 CONSEJO</b><span>Arriesgarte con un solo Pokémon deja huecos para reclutar durante la ruta; salir con tres ofrece más supervivencia.</span></div>`);
- modal.querySelector('.home-header .emblem').textContent='EQUIPO DE EXPEDICIÓN · V0.8';
+ modal.querySelector('.home-header .emblem').textContent='EQUIPO DE EXPEDICIÓN · V0.9';
  const footer=modal.querySelector('.home-footer');if(footer)footer.firstChild.textContent='ELIGE DE 1 A 3 POKÉMON';
 }
 function v05CandyScreen(){
@@ -1004,7 +1005,7 @@ function v05CandyScreen(){
  const bCost=[8,18,32][bond]||0,fCost=[14,30][focus]||0,tCost=tech?0:24;
  return `<div class="candy-card">${sImg(id)}<div><b>${def(id).name}</b><small>${count} 🍬 · Vínculo ${bond}/3 · Instinto ${focus}/2 ${tech?'· Técnica desbloqueada':''}</small><div class="candy-buy"><button data-action="v05:buy:bond:${id}" ${!owned||!bCost||count<bCost?'disabled':''}>❤️ +1 PS · ${bCost||'MAX'} 🍬</button><button data-action="v05:buy:focus:${id}" ${!owned||!fCost||count<fCost?'disabled':''}>🎯 +4 % crítico · ${fCost||'MAX'} 🍬</button><button data-action="v05:buy:tech:${id}" ${!owned||!tCost||count<tCost?'disabled':''}>⚡ Ataque inicial alternativo · ${tCost||'OK'} 🍬</button></div></div></div>`}).join('');
  v04Shell('caramelos',`<p class="home-lead">Los caramelos son <b>progreso permanente por familia</b>, no niveles gratis. Se consiguen capturando básicos (+2) o alcanzando Poké Balls de evoluciones (+6/+14). Compra pequeñas especializaciones, sin disparar los PS ni regalar ráfagas.</p><div class="candy-cards">${cards}</div>`);
- modal.querySelector('.home-header .emblem').textContent='LABORATORIO DE CARAMELOS · V0.8';
+ modal.querySelector('.home-header .emblem').textContent='LABORATORIO DE CARAMELOS · V0.9';
  const footer=modal.querySelector('.home-footer');if(footer)footer.firstChild.textContent='MEJORAS PERMANENTES MODERADAS';
 }
 showHome=function(tab='inicio'){
@@ -1024,10 +1025,10 @@ showHome=function(tab='inicio'){
     const x=card.querySelector('small');if(x){const id=+(x.textContent.match(/\d+/)||[])[0];if(DB[id])x.innerHTML+=` · ${v05Name(id)}`}
   });
  }
- modal.innerHTML=modal.innerHTML.replace(/V0\.4/g,'V0.8').replace('Solo puedes comenzar con un inicial: incorpora compañeros durante la ruta y reorganízalos en un Centro Pokémon.','Antes de salir puedes elegir hasta tres Pokémon básicos que hayas capturado. También puedes reorganizarlos en un Centro Pokémon.');
+ modal.innerHTML=modal.innerHTML.replace(/V0\.4/g,'V0.9').replace('Solo puedes comenzar con un inicial: incorpora compañeros durante la ruta y reorganízalos en un Centro Pokémon.','Antes de salir puedes elegir hasta tres Pokémon básicos que hayas capturado. También puedes reorganizarlos en un Centro Pokémon.');
 };
 const v05OldStarterDraft=showStarterDraft;
-showStarterDraft=function(){v05OldStarterDraft();modal.innerHTML=modal.innerHTML.replace(/V0\.4/g,'V0.8')};
+showStarterDraft=function(){v05OldStarterDraft();modal.innerHTML=modal.innerHTML.replace(/V0\.4/g,'V0.9')};
 const v05OldRegister=registerReward;
 registerReward=function(id,shiny=false,source='capture'){const out=v05OldRegister(id,shiny,source);if(source==='gacha'&&!out.isFirst){const root=rootOf(id);saved.candies[root]=(saved.candies[root]||0)+3;save();out.reward+=3}return out};
 function v05Roll(){
@@ -2196,7 +2197,7 @@ registerReward=function(id,shiny=false,source='capture'){
  return result;
 };
 function pk9EvoChoices(p){
- return (PK9.evolutions?.[p.id]||[]).filter(e=>!!PK9_STATS(e.to));
+ return (PK9.evolutions?.[p.id]||[]).filter(e=>!!DB[e.to]&&!!PK9.stats[e.to]);
 }
 function pk9ItemFor(e){
  if(e.method===3&&e.item)return e.item;
@@ -2348,7 +2349,7 @@ startBattle=function(kind){
  }
  run.v09InitialSize=run.blocks.length;
  mode='aim';run.turn=1;
- v08WaveToast('RUTA '+(run.floor||1)+' · 15 FILAS · '+(V07_DETAILS[kind]?.[1]||'ENCUENTRO'));
+ v08WaveToast('RUTA '+(run.floor||1)+' · '+run.v09RowsTotal+' FILAS · '+(V07_DETAILS[kind]?.[1]||'ENCUENTRO'));
  refresh();
 };
 const pk9BeforeEndVolley=endVolley;
