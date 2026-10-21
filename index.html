@@ -3487,7 +3487,7 @@ generateMap=function(){
 const v10NextFloorBefore=nextRoute;
 nextRoute=function(){
  if(run){
-  run.v10FloorCaptures=[];
+  run.v10FloorCaptures=[];run.v10OfferUsed=false;
   run.v10FloorStartMoney=run.money||0;
   run.v10CoinsGained=0;
  }
@@ -3521,12 +3521,7 @@ attackInfo=function(m,e){
  return a;
 };
 // Sturdy is resolved in the attack calculation, never resurrect a defeated monster.
-const v10SturdyHitOriginal=hit;
-hit=function(e,b){
- // Older collision-handler fallback is bypassed by having v10SturdyUsed set by attackInfo.
- if(e.v10Skill==='sturdy'&&!e.v10SturdyUsed&&e.hp===e.maxHp)e.v10SturdyUsed=true;
- return v10SturdyHitOriginal(e,b);
-};
+// Sturdy is resolved in attackInfo. No preemptive flag or resurrected KOs.
 function v10PartySwitch(){
  if(!run||mode!=='aim'||run.team.filter(p=>p.hp>0).length<2)return;
  mode='switchpick';
@@ -3581,7 +3576,7 @@ function v10FloorRecap(boss=false){
  mode='reward';const captures=run.v10FloorCaptures||[],won=(run.money||0)-(run.v10FloorStartMoney||0);
  const entries=captures.map(c=>'<div class="v10-capture">'+sImg(c.id,c.shiny)+
  '<span><b>'+def(c.id).name+(c.shiny?' ✨':'')+'</b><small>+'+c.candies+' 🍬 · '+c.ivs+' IV mejorados'+(c.joined?' · AL EQUIPO':'')+'</small></span></div>').join('');
- const chanceEvent=!boss&&run.floor<zone().rooms&&Math.random()<.22;
+ const chanceEvent=!boss&&run.floor<zone().rooms&&!run.v10OfferUsed&&Math.random()<.22;
  run.v10NextChoice=chanceEvent;
  const choice=chanceEvent?'<div class="v10-between-event"><div><b>📜 Un entrenador te propone un desafío</b><p>Recibe ₱20 ahora, pero los enemigos del próximo combate tendrán un 16 % más de PS.</p></div><button class="v10-event-button" data-action="v10:challenge">ACEPTAR RETO · +₽20</button></div>':'';
  showModal('<div class="v10-floor-summary"><div class="emblem">'+(boss?'👑 JEFE DERROTADO':'✦ PISO COMPLETADO')+'</div>'+
@@ -3594,7 +3589,7 @@ showBattleClear=function(boss){v10FloorRecap(boss)};
 const v10ProgressAction=handleAction;
 handleAction=function(action){
  if(action==='v10:challenge'&&mode==='reward'&&run.v10NextChoice){
-  run.v10NextChoice=false;run.money+=20;run.v10ChallengeNext=true;
+  run.v10NextChoice=false;run.v10OfferUsed=true;run.money+=20;run.v10ChallengeNext=true;
   v08WaveToast('📜 RETO ACEPTADO · +₽20');
   v10FloorRecap(run.encounter==='boss');return;
  }
@@ -3603,6 +3598,56 @@ handleAction=function(action){
   if(next)next();return;
  }
  return v10ProgressAction(action);
+};
+
+
+/* v1.0 — better stats visibility in the collection and preparation menu */
+function v10StatBar(v,i){
+ const maximum=i===0?190:240;
+ return '<span class="v10-mini-stat"><small>'+['PS','ATQ','DEF','AT.E','DF.E','VEL'][i]+'</small><span><i style="width:'+Math.max(6,Math.min(100,v/maximum*100))+'%"></i></span><b>'+v+'</b></span>';
+}
+function v10MenuStatsCard(id,shiny=false){
+ const iv=pk9IV(id),base=PK9_STATS(id);
+ const p={id,level:5,ivs:iv,evs:[0,0,0,0,0,0],natureIndex:saved.natureBest?.[rootOf(id)]||0};
+ const stats=Array.from({length:6},(_,i)=>pk9OneStat(p,i));
+ return '<button class="v10-menu-stat-card" data-action="v10:monstats:'+id+':'+(shiny?1:0)+'">'+sImg(id,shiny)+
+ '<div class="v10-menu-stat-main"><b>'+def(id).name+(shiny?' ✨':'')+' <small>NV. 5</small></b>'+
+ '<span class="v10-mini-chart">'+stats.map((v,i)=>v10StatBar(v,i)).join('')+'</span>'+
+ '<small>IVs: '+iv.join(' / ')+' · TOCAR PARA VER DETALLES</small></div></button>';
+}
+const v10HomePrevious=showHome;
+showHome=function(tab='inicio'){
+ const result=v10HomePrevious(tab);
+ if(!saved.hasStarter)return result;
+ const content=modal.querySelector('.home-content');
+ if(!content)return result;
+ if(tab==='equipo'){
+  const party=starterTeam.map((id,i)=>v10MenuStatsCard(id,!!starterShiny[i])).join('');
+  content.insertAdjacentHTML('afterbegin','<div class="v10-menu-stats"><div class="v10-stats-head"><b>📊 ESTADÍSTICAS DE TU EQUIPO</b><small>IVs permanentes y valores iniciales</small></div><div class="v10-team-cards">'+party+'</div></div>');
+ }else if(tab==='inicio'){
+  const party=starterTeam.map((id,i)=>'<button data-action="v10:monstats:'+id+':'+(starterShiny[i]?1:0)+'" class="v10-home-mon">'+sImg(id,!!starterShiny[i])+'<span>'+def(id).name+'<small>IVs '+pk9IV(id).reduce((a,b)=>a+b,0)+'/186</small></span></button>').join('');
+  const item='<div class="v10-home-mons"><small>PREPARADOS PARA LA EXPEDICIÓN · TOCA PARA CONSULTAR SUS ESTADÍSTICAS</small><div>'+party+'</div></div>';
+  content.insertAdjacentHTML('beforeend',item);
+ }
+ return result;
+};
+const v10DetailsActionBefore=handleAction;
+handleAction=function(action){
+ if(action.startsWith('v10:monstats:')){
+  const [,,sid,sShiny]=action.split(':'),id=Number(sid);
+  if(!DB[id]||!starterTeam.includes(id)&&!saved.collection[id]?.normal&&!saved.collection[id]?.shiny)return;
+  const iv=pk9IV(id),p={id,level:5,ivs:iv,evs:[0,0,0,0,0,0],natureIndex:saved.natureBest?.[rootOf(id)]||0};
+  const base=PK9_STATS(id);
+  const rows=base.map((b,i)=>'<div class="v09-stat-line"><strong>'+PK9_STAT_LABELS[i]+'</strong><div class="v09-stat-meter"><i style="width:'+Math.max(5,b/210*100)+'%"></i></div><b>'+pk9OneStat(p,i)+'</b><small>BASE '+b+' · IV '+iv[i]+'/31</small></div>').join('');
+  const traits=(PK9.abilities[id]||[]).map(a=>(PK9_ABILITY_NAMES[a.name]||a.name)+(a.hidden?' [OCULTA]':'')).join(' · ');
+  showModal('<div class="v09-stats"><div class="emblem">📊 PC · ESTADÍSTICAS PERMANENTES</div><div class="v09-stats-top">'+sImg(id,sShiny==='1')+
+  '<div><h2>'+def(id).name+' · NV. 5</h2><p>'+def(id).types.map(x=>TT[x]).join(' / ')+'</p><div class="v09-small-tags"><span>'+traits+'</span><span>IVs '+iv.reduce((a,b)=>a+b,0)+'/186</span></div></div></div>'+
+  '<div class="v09-stats-list">'+rows+'</div><p>Las estadísticas se recalculan con nivel, naturaleza y EVs durante la expedición.</p>'+
+  '<div class="actions"><button class="primary" data-action="v10:backteam">VOLVER AL EQUIPO</button></div></div>');
+  return;
+ }
+ if(action==='v10:backteam'){showHome('equipo');return}
+ return v10DetailsActionBefore(action);
 };
 
 fitBoard();startMenu();requestAnimationFrame(render);
