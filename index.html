@@ -730,7 +730,7 @@ for(const [id,props] of Object.entries(EVOMETA)){
 }
 const rootOf=id=>FAMILY_ROOT[id]||+id;
 const stageOf=id=>FAMILY_STAGE[id]||0;
-const candiesOf=id=>saved.candies?.[rootOf(id)]||0;
+const candiesOf=id=>saved.candies?.[id]||0;
 const masteryOf=id=>saved.mastery?.[rootOf(id)]||0;
 const affinityOf=id=>saved.affinity?.[rootOf(id)]||0;
 const SAVE_V04='pokeRicochet-v04';
@@ -3175,6 +3175,102 @@ finishDescent=function(){
   if(p.hp>0&&p.v10PeriodicGuard&&run.turn%p.v10PeriodicGuard===0&&p.shield<1){p.shield=1;v07Flash('🛡️ ¡PANTALLA PROTECTORA!')}
  }
  return ret;
+};
+
+
+/* v1.0 species-specific candies, shinies and capture history */
+saved.v10Training??={};
+const v10RegisterBefore=registerReward;
+registerReward=function(id,shiny=false,source='capture'){
+ const root=rootOf(id),r=v10RegisterBefore(id,shiny,source);
+ if(root!==id&&stageOf(id)>0){
+  saved.candies[root]=Math.max(0,(saved.candies[root]||0)-r.reward);
+  saved.candies[id]=(saved.candies[id]||0)+r.reward;save();
+ }
+ return r;
+};
+onCapture=function(drop){
+ if(!run)return;
+ const id=drop.id,r=registerReward(id,!!drop.shiny),stage=stageOf(id);
+ run.captures++;
+ const recruit=stage===0&&recruitIfRoom(rootOf(id),!!drop.shiny);
+ run.v10FloorCaptures??=[];
+ run.v10FloorCaptures.push({id,shiny:!!drop.shiny,candies:r.reward,ivs:r.iv?.improvements||0,joined:recruit});
+ const n=def(id).name;
+ burst(drop.x,drop.y,drop.shiny?'#ffe18c':'#ff9fbb',20);
+ textFx(drop.x,drop.y-13,'🔴 '+n,'#ffe3a3');
+ log('🔴 '+n+' · +'+r.reward+' 🍬'+(r.iv?.improvements?' · +'+r.iv.improvements+' IVs':'')+(recruit?' · ¡AL EQUIPO!':''));
+ if(r.iv?.improvements)v08WaveToast('🧬 ¡IVs MEJORADOS! +'+r.iv.improvements);
+ message(stage?'🍬 Caramelos de '+n:'🔴 ¡'+n+' capturado!');
+ refresh();
+};
+const v10StateBefore=newState;
+newState=function(team){
+ const r=v10StateBefore(team),shine=r.team.filter(p=>p.shiny).length;
+ r.v10ShinyLuck=Math.min(.15,shine*.04);
+ r.lucky=(r.lucky||1)*(1+r.v10ShinyLuck);
+ r.v10FloorCaptures=[];r.v10CoinsGained=0;
+ return r;
+};
+const v10KillBefore=enemyDown;
+enemyDown=function(e){
+ const was=run.blocks.includes(e),money=run.money||0,p=active();
+ v10KillBefore(e);
+ if(!was||run.blocks.includes(e))return;
+ if(e.v10Champion||e.boss)run.money+=(e.boss?18:10);
+ const income=(run.money||0)-money;
+ run.v10CoinsGained=(run.v10CoinsGained||0)+income;
+ if(income>0&&run.defeated%4===0)textFx(enemyX(e)+10,enemyY(e)-8,'₽ +'+income,'#ffe5a0');
+ if(p?.v10HealEvery){p.v10HealCounter=(p.v10HealCounter||0)+1;
+  if(p.v10HealCounter%p.v10HealEvery===0&&p.hp>0)p.hp=Math.min(p.maxHp,p.hp+1)}
+};
+const v10MakeBefore=mkMon;
+mkMon=function(id,lvl=5,shiny=false){const p=v10MakeBefore(id,lvl,shiny);p.crit=Math.min(.50,(p.crit||0)+((saved.v10Training?.[id]?.focus||0)*.03));return p};
+const v10CalcBefore=pk9Recacl;
+pk9Recacl=function(p,full=false){v10CalcBefore(p,full);if(!p)return;const bond=saved.v10Training?.[p.id]?.bond||0;p.maxHp+=bond;if(full)p.hp=p.maxHp;else if(p.hp>0)p.hp=Math.min(p.maxHp,p.hp+bond)};
+const V10_CANDY_COST={bond:[12,28,55],focus:[18,42]};
+function v10CandyPage(){
+ const ids=[...new Set([...Object.keys(saved.candies||{}),...Object.keys(saved.collection||{}),...starterTeam].map(Number))]
+ .filter(id=>DB[id]).sort((a,b)=>a-b);
+ const cards=ids.map(id=>{
+  const n=candiesOf(id),state=saved.v10Training?.[id]||{bond:0,focus:0},
+  bond=V10_CANDY_COST.bond[state.bond||0],focus=V10_CANDY_COST.focus[state.focus||0],
+  hidden=(PK9.abilities[id]||[]).find(a=>a.hidden),unlocked=!!saved.abilityUnlocked?.[id],
+  label=hidden?(PK9_ABILITY_NAMES[hidden.name]||hidden.name.replaceAll('-',' ')):'';
+  return '<div class="v10-candy"><div class="v10-candy-head">'+sImg(id,false)+'<div><b>'+def(id).name+'</b><small>PS base '+PK9_STATS(id)[0]+' · '+(PK9.types[id]||[]).map(t=>TT[t]).join(' / ')+'</small></div><strong>🍬 '+n+'</strong></div>'+
+  '<div class="v10-candy-actions">'+
+  '<button data-action="v10:candy:bond:'+id+'" '+(bond&&n>=bond?'':'disabled')+'>❤️ Vínculo '+(state.bond||0)+'/3 <small>+1 PS · '+(bond||'MÁX')+' 🍬</small></button>'+
+  '<button data-action="v10:candy:focus:'+id+'" '+(focus&&n>=focus?'':'disabled')+'>🎯 Afinidad '+(state.focus||0)+'/2 <small>+3 % crítico · '+(focus||'MÁX')+' 🍬</small></button>'+
+  (hidden?'<button data-action="v10:candy:ability:'+id+'" '+(unlocked||n<45?'disabled':'')+'>✨ Habilidad oculta <small>'+label+' · '+(unlocked?'LISTA':'45 🍬')+'</small></button>':'')+'</div></div>';
+ }).join('');
+ v04Shell('caramelos','<div class="v10-candy-page"><h2>Caramelos de cada Pokémon</h2><p>Cada especie tiene sus propios caramelos. Las Poké Balls de evoluciones aportan caramelos de esa especie. Los IVs se perfeccionan permanentemente por familia.</p><div class="v10-candy-grid">'+cards+'</div></div>');
+}
+v05CandyScreen=v10CandyPage;
+const v10CandyActionBefore=handleAction;
+handleAction=function(action){
+ if(action.startsWith('v10:candy:')){
+  const [, ,kind,str]=action.split(':'),id=Number(str);
+  if(!DB[id])return;
+  const current=candiesOf(id),state=(saved.v10Training[id]??={bond:0,focus:0});
+  const cost=kind==='bond'?V10_CANDY_COST.bond[state.bond||0]:kind==='focus'?V10_CANDY_COST.focus[state.focus||0]:
+     kind==='ability'&&!saved.abilityUnlocked?.[id]&&(PK9.abilities[id]||[]).some(a=>a.hidden)?45:null;
+  if(!cost||current<cost)return;
+  saved.candies[id]-=cost;
+  if(kind==='ability'){saved.abilityUnlocked??={};saved.abilityUnlocked[id]=true}
+  else state[kind]++;
+  save();v10CandyPage();return;
+ }
+ return v10CandyActionBefore(action);
+};
+const v10AbilityPrevious=v07Ability;
+v07Ability=function(p){
+ if(!p)return null;
+ const hidden=saved.abilityUnlocked?.[p.id]&&(PK9.abilities[p.id]||[]).find(a=>a.hidden);
+ if(hidden){
+  const a=hidden.name;return {name:PK9_ABILITY_NAMES[a]||a.replaceAll('-',' ').toUpperCase(),
+  type:({'solar-power':'sun','swift-swim':'rain','flash-fire':'fire-immune','water-absorb':'water-immune','lightning-rod':'electric-immune','sturdy':'sturdy'})[a]||'passive',original:a};
+ }
+ return v10AbilityPrevious(p);
 };
 
 fitBoard();startMenu();requestAnimationFrame(render);
