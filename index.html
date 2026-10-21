@@ -2215,7 +2215,7 @@ function pk9ApplyEvo(p,e){
  // Stats are recalculated from species base stats: no arbitrary +26 HP.
  if(oldHP>0)p.hp=Math.min(p.maxHp,oldHP+Math.max(0,p.maxHp-oldMax));
  p.evolvedFrom=from;
- saved.evolved[e.to]=true;save();prefetchSprite(p.id,p.shiny);
+ saved.evolved[e.to]=true;save();prefetchSprite(p.id,p.shiny);pk9PrefetchLearnset(p.id);
  return {before:name,after:p.name,beforeId:from,afterId:p.id,oldHp:oldMax,newHp:p.maxHp};
 }
 performEvolution=function(p){
@@ -2251,6 +2251,9 @@ const pk9MoveNameMap={
 const pk9LearnCache=new Map();
 function pk9PrefetchLearnset(id){
  if(!window.fetch||pk9LearnCache.has(id))return;
+ let cached=null;
+ try{cached=JSON.parse(localStorage.getItem('pkr-gen9-learn-'+id)||'null')}catch{}
+ if(Array.isArray(cached)){pk9LearnCache.set(id,cached);return}
  const promise=fetch('https://pokeapi.co/api/v2/pokemon/'+id+'/')
  .then(res=>{if(!res.ok)throw Error('offline');return res.json()})
  .then(data=>{
@@ -2264,7 +2267,13 @@ function pk9PrefetchLearnset(id){
   found.sort((a,b)=>a.level-b.level);
   const curated=found.filter((r,i,arr)=>arr.findIndex(x=>x.name===r.name)===i);
   pk9LearnCache.set(id,curated);
-  for(const p of run?.team||[])if(p.id===id&&p.level>5)pk9AcquireMoves(p);
+  try{localStorage.setItem('pkr-gen9-learn-'+id,JSON.stringify(curated))}catch{}
+  for(const p of run?.team||[])if(p.id===id){
+   if(p.level===5&&p.moves.length===1&&!saved.tech?.[rootOf(p.id)]){
+    const initial=curated.filter(m=>m.level<=5&&V08_MOVEDATA[m.name]?.[3]!=='status').at(-1);
+    if(initial&&p.moves[0].name!==initial.name)p.moves=[v08Move(initial.name)];
+   }else if(p.level>5)pk9AcquireMoves(p);
+  }
   return curated;
  }).catch(()=>[]);
  pk9LearnCache.set(id,promise);
