@@ -3051,12 +3051,12 @@ const V10_UPGRADES=[
  {id:'focus',name:'Periscopio',rarity:'uncommon',max:2,icon:'🎯',desc:l=>'Probabilidad de crítico +5 %',ok:p=>true,apply:p=>p.crit=Math.min(.50,(p.crit||.05)+.05)},
  {id:'stab',name:'Afinidad de Tipo',rarity:'uncommon',max:2,icon:'🔷',desc:l=>'Golpes del tipo propio infligen +8 % de daño',ok:p=>p.moves.some(m=>p.types.includes(m.type)),apply:p=>p.v10STAB=(p.v10STAB||0)+.08},
  {id:'leech',name:'Drenadoras Expertas',rarity:'uncommon',max:2,icon:'🌱',desc:l=>'Drenadoras duran una ronda más y curan con mayor eficacia',ok:p=>p.moves.some(m=>m.name==='Drenadoras'),apply:p=>p.v09StatusLevel=Math.min(3,(p.v09StatusLevel||0)+1)},
- {id:'flame',name:'Fuego Fatuo',rarity:'uncommon',max:2,icon:'🔥',desc:l=>'Aumenta la probabilidad de quemar con '+l.moves[l.chosen].name,ok:p=>p.moves[p.chosen]?.type==='fire',apply:p=>p.moves[p.chosen].v09FireMastery=true},
+ {id:'flame',name:'Fuego Fatuo',rarity:'uncommon',max:1,icon:'🔥',desc:l=>'Aumenta la probabilidad de quemar con '+l.moves[l.chosen].name,ok:p=>p.moves[p.chosen]?.type==='fire',apply:p=>p.moves[p.chosen].v09FireMastery=true},
  {id:'water',name:'Hidropresión',rarity:'uncommon',max:2,icon:'💧',desc:l=>'Permite perforar con '+l.moves[l.chosen].name,ok:p=>p.moves[p.chosen]?.type==='water',apply:p=>p.moves[p.chosen].pierce=Math.min(.55,(p.moves[p.chosen].pierce||0)+.22)},
  {id:'electric',name:'Electroconductor',rarity:'uncommon',max:2,icon:'⚡',desc:l=>'Hasta dos saltos de Rayo en cadena, una activación por bola',ok:p=>p.moves[p.chosen]?.type==='electric',apply:p=>p.moves[p.chosen].chain=Math.min(2,(p.moves[p.chosen].chain||0)+1)},
- {id:'grass',name:'Esporas Enraizadas',rarity:'uncommon',max:2,icon:'🍃',desc:l=>'Oportunidad de aplicar Drenadoras una vez por proyectil',ok:p=>p.moves[p.chosen]?.type==='grass'&&p.moves[p.chosen]?.category!=='status',apply:p=>p.moves[p.chosen].v09SeedMastery=true},
- {id:'pulse',name:'Energía Rebosante',rarity:'rare',max:2,icon:'💠',desc:l=>'Carga adicional del especial cada tres impactos',ok:p=>p.moves.some(m=>m.category!=='status'),apply:p=>p.v08ChargeMastery=true},
- {id:'resilience',name:'Regeneración',rarity:'rare',max:2,icon:'💚',desc:l=>'Recuperas 1 PS tras cada cuatro enemigos derrotados',ok:p=>true,apply:p=>p.v10HealEvery=Math.max(2,4-(p.v10Upgrades?.resilience||0))},
+ {id:'grass',name:'Esporas Enraizadas',rarity:'uncommon',max:1,icon:'🍃',desc:l=>'Oportunidad de aplicar Drenadoras una vez por proyectil',ok:p=>p.moves[p.chosen]?.type==='grass'&&p.moves[p.chosen]?.category!=='status',apply:p=>p.moves[p.chosen].v09SeedMastery=true},
+ {id:'pulse',name:'Energía Rebosante',rarity:'rare',max:1,icon:'💠',desc:l=>'Carga adicional del especial cada tres impactos',ok:p=>p.moves.some(m=>m.category!=='status'),apply:p=>p.v08ChargeMastery=true},
+ {id:'resilience',name:'Regeneración',rarity:'rare',max:2,icon:'💚',desc:l=>'Recuperas 1 PS cada 3 KOs; rango II: cada 2 KOs',ok:p=>true,apply:p=>p.v10HealEvery=Math.max(2,4-(p.v10Upgrades?.resilience||0))},
  {id:'eviolite',name:'Mineral Evol',rarity:'rare',max:1,icon:'🪨',desc:l=>'Reduce daño un 15 % si tu Pokémon puede evolucionar',ok:p=>pk9EvoChoices(p).length>0,apply:p=>p.v10Eviolite=true},
  {id:'scope',name:'Enfoque Perfeccionado',rarity:'rare',max:2,icon:'🔎',desc:l=>'Los críticos añaden +1 de daño y +5 % de probabilidad',ok:p=>true,apply:p=>{p.v10CritBonus=(p.v10CritBonus||0)+1;p.crit=Math.min(.5,(p.crit||0)+.05)}},
  {id:'guard',name:'Pantalla Protectora',rarity:'epic',max:2,icon:'🛡️',desc:l=>'Obtiene un escudo cada cinco turnos; no se acumula',ok:p=>true,apply:p=>p.v10PeriodicGuard=Math.max(3,5-(p.v10Upgrades?.guard||0))},
@@ -3074,8 +3074,10 @@ function v10UpgradeDraw(p,avoid=new Set()){
  let rarity=v10Weighted(Object.entries(V10_TIERS).map(([key,t])=>({key,weight:t.percent}))).key;
  let options=v10EligibleUpgrades(p,rarity).filter(x=>!avoid.has(x.id));
  if(!options.length){
-  const tiers=['legendary','epic','rare','uncommon','common'];
-  options=tiers.flatMap(t=>v10EligibleUpgrades(p,t)).filter(x=>!avoid.has(x.id));
+  const possible=Object.entries(V10_TIERS).filter(([t])=>v10EligibleUpgrades(p,t).some(x=>!avoid.has(x.id)));
+  if(!possible.length)return null;
+  rarity=v10Weighted(possible.map(([key,t])=>({key,weight:t.percent}))).key;
+  options=v10EligibleUpgrades(p,rarity).filter(x=>!avoid.has(x.id));
  }
  if(!options.length)return null;
  const upgraded=options[Math.floor(Math.random()*options.length)];
@@ -3649,6 +3651,79 @@ handleAction=function(action){
  }
  if(action==='v10:backteam'){showHome('equipo');return}
  return v10DetailsActionBefore(action);
+};
+
+
+/* v1.0 — readable, fair status effects and satisfying KO chains */
+const v10CombatStartBefore=startBattle;
+startBattle=function(kind){
+ v10CombatStartBefore(kind);run.v10Combo=0;run.v10ComboTurn=0;
+};
+const v10StatusDamageBefore=takeDamage;
+takeDamage=function(amount,source){
+ const r=run,mon=active(),enemy=r?.blocks?.find(e=>e.name===source);
+ const prev=mon?.hp;
+ const out=v10StatusDamageBefore(amount,source);
+ if(r&&mon&&mon.hp>0&&mon.hp<prev&&enemy&&r.v10StatusAppliedTurn!==r.turn){
+  let status=null;
+  if(enemy.types.includes('poison')&&chance(.08))status='poison';
+  else if(enemy.types.includes('electric')&&chance(.08))status='paralysis';
+  else if(enemy.types.includes('fire')&&chance(.06))status='burn';
+  if(status){
+   r.v10StatusAppliedTurn=r.turn;
+   if(mon.heldItem==='lum-berry'&&!mon.v09HeldUsed){mon.v09HeldUsed=true;v07Flash('🍋 ¡BAYA ZIUELA!')}
+   else{
+    if(status==='poison')mon.v10Poisoned=3;
+    if(status==='paralysis')mon.v10Paralyzed=2;
+    if(status==='burn')mon.v10Burned=2;
+    v07Flash(({poison:'☠ ¡ENVENENADO!',paralysis:'⚡ ¡PARALIZADO!',burn:'🔥 ¡QUEMADO!'})[status]);
+   }
+  }
+ }
+ return out;
+};
+const v10StatusShootBefore=shoot;
+shoot=function(){
+ const p=active(),paralysis=mode==='aim'&&p?.v10Paralyzed>0;
+ v10StatusShootBefore();
+ if(paralysis&&mode==='shooting'){run.pending=Math.max(1,run.pending-1);p.v10Paralyzed--;textFx(run.shooter,SHOOT_Y-30,'⚡ -1 BOLA','#ffe2a0')}
+ if(run.v10StaticSlow&&p){p.v10Paralyzed=Math.max(1,p.v10Paralyzed||0);run.v10StaticSlow=false}
+};
+const v10StatusVolleyBefore=endVolley;
+endVolley=function(){
+ const p=active();
+ if(mode==='shooting'&&p&&p.hp>0){
+  if(p.v10Poisoned>0){p.v10Poisoned--;v07Flash('☠ ¡VENENO!');if(p.hp>1)p.hp--}
+  if(p.v10Burned>0){p.v10Burned--;v07Flash('🔥 ¡QUEMADURA!');if(p.hp>1)p.hp--}
+ }
+ return v10StatusVolleyBefore();
+};
+const v10CombosBefore=enemyDown;
+enemyDown=function(e){
+ const was=run.blocks.includes(e),x=enemyX(e)+enemyW(e)/2,y=enemyY(e)+enemyH(e)/2;
+ v10CombosBefore(e);
+ if(!was||run.blocks.includes(e))return;
+ if(run.v10ComboTurn!==run.turn){run.v10ComboTurn=run.turn;run.v10Combo=0}
+ run.v10Combo++;
+ const c=run.v10Combo;
+ if([4,8,12,18].includes(c)){
+  const title=c>=12?'¡RACHA DEMOLEDORA!':c>=8?'¡COMBO ESPECTACULAR!':'¡BUEN COMBO!';
+  textFx(x,y-20,'✦ '+title+' ×'+c,'#ffe89b');
+  burst(x,y,c>=12?'#ffd489':'#9aeecf',Math.min(22,10+c));
+  if(c>=8){run.money+=c>=12?8:4;run.v10CoinsGained=(run.v10CoinsGained||0)+(c>=12?8:4)}
+  run.impactShake=Math.min(5,run.impactShake+2);
+ }
+ if(e.v10Champion)textFx(x,y-20,'👑 ¡ALFA DERROTADO!','#ffe8ac');
+};
+const v10StatusHUDBefore=refresh;
+refresh=function(){
+ v10StatusHUDBefore();
+ if(!run||mode==='menu')return;
+ const p=active(),a=$id('activeLevel');
+ if(a&&p){
+  const state=[p.v10Poisoned?'☠ VENENO':'',p.v10Paralyzed?'⚡ PARÁLISIS':'',p.v10Burned?'🔥 QUEMADURA':''].filter(Boolean).join(' · ');
+  a.title=state||'Sin alteraciones de estado';
+ }
 };
 
 fitBoard();startMenu();requestAnimationFrame(render);
