@@ -2118,7 +2118,9 @@ function pk9RollIV(id,shiny=false){
  if(shiny){const index=Math.floor(Math.random()*6);fresh[index]=31}
  const better=old.map((v,i)=>Math.max(v,fresh[i]));
  const improvements=better.filter((v,i)=>v>old[i]).length;
- saved.ivBest[root]=better;save();return {fresh,best:better,improvements};
+ saved.ivBest[root]=better;
+ if(!Object.hasOwn(saved.natureBest,root))saved.natureBest[root]=Math.floor(Math.random()*PK9_NATURES.length);
+ save();return {fresh,best:better,improvements};
 }
 function pk9Nature(p){const root=rootOf(p.id);const n=p.natureIndex??saved.natureBest[root]??0;return PK9_NATURES[n]||PK9_NATURES[0]}
 function pk9OneStat(p,i,baseId){
@@ -2497,7 +2499,7 @@ function pk9ShowCamp(){
  mode='event';
  run.v09Camp??=pk9CampStock();
  const members=run.team.map((p,i)=>'<div class="v09-party-mini">'+sImg(p.id,p.shiny)+'<b>'+p.name+'</b><small>Nv.'+p.level+' · '+p.hp+'/'+p.maxHp+' PS</small>'+(p.heldItem?'<small>🎒 '+(PK9_ITEMS[p.heldItem]?.name||p.heldItem)+'</small>':'')+'</div>').join('');
- showModal('<div class="v09-camp">'+pk9CampHeader()+'<div class="v09-purse">₽ '+(run.money||0)+' <small>POKÉDÓLARES DE ESTA EXPEDICIÓN</small></div><div class="v09-party-row">'+members+'</div><div class="v09-camp-actions"><button class="v09-camp-choice" data-action="v09:rest"><b>💚 Descansar</b><small>Recuperar el 28 % de PS de todo el equipo · gratis</small></button><button class="v09-camp-choice" data-action="v09:train"><b>🥋 Entrenamiento</b><small>+8 EVs en un atributo del Pokémon activo · gratis</small></button><button class="v09-camp-choice" data-action="v09:shop"><b>🛍️ Pokétienda</b><small>Objetos, bayas y rarísimas oportunidades de evolución</small></button></div><div class="actions"><button class="primary" data-action="v09:leave">CONTINUAR LA EXPEDICIÓN →</button></div></div>');
+ showModal('<div class="v09-camp">'+pk9CampHeader()+'<div class="v09-purse">₽ '+(run.money||0)+' <small>POKÉDÓLARES DE ESTA EXPEDICIÓN</small></div><div class="v09-party-row">'+members+'</div><div class="v09-camp-actions"><button class="v09-camp-choice" data-action="v09:rest" '+(run.v09Camp?.rested?'disabled':'')+'><b>💚 Descansar</b><small>Recuperar el 28 % de PS de todo el equipo · gratis</small></button><button class="v09-camp-choice" data-action="v09:train" '+(run.v09Camp?.trained?'disabled':'')+'><b>🥋 Entrenamiento</b><small>+8 EVs en un atributo del Pokémon activo · gratis</small></button><button class="v09-camp-choice" data-action="v09:shop"><b>🛍️ Pokétienda</b><small>Objetos, bayas y rarísimas oportunidades de evolución</small></button></div><div class="actions"><button class="primary" data-action="v09:leave">CONTINUAR LA EXPEDICIÓN →</button></div></div>');
 }
 function pk9ShowShop(){
  mode='event';const offer=run.v09Camp||pk9CampStock(),ids=offer.stock.slice();
@@ -2533,12 +2535,16 @@ handleAction=function(action){
  if(action==='v09:camp'){pk9ShowCamp();return}
  if(action==='v09:shop'){pk9ShowShop();return}
  if(action==='v09:rest'){
+  if(!run.v09Camp||run.v09Camp.rested)return;
+  run.v09Camp.rested=true;
   for(const p of run.team)if(p.hp>0)p.hp=Math.min(p.maxHp,p.hp+Math.max(1,Math.ceil(p.maxHp*.28)));
   v08WaveToast('💚 ¡EQUIPO RECUPERADO!');pk9ShowCamp();return;
  }
  if(action==='v09:train'){
+  if(!run.v09Camp||run.v09Camp.trained)return;
+  run.v09Camp.trained=true;
   const p=active(),i=p?.stats?.[1]>=p?.stats?.[3]?1:3;
-  if(p){p.evs??=[0,0,0,0,0,0];p.evs[i]=Math.min(252,p.evs[i]+8);pk9Recacl(p,false)}
+  if(p){p.evs??=[0,0,0,0,0,0];p.evs[i]+=Math.max(0,Math.min(8,252-p.evs[i],510-p.evs.reduce((n,v)=>n+v,0)));pk9Recacl(p,false)}
   v08WaveToast('🥋 ENTRENAMIENTO · +8 EV');pk9ShowCamp();return;
  }
  if(action==='v09:leave'){hideModal();run.v09Camp=null;nextRoute();return}
@@ -2705,6 +2711,40 @@ showHome=function(tab='inicio'){
   }
  }
  return out;
+};
+
+
+/* v0.9 stats display, evolution preview and in-battle inspect */
+const pk9StatsButton=document.createElement('button');
+pk9StatsButton.className='v08-type-btn';pk9StatsButton.textContent='▤ FICHA';
+pk9StatsButton.title='IVs, EVs, naturaleza, estadísticas, habilidad y objeto';
+$id('helpBtn').insertAdjacentElement('beforebegin',pk9StatsButton);
+let pk9ModalResume=null;
+function pk9ViewStats(){
+ if(['shooting','descending','retaliating','statuspick'].includes(mode))return message('Consulta la ficha antes de disparar');
+ const p=active()||run?.team?.[0];if(!p)return;
+ pk9ModalResume={hidden:backdrop.classList.contains('hidden'),content:modal.innerHTML};
+ const stats=p.stats||Array.from({length:6},(_,i)=>pk9OneStat(p,i));
+ const base=PK9_STATS(p.id),ivs=p.ivs||pk9IV(p.id),evs=p.evs||Array(6).fill(0),n=pk9Nature(p);
+ const rows=PK9_STAT_LABELS.map((name,i)=>{
+  const percentage=Math.max(5,Math.min(100,stats[i]/(i===0?180:240)*100));
+  return '<div class="v09-stat-line"><strong>'+name+'</strong><div class="v09-stat-meter"><i style="width:'+percentage+'%"></i></div><b>'+stats[i]+'</b><small>BASE '+base[i]+' · IV '+ivs[i]+'/31 · EV '+evs[i]+'</small></div>';
+ }).join('');
+ const a=v07Ability(p),evos=pk9EvoChoices(p).map(e=>(PK9.names[e.to]||DB[e.to]?.[0]||e.to)+' · '+(pk9ItemFor(e)||'Nv. '+(e.level||'?'))).join(' / ');
+ const item=PK9_ITEMS[p.heldItem]?.name||'Sin objeto';
+ showModal('<div class="v09-stats"><div class="emblem">POKÉDEX · FICHA DEL EQUIPO</div><div class="v09-stats-top">'+sImg(p.id,p.shiny)+'<div><h2>'+p.name+' <span>Nv. '+p.level+'</span></h2><p>'+p.types.map(t=>TT[t]).join(' / ')+' · '+p.hp+'/'+p.maxHp+' PS</p><div class="v09-small-tags"><span>'+n[0]+'</span><span>'+(a?.name||'Sin habilidad')+'</span><span>🎒 '+item+'</span></div></div></div><div class="v09-stats-list">'+rows+'</div><p class="v09-stat-footer">Mejores IVs de la familia: '+pk9IV(p.id).join(' / ')+' · EVs obtenidos durante esta expedición: '+evs.reduce((a,b)=>a+b,0)+'/510</p><p class="v09-stat-footer">Próxima evolución: '+(evos||'Sin evolución conocida')+'</p><div class="actions"><button class="primary" data-action="v09:statsClose">VOLVER</button></div></div>');
+}
+pk9StatsButton.onclick=pk9ViewStats;
+const pk9StatsActionBefore=handleAction;
+handleAction=function(action){
+ if(action==='v09:stats'){pk9ViewStats();return}
+ if(action==='v09:statsClose'){
+  if(!pk9ModalResume)return;
+  const prior=pk9ModalResume;pk9ModalResume=null;
+  if(prior.hidden)hideModal();else showModal(prior.content);
+  return;
+ }
+ return pk9StatsActionBefore(action);
 };
 
 fitBoard();startMenu();requestAnimationFrame(render);
