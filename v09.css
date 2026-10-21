@@ -103,3 +103,32 @@ body{background:radial-gradient(ellipse at 20% 10%,#295a5a26,transparent 35%),li
  .v08-types-table{max-height:41dvh}.v08-types-table table{min-width:760px}
  .board-frame{border-width:1px}.move strong{font-size:10px}.fire-btn{font-size:11px}
 }
+
+
+/* Detailed Pokémon summary panel */
+.modal:has(.v09-stats){width:min(95vw,860px)!important;max-width:860px!important;max-height:95dvh;overflow:auto;border-color:#6db5a3}
+.v09-stats{margin:0 auto;max-width:820px}
+.v09-stats-top{display:flex;align-items:center;gap:24px;background:linear-gradient(110deg,#204e53,#153043);padding:17px;border:1px solid #5e9486;border-radius:18px;margin:13px 0}
+.v09-stats-top>img{height:112px;width:112px;object-fit:contain;image-rendering:pixelated;background:radial-gradient(circle,#72b29b34,transparent 75%);border-radius:14px}
+.v09-stats-top h2{font-size:clamp(20px,3vw,32px);margin:0 0 6px}
+.v09-stats-top h2 span{font-size:15px;color:#c8eedc}
+.v09-stats-top p{color:#b6d7d3;margin:5px 0}
+.v09-small-tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.v09-small-tags span{background:#326453;border:1px solid #7caf87;color:#f8ffe9;border-radius:8px;padding:5px 9px;font-size:11px}
+.v09-stats-list{display:grid;gap:7px;margin-top:12px}
+.v09-stat-line{display:grid;grid-template-columns:125px minmax(60px,1fr) 35px 220px;align-items:center;gap:11px;background:#132e3c;border:1px solid #355f68;border-radius:10px;padding:9px 11px}
+.v09-stat-line strong{font-size:12px;color:#ecffee}.v09-stat-line b{font-size:15px;color:#fff0bf;text-align:right}
+.v09-stat-line small{font-size:10px;color:#aacec8}
+.v09-stat-meter{height:7px;border-radius:15px;background:#355262;overflow:hidden}
+.v09-stat-meter i{display:block;height:100%;border-radius:15px;background:linear-gradient(90deg,#5dbda4,#cef7a8);box-shadow:0 0 9px #93f7be52}
+.v09-stat-footer{font-size:12px;color:#b3d9ce;padding:6px 2px;margin:6px 0}
+.v09-camp-choice:disabled{opacity:.4;cursor:not-allowed;transform:none!important;background:#1c323a}
+.v09-camp-choice:disabled:hover{background:#1c323a}
+@media(max-width:740px){
+ .v09-stats-top{gap:9px;padding:10px}
+ .v09-stats-top>img{width:78px;height:78px}
+ .v09-stat-line{grid-template-columns:85px minmax(40px,1fr) 27px;gap:7px;padding:7px}
+ .v09-stat-line strong{font-size:10px}
+ .v09-stat-line small{grid-column:1/-1;font-size:9px}
+ .v09-small-tags span{font-size:9px}
+}
