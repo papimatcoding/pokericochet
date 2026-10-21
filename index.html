@@ -202,6 +202,7 @@
 <aside class="sidebar"><section class="side-card"><div class="card-label">POKÉMON ACTIVO</div><div class="active-profile"><img id="activeSprite" class="active-sprite" alt="Pokémon activo"><div style="flex:1;min-width:0"><div id="activeName" class="profile-name">Charmander</div><div id="activeLevel" class="profile-level">Nv. 5 · 0 exp.</div><div id="activeTypes" class="type-row"></div></div></div><div class="bar" id="healthBar"><i></i></div><div class="small-line"><span>PS</span><b id="healthText">—</b></div><div class="bar exp"><i id="xpBar"></i></div><div class="small-line"><span>EXPERIENCIA</span><b id="xpText">—</b></div></section><section class="side-card"><div class="card-label">TU EQUIPO · REPARTIR EXP. ACTIVADO</div><div class="team" id="teamPanel"></div><div class="squad-caption">60 % activo · 20 % para cada reserva. El relevo entra protegido.</div></section><section class="side-card"><div class="card-label">EXPEDICIÓN</div><div class="metrics"><div class="metric"><b id="floorValue">0</b><span>Piso actual</span></div><div class="metric"><b id="captureValue">0</b><span>Capturas</span></div><div class="metric"><b id="defeatsValue">0</b><span>Derrotados</span></div><div class="metric"><b id="roundValue">0</b><span>Turnos</span></div></div></section><section class="side-card"><div class="card-label">ÚLTIMOS EVENTOS</div><div class="event-log" id="log"></div></section><div class="footer-hint"><span>⚔ Ventajas de tipo ×2 y resistencias ×½</span><span>V0.1</span></div></aside></main><div id="toast" role="status"></div>
 </div>
 <div class="modal-backdrop hidden" id="modalBackdrop"><section class="modal" id="modal" role="dialog" aria-modal="true"></section></div>
+<script src="./pokemon-data.js"></script>
 <script>
 (()=>{'use strict';
 const $=s=>document.querySelector(s), $id=s=>document.getElementById(s);
@@ -2092,6 +2093,198 @@ winBattle=function(){
   }
  }
  return v08UpgradesWinBefore();
+};
+
+
+/* ================================================================
+   POKÉRICOCHET v0.9 — Official species and progression core
+   Reference data: PokéAPI Gen IX, with deterministic local fallback.
+   ================================================================ */
+const PK9=window.PKR_OFFICIAL9||{stats:{},effort:{},abilities:{},evolutions:{},names:{},types:{}};
+const PK9_NATURES=[
+ ['Fuerte',null,null],['Huraña',1,2],['Osada',2,1],
+ ['Modesta',3,1],['Serena',4,1],['Miedosa',5,1],
+ ['Firme',1,3],['Agitada',2,3],['Alocada',3,4],['Alegre',5,3],
+ ['Cauta',4,3],['Plácida',2,5],['Grosera',4,5]
+];
+saved.ivBest??={};saved.natureBest??={};
+saved.money??=0;
+const PK9_STAT_LABELS=['PS','Ataque','Defensa','At. Especial','Def. Especial','Velocidad'];
+const PK9_STATS=(id)=>PK9.stats[id]||[50,55,50,55,50,50];
+function pk9IV(id){const root=rootOf(id),ivs=saved.ivBest[root]||[10,10,10,10,10,10];return Array.from({length:6},(_,i)=>Math.max(0,Math.min(31,ivs[i]??10)))}
+function pk9RollIV(id,shiny=false){
+ const root=rootOf(id),old=pk9IV(root);const fresh=old.map(()=>Math.floor(Math.random()*32));
+ if(shiny){const index=Math.floor(Math.random()*6);fresh[index]=31}
+ const better=old.map((v,i)=>Math.max(v,fresh[i]));
+ const improvements=better.filter((v,i)=>v>old[i]).length;
+ saved.ivBest[root]=better;save();return {fresh,best:better,improvements};
+}
+function pk9Nature(p){const root=rootOf(p.id);const n=p.natureIndex??saved.natureBest[root]??0;return PK9_NATURES[n]||PK9_NATURES[0]}
+function pk9OneStat(p,i,baseId){
+ const bs=PK9_STATS(baseId||p.id)[i],lv=Math.max(1,p.level||5);
+ const iv=(p.ivs||pk9IV(p.id))[i]??10,ev=(p.evs||[])[i]||0;
+ if(i===0)return Math.floor((2*bs+iv+Math.floor(ev/4))*lv/100)+lv+10;
+ const raw=Math.floor((2*bs+iv+Math.floor(ev/4))*lv/100)+5;
+ const nature=pk9Nature(p);
+ return Math.max(1,Math.floor(raw*(nature[1]===i?1.1:nature[2]===i?.9:1)));
+}
+function pk9Recacl(p,full=false){
+ if(!p)return;
+ p.ivs??=pk9IV(p.id);p.evs??=[0,0,0,0,0,0];
+ p.natureIndex??=saved.natureBest[rootOf(p.id)]??0;
+ const oldMax=p.maxHp||1,oldHp=p.hp;
+ p.stats=Array.from({length:6},(_,i)=>pk9OneStat(p,i));
+ p.maxHp=p.stats[0]+(p.bonusHp||0)+(saved.mastery?.[rootOf(p.id)]||0);
+ if(full)p.hp=p.maxHp;
+ else if(oldHp>0)p.hp=Math.max(1,Math.min(p.maxHp,p.hp+Math.max(0,p.maxHp-oldMax)));
+ else p.hp=0;
+}
+const pk9FormerMon=mkMon;
+mkMon=function(id,lvl=5,shiny=false){
+ const p=pk9FormerMon(id,lvl,shiny);
+ p.ivs=pk9IV(id);p.evs=[0,0,0,0,0,0];p.natureIndex=saved.natureBest[rootOf(id)]??0;
+ pk9Recacl(p,true);
+ const ab=PK9.abilities[id]||PK9.abilities[rootOf(id)]||[];
+ p.abilityOfficial=ab.find(a=>!a.hidden)?.name||'';
+ p.abilityHidden=ab.find(a=>a.hidden)?.name||'';
+ p.heldItem=null;
+ return p;
+};
+v05HP=function(id,level){
+ const p={id,level,ivs:pk9IV(id),evs:[0,0,0,0,0,0],natureIndex:saved.natureBest[rootOf(id)]??0};
+ return pk9OneStat(p,0);
+};
+v05Max=function(p){return pk9OneStat(p,0)+(p.bonusHp||0)+(saved.mastery?.[rootOf(p.id)]||0)};
+addXP=function(base){
+ const living=run.team.map((p,i)=>({p,i})).filter(x=>x.p.hp>0);if(!living.length)return;
+ const reserve=living.filter(x=>x.i!==run.active);
+ for(const {p,i} of living){
+  const share=i===run.active?(reserve.length?.6:1):(.4/reserve.length);
+  p.xp+=Math.max(1,Math.round(base*share*(run.expBoost||1)));
+  let gained=0;
+  while(p.level<100&&p.xp>=neededXP(p.level)&&gained++<5){
+   p.xp-=neededXP(p.level);p.level++;
+   pk9Recacl(p,false);
+   p.hp=Math.min(p.maxHp,p.hp+Math.max(1,Math.ceil(p.maxHp*.12)));
+   run.expQueue.push(i);
+   log('✨ '+p.name+' alcanza el nivel '+p.level);
+  }
+ }
+ refresh();
+};
+const pk9PrevEnemyDown=enemyDown;
+enemyDown=function(e){
+ const present=run?.blocks?.includes(e);pk9PrevEnemyDown(e);
+ if(!present||!run||run.blocks.includes(e))return;
+ const yieldStats=PK9.effort[e.id]||[0,0,0,0,0,0];
+ for(const p of run.team.filter(x=>x.hp>0)){
+  p.evs??=[0,0,0,0,0,0];
+  let total=p.evs.reduce((a,b)=>a+b,0);
+  for(let i=0;i<6;i++)if(yieldStats[i]&&total<510){
+   const amount=Math.min(yieldStats[i],252-p.evs[i],510-total);
+   p.evs[i]+=amount;total+=amount;
+  }
+  pk9Recacl(p,false);
+ }
+};
+const pk9RewardBefore=registerReward;
+registerReward=function(id,shiny=false,source='capture'){
+ const result=pk9RewardBefore(id,shiny,source);
+ result.iv=pk9RollIV(id,shiny);
+ return result;
+};
+function pk9EvoChoices(p){
+ return (PK9.evolutions?.[p.id]||[]).filter(e=>!!PK9_STATS(e.to));
+}
+function pk9ItemFor(e){
+ if(e.method===3&&e.item)return e.item;
+ if(e.method===2)return e.heldItem||'link-cable';
+ if(e.happiness||e.method===1&&!e.level)return 'friendship-ribbon';
+ return null;
+}
+function pk9ApplyEvo(p,e){
+ const from=p.id,name=p.name,oldMax=p.maxHp,oldHP=p.hp;
+ const next=def(e.to);p.id=e.to;p.name=next.name;p.types=(PK9.types[e.to]||next.types);
+ p.rarity=next.rarity;p.icon=next.icon;p.root=rootOf(from);
+ pk9Recacl(p,false);
+ // Stats are recalculated from species base stats: no arbitrary +26 HP.
+ if(oldHP>0)p.hp=Math.min(p.maxHp,oldHP+Math.max(0,p.maxHp-oldMax));
+ p.evolvedFrom=from;
+ saved.evolved[e.to]=true;save();prefetchSprite(p.id,p.shiny);
+ return {before:name,after:p.name,beforeId:from,afterId:p.id,oldHp:oldMax,newHp:p.maxHp};
+}
+performEvolution=function(p){
+ const eligible=pk9EvoChoices(p).find(e=>e.method===1&&e.level&&p.level>=e.level);
+ return eligible?pk9ApplyEvo(p,eligible):false;
+};
+const pk9OldShowLevelUp=showLevelUp;
+showLevelUp=function(){
+ const idx=run.expQueue?.[0],p=run.team[idx];
+ if(p){
+  pk9Recacl(p,false);
+  const evo=performEvolution(p);
+  if(evo){
+   mode='evolving';
+   showModal('<div class="v09-evolution"><div class="emblem">EVOLUCIÓN · NIVEL '+p.level+'</div><h2>¡'+evo.before+' está evolucionando!</h2><div class="v09-evo-scene"><img class="v09-evo-old" src="'+sprite(evo.beforeId,p.shiny)+'"><div class="v09-evo-core">✦</div><img class="v09-evo-new" src="'+sprite(evo.afterId,p.shiny)+'"></div><h2>¡Enhorabuena! Tu '+evo.before+' evolucionó a '+evo.after+'.</h2><p>PS '+evo.oldHp+' → '+evo.newHp+' · Estadísticas actualizadas a su nueva especie</p><button class="big-play" data-action="v04:evolvecontinue">CONTINUAR →</button></div>');
+   refresh();return;
+  }
+ }
+ return _v04ShowLevelUp();
+};
+// Official Scarlet/Violet level-up data are requested and cached per species, only when the data source is available.
+const pk9MoveNameMap={
+ 'tackle':'Placaje','scratch':'Arañazo','growl':'Gruñido','ember':'Ascuas','flamethrower':'Lanzallamas',
+ 'fire-spin':'Giro Fuego','vine-whip':'Látigo Cepa','razor-leaf':'Hoja Afilada','leech-seed':'Drenadoras',
+ 'water-gun':'Pistola Agua','bubble':'Burbuja','thunder-shock':'Impactrueno','spark':'Chispa',
+ 'thunder-wave':'Onda Trueno','quick-attack':'Ataque Rápido','swords-dance':'Danza Espada',
+ 'light-screen':'Pantalla Luz','protect':'Protección','synthesis':'Síntesis','growth':'Desarrollo',
+ 'smokescreen':'Pantalla Humo','mud-shot':'Disparo Lodo','bite':'Mordisco','confusion':'Confusión',
+ 'shadow-ball':'Bola Sombra','rock-throw':'Lanzarrocas','absorb':'Absorber','leafage':'Follaje',
+ 'branch-poke':'Rama','aqua-jet':'Acua Jet','flame-charge':'Nitrocarga','flame-wheel':'Rueda Fuego',
+ 'pin-missile':'Pin Misil','magical-leaf':'Hoja Afilada','water-pulse':'Pistola Agua'
+};
+const pk9LearnCache=new Map();
+function pk9PrefetchLearnset(id){
+ if(!window.fetch||pk9LearnCache.has(id))return;
+ const promise=fetch('https://pokeapi.co/api/v2/pokemon/'+id+'/')
+ .then(res=>{if(!res.ok)throw Error('offline');return res.json()})
+ .then(data=>{
+  const found=[];
+  for(const entry of data.moves||[]){
+   const l=entry.version_group_details?.find(d=>d.version_group?.name==='scarlet-violet'&&d.move_learn_method?.name==='level-up');
+   if(!l)continue;
+   const label=pk9MoveNameMap[entry.move.name];
+   if(label&&typeof V08_MOVEDATA[label]!=='undefined')found.push({name:label,level:l.level_learned_at});
+  }
+  found.sort((a,b)=>a.level-b.level);
+  return found.filter((r,i,arr)=>arr.findIndex(x=>x.name===r.name)===i);
+ }).catch(()=>[]);
+ pk9LearnCache.set(id,promise);
+}
+function pk9LearnsetFor(p){
+ const family=V08_LEARNSETS[rootOf(p.id)]||[];
+ const actual=pk9LearnCache.get(p.id);
+ if(Array.isArray(actual))return actual;
+ if(actual&&typeof actual.then==='function')return family.map((name,i)=>({name,level:5+(i*5)}));
+ return family.map((name,i)=>({name,level:5+(i*5)}));
+}
+const pk9PrevStartBattle=startBattle;
+startBattle=function(kind){
+ for(const p of run.team)pk9PrefetchLearnset(p.id);
+ return pk9PrevStartBattle(kind);
+};
+const pk9PreviousLevelOptions=levelOptions;
+levelOptions=function(p){
+ const opts=pk9PreviousLevelOptions(p);
+ const learned=pk9LearnCache.get(p.id);
+ const fallback=pk9LearnsetFor(p);
+ const eligible=fallback.find(m=>m.level<=p.level&&!p.moves.some(x=>x.name===m.name));
+ const at=opts.findIndex(x=>x.key==='v08learn');
+ if(eligible&&p.moves.length<4){
+  const d=V08_MOVEDATA[eligible.name];
+  if(d){const card={key:'v08learn',title:'Aprender '+eligible.name,desc:'Movimiento de '+TT[d[0]]+' · '+(d[3]==='status'?'Estado':'Nivel '+eligible.level),emoji:'📖'};opts[at>=0?at:0]=card}
+ }else if(at>=0)opts[at]={key:'hp',title:'Aumentar aguante',desc:'Mejora PS máximos del Pokémon',emoji:'❤️'};
+ return opts;
 };
 
 fitBoard();startMenu();requestAnimationFrame(render);
