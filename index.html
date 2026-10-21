@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#0a1121">
 <meta name="description" content="PokéRicochet: prototipo fan roguelite de rebotes, captura y progreso Pokémon.">
-<title>POKÉRICOCHET · Rogue Bounce v0.9</title>
+<title>POKÉRICOCHET · Rogue Bounce v1.0</title>
 <style>
 :root{color-scheme:dark;--bg:#080e1b;--panel:#101c32;--panel2:#142540;--line:#2b4262;--faint:#8c9fbb;--white:#f5f8ff;--aqua:#70f2d3;--yellow:#ffdb7c;--pink:#f6a1c4;--red:#ff7383;--blue:#85aaff}
 *{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--white);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}button{font:inherit;cursor:pointer;touch-action:manipulation}button:disabled{cursor:not-allowed;opacity:.4}button:focus-visible{outline:2px solid var(--aqua);outline-offset:3px}body:before{position:fixed;content:"";inset:0;pointer-events:none;background:radial-gradient(ellipse 65% 55% at 20% 0%,#22396383,transparent),radial-gradient(ellipse 43% 60% at 93% 90%,#0f4e5d40,transparent);z-index:0}.app{position:relative;display:flex;flex-direction:column;height:100vh;height:100dvh;max-width:1320px;margin:auto;padding:clamp(7px,1.5vh,14px) clamp(8px,1.5vw,22px);gap:clamp(6px,1vh,11px);min-height:0}.top{flex:0 0 auto;display:flex;align-items:center;gap:12px;min-height:46px}.brand{font-size:clamp(17px,2vw,23px);font-weight:950;line-height:1;letter-spacing:-.06em;white-space:nowrap}.brand b{color:var(--aqua)}.brand small{display:block;margin-top:5px;letter-spacing:.16em;font-size:9px;font-weight:800;color:#839cba}.top-right{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex:1;min-width:0}.mini-status{font-size:11px;color:#c2d1e5;background:#13243b;border:1px solid #284260;border-radius:9px;padding:9px 11px;white-space:nowrap}.mini-status strong{color:var(--yellow)}.iconbtn{color:#dce8f9;background:#14243a;border:1px solid #2c4360;border-radius:10px;min-width:34px;height:34px;display:grid;place-items:center;font-size:16px}.iconbtn:hover{background:#253d5d}
@@ -2863,6 +2863,173 @@ enemyDown=function(e){
  if(was&&!run.blocks.includes(e)&&run.relics.includes('amulet-coin')){
   run.money+=Math.max(1,Math.ceil(((run.money||0)-before)*.5));
  }
+};
+
+
+/* ==== POKÉRICOCHET 1.0 — encounter director ==== */
+const V10_ROSTER=[
+ [10,13,16,19,21,29,32,43,46,48,52,56,63,69,84,102,161,163,165,167,172,187,191,204,252,263,273,280,285,290,298,300,315,316,322,328,333,349,360,387,396,399,406,412,415,420,427,431,434,440,446,495,504,509,511,519,522,531,540,546,548,557,572,585,590,607,650,659,661,664,669,672,674,679,682,694,696,710,712,722,731,736,742,744,747,753,755,761,764,767,769,810,819,821,824,827,829,835,840,843,848,854,859,868,906,915,917,919,921,924,926,928,932,935,938,940,943,946,948,951,955],
+ [23,27,41,50,66,74,81,92,95,104,109,111,116,118,123,129,137,147,194,200,207,209,215,218,220,228,231,246,261,293,296,299,302,304,307,318,325,331,337,339,343,347,353,355,361,363,371,374,390,403,433,436,438,443,447,451,453,456,459,473,506,524,527,532,535,538,543,551,559,562,568,570,574,577,582,588,592,595,597,599,605,607,610,613,618,622,624,627,633,636,677,686,690,698,703,704,708,714,720,734,744,751,757,762,764,782,808,831,833,837,843,848,859,872,876,878,880,884,906,909,912,921,924,933,940,948,957],
+ [7,54,60,72,79,86,90,98,116,118,120,129,130,131,133,170,177,183,194,199,211,222,223,226,230,238,258,270,278,283,318,320,339,341,345,349,363,366,370,393,418,422,425,443,456,458,489,501,515,522,535,550,564,580,592,594,602,618,646,656,661,682,686,690,692,694,704,712,728,736,746,747,751,755,767,771,775,780,789,816,833,846,850,852,854,859,885,912,919,938,940,944,946,955,957,960,963,965,968,969,970,973,976,977,978,979],
+ [4,5,6,27,37,58,59,74,75,77,78,81,83,95,100,109,111,123,126,127,133,136,142,147,155,156,190,200,207,218,220,225,228,229,231,240,246,255,256,261,263,276,280,296,302,304,322,324,325,328,331,333,337,343,353,355,359,371,374,390,391,403,417,425,436,443,447,451,455,459,470,471,479,498,513,524,529,532,551,554,557,559,562,568,570,577,582,588,607,610,613,618,624,627,633,636,650,653,656,661,674,679,686,698,703,704,708,714,727,741,744,757,776,782,810,813,816,837,840,848,854,859,885,906,909,912,935,937,938,940,951,957,960,963]
+];
+const V10_NAMES={'nidoran-f':'Nidoran♀','nidoran-m':'Nidoran♂','mr-mime':'Mr. Mime','mime-jr':'Mime Jr.','ho-oh':'Ho-Oh'};
+const V10_LABEL=id=>V10_NAMES[PK9.names[id]]||(PK9.names[id]||'Pokémon '+id).replaceAll('-',' ').replace(/\b\w/g,c=>c.toUpperCase());
+const V10_BACK_EVOLUTION={};
+for(const [from,evos] of Object.entries(PK9.evolutions))for(const e of evos)
+ if(e.to<1026&&!V10_BACK_EVOLUTION[e.to])V10_BACK_EVOLUTION[e.to]=Number(from);
+function v10Root(id){
+ let curr=Number(id),n=0;
+ while(V10_BACK_EVOLUTION[curr]&&n++<4)curr=V10_BACK_EVOLUTION[curr];
+ return curr;
+}
+function v10Stage(id){let curr=Number(id),n=0;while(V10_BACK_EVOLUTION[curr]&&n<3){curr=V10_BACK_EVOLUTION[curr];n++}return n}
+function v10RegisterSpecies(id){
+ if(!PK9.stats[id]||!PK9.types[id]?.[0])return false;
+ if(!DB[id]){
+  const root=v10Root(id),bst=PK9.stats[id].reduce((a,b)=>a+b,0);
+  const rarity=bst>480?'rare':bst>365?'uncommon':'common';
+  DB[id]=[V10_LABEL(id),PK9.types[id],rarity,rarity==='rare'?3:rarity==='uncommon'?8:13,
+   ({grass:'🌱',fire:'🔥',water:'💧',electric:'⚡',ghost:'👻',psychic:'🔮',rock:'🪨',dragon:'🐉',normal:'⭐'})[PK9.types[id][0]]||'✦'];
+ }
+ FAMILY_ROOT[id]??=v10Root(id);FAMILY_STAGE[id]??=v10Stage(id);
+ return true;
+}
+for(const roster of V10_ROSTER)for(const id of roster){
+ v10RegisterSpecies(id);
+ for(const e of PK9.evolutions[id]||[])v10RegisterSpecies(e.to);
+}
+// Preserve canonical base family behavior for already known starters.
+const V10_POOLS=V10_ROSTER.map(list=>[...new Set(list.filter(id=>v10RegisterSpecies(id)&&v10Stage(id)===0))]);
+const V10_RARITIES=[
+ {key:'common',label:'Común',weight:59},
+ {key:'uncommon',label:'Poco común',weight:29},
+ {key:'rare',label:'Raro',weight:10},
+ {key:'ultra',label:'Extraordinario',weight:2}
+];
+function v10SpeciesRarity(id){
+ const base=PK9.stats[id]||[50,50,50,50,50,50],total=base.reduce((a,b)=>a+b,0);
+ if([25,58,133,246,280,304,371,374,443,447,633,703,704,722,808,885,935].includes(id))return 'rare';
+ if(total>=480)return 'ultra';
+ if(total>=385)return 'rare';
+ if(total>=325)return 'uncommon';
+ return 'common';
+}
+function v10Weighted(list){const total=list.reduce((s,x)=>s+x.weight,0);let n=Math.random()*total;for(const r of list){n-=r.weight;if(n<=0)return r}return list.at(-1)}
+function v10SelectSpecies(used){
+ const roster=V10_POOLS[run.zone]||V10_POOLS.at(-1),recent=run.v10Recent||[];
+ const target=v10Weighted(V10_RARITIES).key;
+ const valid=roster.filter(id=>v10SpeciesRarity(id)===target&&(!used.has(id))&&!recent.slice(-10).includes(id));
+ const fallback=roster.filter(id=>!used.has(id)&&!recent.slice(-6).includes(id));
+ const candidates=valid.length?valid:fallback.length?fallback:roster;
+ let id=pick(candidates);
+ const evolveChance=Math.min(.095,.025+run.zone*.018+(run.encounter==='elite'?.035:0));
+ if(chance(evolveChance)){
+  const evolutions=(PK9.evolutions[id]||[]).filter(x=>x.to<=1025&&PK9.stats[x.to]&&v10RegisterSpecies(x.to));
+  if(evolutions.length){id=pick(evolutions).to;}
+ }
+ recent.push(id);run.v10Recent=recent.slice(-18);used.add(id);
+ return id;
+}
+const v10OriginalRow=pk9EmitRow;
+pk9EmitRow=function(targetRow=0){
+ if(!run?.v09Active||run.v09RowsEmitted>=run.v09RowsTotal)return false;
+ const num=++run.v09RowsEmitted;
+ const horde=num===7||num===13||run.encounter==='swarm'&&num%4===0;
+ const density=horde?7:clamp(num<=3?2+Math.floor(rand(0,2)):num<=8?3+Math.floor(rand(0,3)):4+Math.floor(rand(0,3)),2,7);
+ const cols=[0,1,2,3,4,5,6].sort(()=>Math.random()-.5).slice(0,density);
+ const used=new Set;
+ let mini=null;
+ const miniboss=run.encounter==='miniboss'&&(num===6||num===11);
+ for(const col of cols){
+  let id=v10SelectSpecies(used);
+  const stage=v10Stage(id),isEvolved=stage>0;
+  const isChampion=(!mini&&miniboss&&stage>0)||(!mini&&miniboss&&col===cols[0]);
+  const e=newEnemy(id,col,targetRow,false,isChampion||run.encounter==='elite'&&chance(.10));
+  e.v10Stage=stage;e.v10Champion=!!isChampion;e.v10Evolution=!!isEvolved;
+  const lv=Math.max(5,Math.round(run.team.reduce((sum,p)=>sum+p.level,0)/run.team.length)+run.zone*2+Math.floor(num/5)+stage*2);
+  const hp=pk9OneStat({id,level:lv,ivs:[14,14,14,14,14,14],evs:[0,0,0,0,0,0]},0);
+  e.level=lv;
+  e.maxHp=Math.max(12,Math.round(hp*(1.03+run.zone*.24+num*.048)*(isEvolved?2.0:1)*(isChampion?2.45:1)*(e.role==='tank'?1.28:1)));
+  e.hp=e.maxHp;
+  e.attack=Math.max(1,Math.ceil(1+run.zone*.9+Math.floor(num/5)+(isEvolved?1:0)+(isChampion?2:0)));
+  e.ranged=e.ranged&&chance(isChampion?.74:.34);e.cooldown=Math.max(2,e.cooldown||3);
+  e.v10Skill=(PK9.abilities[id]||[]).find(a=>!a.hidden)?.name||'';
+  e.v10AI= id%7===0?'medic':id%7===1?'sniper':id%7===2?'guardian':id%7===3?'trickster':'striker';
+  e.v10SkillShown=false;e.v10Armor=0;
+  if(isEvolved)e.drop*=.48;
+  if(isChampion){mini=e;e.drop=Math.max(e.drop,.055);}
+  run.blocks.push(e);
+ }
+ if(horde)v08WaveToast('⚔ HORDA SALVAJE · FILA '+num);
+ if(mini)v08WaveToast('💀 ¡APARECE UN MINIJЕFE!'); 
+ return true;
+};
+const v10StartBefore=startBattle;
+startBattle=function(kind){
+ v10StartBefore(kind);
+ run.v10FloorCaptures=[];run.v10FloorStartMoney=run.money||0;
+ run.v10Recent=[];run.v10SkillLog=[];run.v10DefenseTurn=0;
+ if(kind==='miniboss')v08WaveToast('💀 ENCUENTRO DE MINIJЕFE');
+};
+const v10AttackBefore=attackInfo;
+attackInfo=function(move,e){
+ const info=v10AttackBefore(move,e);
+ const trait=e.v10Skill;
+ if((trait==='levitate'&&move.type==='ground')||(trait==='flash-fire'&&move.type==='fire')||
+    (trait==='water-absorb'&&move.type==='water')||(trait==='lightning-rod'&&move.type==='electric')||
+    (trait==='sap-sipper'&&move.type==='grass')){
+  if(info.dmg>0&&!e.v10SkillShown){e.v10SkillShown=true;textFx(enemyX(e)+enemyW(e)/2,enemyY(e)-10,trait.replaceAll('-',' ').toUpperCase(),'#ffe5a1')}
+  info.mult=0;info.dmg=0;
+ }
+ if(e.v10Armor>0&&info.dmg){info.dmg=Math.max(1,Math.ceil(info.dmg*.67));e.v10Armor--}
+ return info;
+};
+const v10EnemyHitBefore=hit;
+hit=function(e,b){
+ const prev=e.hp,skill=e.v10Skill;
+ if(skill==='sturdy'&&!e.v10SturdyUsed&&prev===e.maxHp){
+  // Shared hit logic may apply AoE; keep Sturdy from a single lethal contact.
+  v10EnemyHitBefore(e,b);
+  if(e.hp<=0){e.hp=1;if(!run.blocks.includes(e))run.blocks.push(e);e.v10SturdyUsed=true;textFx(enemyX(e),enemyY(e),'¡ROBUSTEZ!','#f9efbb')}
+ }else v10EnemyHitBefore(e,b);
+ if(e.hp<prev&&e.hp>0&&skill==='static'&&!b.effectUsed&&chance(.08)){b.effectUsed=true;run.v10StaticSlow=true;textFx(b.x,b.y,'⚡ ESTÁTICA','#fced99')}
+};
+const v10DescentBefore=finishDescent;
+finishDescent=function(){
+ if(run?.v09Active&&run.blocks?.length){
+  const activeEnemies=run.blocks.filter(e=>e.hp>0);
+  let count=0;
+  for(const e of activeEnemies){
+   if(e.v10AI==='medic'&&e.hp>0&&run.turn%3===0&&count<2){
+    const wounded=activeEnemies.filter(t=>t!==e&&t.hp<t.maxHp).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0];
+    if(wounded){wounded.hp=Math.min(wounded.maxHp,wounded.hp+Math.max(2,Math.floor(wounded.maxHp*.12)));textFx(enemyX(e),enemyY(e)-12,'✚ CURACIÓN','#9effbf');count++}
+   }else if(e.v10AI==='guardian'&&run.turn%4===0&&count<2){e.v10Armor=1;textFx(enemyX(e),enemyY(e)-8,'🛡 BLOQUEO','#addfff');count++}
+   else if(e.v10AI==='sniper'&&e.ranged&&run.turn%4===0&&count<3)e.cooldown=Math.min(e.cooldown,1);
+   else if(e.v10AI==='trickster'&&run.turn%5===0&&!e.boss&&e.row<5&&count<2){
+    e.col=Math.max(0,Math.min(6,e.col+(e.col===6?-1:chance(.5)?1:-1)));
+    textFx(enemyX(e),enemyY(e)-10,'✦ ESQUIVA','#d8caff');count++;
+   }
+  }
+ }
+ return v10DescentBefore();
+};
+const v10RenderBefore=renderBoard;
+renderBoard=function(now){
+ v10RenderBefore(now);
+ if(!run||!['aim','shooting','descending','retaliating'].includes(mode))return;
+ ctx.save();
+ for(const e of run.blocks){
+  if(!e.v10Evolution&&!e.v10Champion)continue;
+  const x=enemyX(e),y=enemyY(e),w=enemyW(e),h=enemyH(e);
+  if(y<TOP-70||y>FLOOR_Y+10)continue;
+  ctx.strokeStyle=e.v10Champion?'#ffe08c':'#d4a5f5';ctx.lineWidth=e.v10Champion?3:2;
+  ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=e.v10Champion?18:9;
+  ctx.strokeRect(x+1,y+1,w-2,h-2);ctx.shadowBlur=0;
+  ctx.font='bold 9px system-ui';ctx.textAlign='right';ctx.fillStyle=e.v10Champion?'#ffdf83':'#e5c6ff';
+  ctx.fillText(e.v10Champion?'★ ALFA':'▲ EV.',x+w-4,y+h-10);
+ }
+ ctx.restore();
 };
 
 fitBoard();startMenu();requestAnimationFrame(render);
