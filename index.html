@@ -206,7 +206,7 @@
 <script>
 (()=>{'use strict';
 const $=s=>document.querySelector(s), $id=s=>document.getElementById(s);
-const W=420,H=570,COLS=7,CS=55,LEFT=17,TOP=31,STEP=58,FLOOR_Y=516,BALL_R=4.8,SHOOT_Y=535;
+const W=420,H=570,COLS=7,CS=60,LEFT=0,TOP=31,STEP=58,FLOOR_Y=516,BALL_R=4.8,SHOOT_Y=535;
 const canvas=$id('game'),ctx=canvas.getContext('2d'),backdrop=$id('modalBackdrop'),modal=$id('modal');let mode='menu',sound=false,audioCtx=null,toastTimer=null,pcChoice=null;const images=new Map();
 const TYPE_COLOR={normal:'#a2a29a',fire:'#f08030',water:'#6c9bed',electric:'#e4bf3c',grass:'#71b963',ice:'#7fc9d7',fighting:'#c44e40',poison:'#a570b3',ground:'#c6a557',flying:'#94aada',psychic:'#ef75a7',bug:'#94ac42',rock:'#a39360',ghost:'#6c639c',dragon:'#7469d3',dark:'#6a6170',steel:'#8d9ab0',fairy:'#e49fc8'};
 const TT={normal:'Normal',fire:'Fuego',water:'Agua',electric:'Eléctrico',grass:'Planta',ice:'Hielo',fighting:'Lucha',poison:'Veneno',ground:'Tierra',flying:'Volador',psychic:'Psíquico',bug:'Bicho',rock:'Roca',ghost:'Fantasma',dragon:'Dragón',dark:'Siniestro',steel:'Acero',fairy:'Hada'};
@@ -2285,6 +2285,117 @@ levelOptions=function(p){
   if(d){const card={key:'v08learn',title:'Aprender '+eligible.name,desc:'Movimiento de '+TT[d[0]]+' · '+(d[3]==='status'?'Estado':'Nivel '+eligible.level),emoji:'📖'};opts[at>=0?at:0]=card}
  }else if(at>=0)opts[at]={key:'hp',title:'Aumentar aguante',desc:'Mejora PS máximos del Pokémon',emoji:'❤️'};
  return opts;
+};
+
+
+/* ================================================================
+   v0.9 — Continuous 15-row pressure field (no wave resets)
+   ================================================================ */
+function pk9EmitRow(targetRow=0){
+ if(!run?.v09Active||run.v09RowsEmitted>=run.v09RowsTotal)return false;
+ const number=++run.v09RowsEmitted;
+ const isHorde=number===8||number===13||run.encounter==='swarm'&&number%4===0;
+ const base=number<4?3:number<8?4:number<12?5:6;
+ const density=isHorde?7:Math.max(2,Math.min(7,base+Math.floor(Math.random()*3)-1));
+ const cols=[0,1,2,3,4,5,6].sort(()=>Math.random()-.5).slice(0,density).sort();
+ const species=typeof pool==='function'?pool(run.encounter==='elite'?'rare':run.encounter==='hunt'?'rare':'wild'):zone().normal;
+ for(const col of cols){
+  const id=pick(species?.length?species:zone().normal);
+  if(!id||!DB[id])continue;
+  const e=newEnemy(id,col,targetRow,false,run.encounter==='elite'&&chance(.14));
+  e.v09Layer=number;
+  e.maxHp=Math.max(4,Math.round(pk9OneStat({id:e.id,level:Math.max(4,Math.round(run.team.reduce((n,p)=>n+p.level,0)/run.team.length)),ivs:[8,8,8,8,8,8],evs:[0,0,0,0,0,0]},0)*(e.role==='tank'?.78:.52)*(run.zone*.10+1)));
+  e.hp=e.maxHp;
+  e.attack=Math.max(1,Math.min(5,Math.ceil(1+run.zone*.55+(e.elite?1:0))));
+  e.ranged=e.ranged&&chance(.36);
+  e.cooldown=Math.max(2,e.cooldown||3);
+  run.blocks.push(e);
+ }
+ if(isHorde){v08WaveToast('⚔ HORDA · FILA '+number);if(sound)playTone(270,.15,'triangle',.010)}
+ return true;
+}
+const pk9BattleBefore=startBattle;
+startBattle=function(kind){
+ run.v09Active=false;run.v08WaveActive=false;
+ pk9BattleBefore(kind);
+ run.v08WaveActive=false;
+ run.v09Active=true;run.v09RowsTotal=kind==='boss'?18:15;run.v09RowsEmitted=0;
+ run.v09Turns=0;run.v09IsBoss=kind==='boss';
+ run.blocks=[];run.drops=[];run.v09RangedThreat=0;
+ if(kind==='boss'){
+  const boss=newEnemy(zone().boss,2,0,true,true);
+  boss.maxHp=Math.max(65,Math.round(pk9OneStat({id:boss.id,level:Math.max(8,run.team[0]?.level+3||8),ivs:[15,15,15,15,15,15],evs:[0,0,0,0,0,0]},0)*2.8));
+  boss.hp=boss.maxHp;boss.attack=Math.max(2,Math.ceil(3+run.zone*.75));
+  boss.cooldown=3;boss.interval=3;run.blocks.push(boss);
+  pk9EmitRow(2);pk9EmitRow(3);
+ }else{
+  pk9EmitRow(0);pk9EmitRow(1);pk9EmitRow(2);
+ }
+ run.v09InitialSize=run.blocks.length;
+ mode='aim';run.turn=1;
+ v08WaveToast('RUTA '+(run.floor||1)+' · 15 FILAS · '+(V07_DETAILS[kind]?.[1]||'ENCUENTRO'));
+ refresh();
+};
+const pk9BeforeEndVolley=endVolley;
+endVolley=function(){
+ if(mode!=='shooting')return;
+ if(run?.v09Active&&run.blocks.length===0&&run.v09RowsEmitted<run.v09RowsTotal)pk9EmitRow(0);
+ // Restrict ranged attackers: visible threat, never twenty enemies attacking at once.
+ const before=run.turn;
+ const response=pk9BeforeEndVolley();
+ if(run?.v09Active&&mode==='retaliating'&&run.enemyQueue?.length>0){
+  const cap=run.encounter==='boss'?3:run.zone>=2?3:2;
+  const overflow=run.enemyQueue.splice(cap);
+  overflow.forEach(e=>{e.cooldown=Math.max(e.cooldown,2)});
+ }
+ return response;
+};
+const pk9BeforeDescent=finishDescent;
+finishDescent=function(){
+ if(run?.v09Active&&run.v09RowsEmitted<run.v09RowsTotal){
+  // The new top row occupies -1 until the existing blocks slide down.
+  pk9EmitRow(-1);
+  run.v09Turns++;
+ }
+ return pk9BeforeDescent();
+};
+const pk9BeforeWin=winBattle;
+winBattle=function(){
+ if(run?.v09Active&&run.v09RowsEmitted<run.v09RowsTotal){
+  if(run.blocks.length===0){
+   pk9EmitRow(0);
+   mode='aim';run.pending=0;run.shots=[];refresh();
+  }
+  return;
+ }
+ if(run)run.v09Active=false;
+ return pk9BeforeWin();
+};
+const pk9BeforeHUD=refresh;
+refresh=function(){
+ pk9BeforeHUD();
+ if(!run||mode==='menu')return;
+ const progress=run.v09RowsTotal?run.v09RowsEmitted+'/'+run.v09RowsTotal:'JEFE';
+ const status=$id('topStatus');
+ if(status)status.innerHTML='<strong>REGIÓN '+(run.zone+1)+' · PISO '+run.floor+' · FILAS '+progress+' · TURNO '+run.turn+'</strong>';
+};
+const pk9BeforeDrawing=renderBoard;
+renderBoard=function(now){
+ pk9BeforeDrawing(now);
+ if(!run||!['aim','shooting','descending','retaliating'].includes(mode))return;
+ ctx.save();
+ // Incoming row markers, contact line and progressive field indicators.
+ const progress=run.v09RowsTotal?run.v09RowsEmitted/run.v09RowsTotal:0;
+ ctx.fillStyle='#0a1a25db';ctx.fillRect(8,24,154,20);
+ ctx.fillStyle='#335e62';ctx.fillRect(13,39,143,3);
+ ctx.fillStyle='#84f8c1';ctx.fillRect(13,39,143*Math.max(0,Math.min(1,progress)),3);
+ ctx.font='bold 10px system-ui';ctx.textAlign='left';ctx.fillStyle='#dcfff2';
+ ctx.fillText('FILAS  '+(run.v09RowsEmitted||0)+' / '+(run.v09RowsTotal||15),14,35);
+ if(run.blocks.some(e=>e.row>=6)){
+  ctx.fillStyle='#ffb7a5';ctx.textAlign='center';ctx.font='900 12px system-ui';
+  ctx.fillText('⚠ ¡BLOQUES CERCA!',W/2,FLOOR_Y+12);
+ }
+ ctx.restore();
 };
 
 fitBoard();startMenu();requestAnimationFrame(render);
