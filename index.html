@@ -195,6 +195,7 @@
 
 </style>
 <link rel="stylesheet" href="./v09.css">
+<link rel="stylesheet" href="./v10.css">
 </head>
 <body>
 <div class="app" id="app">
@@ -412,7 +413,7 @@ ctx.strokeStyle='#ffffff08';ctx.lineWidth=1;for(let x=LEFT;x<W;x+=CS){ctx.beginP
 ctx.font='800 10px system-ui';ctx.textAlign='left';ctx.fillStyle='#a6bfd096';ctx.fillText('ENCUENTRO · '+(run.encounter==='boss'?'JEFE FINAL':(run.encounter||'SENDA').toUpperCase()),19,21);
 ctx.setLineDash([5,7]);ctx.strokeStyle='#ff8f9d6a';ctx.beginPath();ctx.moveTo(13,FLOOR_Y);ctx.lineTo(W-13,FLOOR_Y);ctx.stroke();ctx.setLineDash([]);ctx.textAlign='right';ctx.font='700 9px system-ui';ctx.fillStyle='#ffadb6b0';ctx.fillText('ZONA DE CONTACTO',W-18,FLOOR_Y-5);
 for(let e of run.blocks){const x=enemyX(e),y=enemyY(e),w=enemyW(e),h=enemyH(e);if(y>H+60||y<-120)continue;const color=TYPE_COLOR[e.types[0]]||'#91aacc';drawRoundRect(x+2,y+4,w,h,11,'#01071888');let grad=ctx.createLinearGradient(x,y,x+w,y+h);grad.addColorStop(0,'#243a55');grad.addColorStop(1,'#0e2036');drawRoundRect(x,y,w,h,10,grad,e.shiny?'#ffe27a':color,e.boss?2.8:1.6);
-ctx.save();ctx.globalAlpha=.13;ctx.fillStyle=color;ctx.beginPath();ctx.ellipse(x+w/2,y+h*.5,w*.43,h*.39,0,0,Math.PI*2);ctx.fill();ctx.restore();drawSprite(e.id,e.shiny,x+w*.055,y+h*.07,w*.89,h*.86,e.icon);if(e.shiny){ctx.fillStyle='#ffe284';ctx.textAlign='left';ctx.font='bold 12px system-ui';ctx.fillText('✧',x+4,y+14)}
+ctx.save();ctx.globalAlpha=.13;ctx.fillStyle=color;ctx.beginPath();ctx.ellipse(x+w/2,y+h*.5,w*.43,h*.39,0,0,Math.PI*2);ctx.fill();ctx.restore();drawSprite(e.id,e.shiny,x+w*(e.v10Evolution?-.045:e.v10Champion?-.03:.055),y+h*(e.v10Evolution?-.045:e.v10Champion?-.04:.07),w*(e.v10Evolution?1.09:e.v10Champion?1.05:.89),h*(e.v10Evolution?1.09:e.v10Champion?1.07:.86),e.icon);if(e.shiny){ctx.fillStyle='#ffe284';ctx.textAlign='left';ctx.font='bold 12px system-ui';ctx.fillText('✧',x+4,y+14)}
 const dangerText=e.ranged?('✦'+Math.max(1,e.cooldown)):('↓'+Math.max(1,Math.ceil((FLOOR_Y-(TOP+e.row*STEP+4+enemyH(e)))/STEP)));
 const dangerColor=e.ranged&&e.cooldown===1?'#ff7e99':e.ranged?'#f9cf79':'#9ce8cf';
 ctx.save();
