@@ -1,6 +1,6 @@
-# POKÉRICOCHET 1.5 — Expedition Edition
+# POKÉRICOCHET 1.6 — Expedition Edition
 
-[▶ Jugar en GitHub Pages](https://papimatcoding.github.io/pokericochet/?v=1.5.0)
+[▶ Jugar en GitHub Pages](https://papimatcoding.github.io/pokericochet/?v=1.6.0)
 
 Juego fan roguelite de Pokémon y rebotes, en HTML/CSS/JavaScript sin servidor ni compilación.
 
@@ -135,3 +135,25 @@ La clave de guardado `pokeRicochet-v04` no cambia. Se conservan los Pokémon, ca
 ### Estado de comprobación
 
 El motor se ha sometido a pruebas simuladas para encuentros, tiendas, desbloqueo de recompensas y cargador de gacha, y se ha revisado la sintaxis del JavaScript. Estas pruebas no sustituyen una sesión real de juego completa ni pruebas visuales en móviles. La clave persistente `pokeRicochet-v04` se conserva.
+
+
+## Versión 1.6 — Dominantes por oleadas y movimientos unificados
+
+### Dominantes y jefes
+- Los dominantes **no empiezan aislados**: aparecen como amenaza final tras **7, 8, 8 o 9 filas normales** dependiendo de la región. El combate sigue usando el emisor de filas original; se evita que salgan minijefes accidentales dentro de las oleadas previas.
+- Dominantes **2×2 casillas** con hitbox real y sprites escalados. Avanzan una fila por ronda y pueden alcanzar la base; se elimina el anclaje que los dejaba en la misma posición. El lateral avisa de las filas restantes.
+- Jefes **3×3 casillas** con hitbox real, sin convertirlos de nuevo en un combate de dieciséis filas. Se mantienen las mecánicas de los jefes de la 1.5.
+
+### Movimientos
+- Máximo **tres movimientos por Pokémon**. Caterpie comienza únicamente con Placaje; Mudkip empieza con Placaje y puede aprender Pistola Agua, Disparo Lodo e Hidrobomba a lo largo de la partida.
+- Los proyectiles de una ráfaga usan **varios movimientos ofensivos equipados**: el elegido tiene más peso, pero los demás aportan bolas de su propio tipo, categoría y potencia. Los movimientos de estado no se mezclan con bolas ofensivas.
+- Aprendizaje por nivel sin consumir la elección de mejora, con ventana para sustituir un movimiento cuando hay tres. La carga asíncrona de PokéAPI no ofrece movimientos antiguos como si fueran aprendizajes nuevos. Las MT respetan el máximo de tres.
+- Los especiales genéricos dejan de estar disponibles. Algunas técnicas de movimiento —como Mordisco, Hidrobomba, Rayo, Lanzallamas y Hoja Afilada— acumulan impactos propios; la Velocidad reduce ligeramente la carga necesaria. No todos los ataques reciben una técnica.
+- Panel de movimientos y cargas fuera del tablero, con vista compacta en móvil.
+
+### Expedición
+- **Eliminadas las misiones de entrenador** del resumen entre pisos y sus manejadores de aceptación. Las misiones diarias/semanales quedan para una futura reforma independiente.
+- Se conserva la clave de guardado `pokeRicochet-v04`, la colección permanente, los IVs, caramelos y tickets.
+
+### Comprobaciones
+Se ha validado la sintaxis del script completo y ejecutado pruebas simuladas del motor: siete filas previas al primer alfa, aparición de un 2×2, avance por descenso, finalización de combate, jefe 3×3, ráfaga que mezcla Placaje y Pistola Agua, Caterpie con Placaje y respeto del límite de tres movimientos. Siguen pendientes partidas completas en navegador y comprobación visual de escritorio/móvil; el balance no debe considerarse definitivo.

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#0a1121">
 <meta name="description" content="PokéRicochet: prototipo fan roguelite de rebotes, captura y progreso Pokémon.">
-<title>POKÉRICOCHET · Rogue Bounce v1.5</title>
+<title>POKÉRICOCHET · Rogue Bounce v1.6</title>
 <style>
 :root{color-scheme:dark;--bg:#080e1b;--panel:#101c32;--panel2:#142540;--line:#2b4262;--faint:#8c9fbb;--white:#f5f8ff;--aqua:#70f2d3;--yellow:#ffdb7c;--pink:#f6a1c4;--red:#ff7383;--blue:#85aaff}
 *{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--white);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}button{font:inherit;cursor:pointer;touch-action:manipulation}button:disabled{cursor:not-allowed;opacity:.4}button:focus-visible{outline:2px solid var(--aqua);outline-offset:3px}body:before{position:fixed;content:"";inset:0;pointer-events:none;background:radial-gradient(ellipse 65% 55% at 20% 0%,#22396383,transparent),radial-gradient(ellipse 43% 60% at 93% 90%,#0f4e5d40,transparent);z-index:0}.app{position:relative;display:flex;flex-direction:column;height:100vh;height:100dvh;max-width:1320px;margin:auto;padding:clamp(7px,1.5vh,14px) clamp(8px,1.5vw,22px);gap:clamp(6px,1vh,11px);min-height:0}.top{flex:0 0 auto;display:flex;align-items:center;gap:12px;min-height:46px}.brand{font-size:clamp(17px,2vw,23px);font-weight:950;line-height:1;letter-spacing:-.06em;white-space:nowrap}.brand b{color:var(--aqua)}.brand small{display:block;margin-top:5px;letter-spacing:.16em;font-size:9px;font-weight:800;color:#839cba}.top-right{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex:1;min-width:0}.mini-status{font-size:11px;color:#c2d1e5;background:#13243b;border:1px solid #284260;border-radius:9px;padding:9px 11px;white-space:nowrap}.mini-status strong{color:var(--yellow)}.iconbtn{color:#dce8f9;background:#14243a;border:1px solid #2c4360;border-radius:10px;min-width:34px;height:34px;display:grid;place-items:center;font-size:16px}.iconbtn:hover{background:#253d5d}
@@ -316,6 +316,28 @@
  .v15-threat-mobile small{font-size:9px;color:#ffd2c6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:35%}
 }
 @media(max-width:440px){.v15-threat-mobile small{display:none}}
+
+/* 1.6 · Unified move displays; only the arena owns balls, the sidebar owns progress. */
+.v16-moves-panel{margin-top:8px;padding:10px;border:1px solid #567f7b;border-radius:12px;background:#122b37;display:flex;flex-direction:column;gap:5px}
+.v16-moves-panel>strong{font-size:10px;letter-spacing:.08em;color:#9cebd2;margin-bottom:4px}
+.v16-move{border:1px solid #3e6f71;border-radius:7px;background:#0e2434;padding:6px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;align-items:center}
+.v16-move.active{border-color:#8ce9ca;background:#16463f}
+.v16-move b{font-size:11px;overflow-wrap:anywhere}
+.v16-move small{font-size:9px;color:#a8c7cb}
+.v16-move span{grid-column:1 / -1;color:#f5e2a8;font-weight:850;font-size:9px}
+.v16-moves-mobile{display:none}
+.v16-learn h2{font-size:clamp(23px,4vw,35px);color:#f6e8c8}
+.v16-learn p{color:#c9dce3;font-size:12px}
+@media(max-width:775px){
+ .v16-moves-panel{display:none}
+ .v16-moves-mobile{display:flex;gap:5px;justify-content:center;min-width:0;padding:5px 4px;background:#122d37;border:1px solid #396e70;border-radius:8px}
+ .v16-moves-mobile .v16-move{flex:1;min-width:0;padding:4px;display:flex;flex-direction:column;gap:2px;align-items:flex-start}
+ .v16-moves-mobile .v16-move b{font-size:9px;line-height:1.1}
+ .v16-moves-mobile .v16-move small{font-size:7px}
+ .v16-moves-mobile .v16-move span{font-size:8px}
+}
+.v16-alpha-notice{padding:9px 12px;background:#3c2937;border:1px solid #d3a1ad;border-radius:10px;color:#ffe4c8;font-size:10px;font-weight:950;letter-spacing:.07em;margin-top:8px}@media(max-width:775px){.v16-alpha-notice{display:none!important}}
+.v16-learn-alert{width:100%;margin-top:5px;padding:8px 9px;background:#236254;color:#e4ffce;border:1px solid #88d9aa;border-radius:7px;font-size:10px;font-weight:900;cursor:pointer}@media(max-width:775px){.v16-moves-mobile .v16-learn-alert{font-size:8px;padding:5px 2px;max-width:95px}}
 </style>
 <link rel="stylesheet" href="./v09.css">
 <link rel="stylesheet" href="./v10.css">
@@ -430,7 +452,7 @@ function hit(e,b){
  playTone(mult>1?620:330,.02,'sine',.012);
  if(e.hp<=0)enemyDown(e);
 }
-function enemyX(e){return LEFT+e.col*CS+1.5}function enemyY(e){return TOP+e.row*STEP+1.5+(run?.descentProgress||0)}function enemyW(e){return e.boss?CS*2-3:CS-3}function enemyH(e){return e.boss?STEP*2-3:STEP-3}
+function enemyX(e){return LEFT+e.col*CS+1.5}function enemyY(e){return TOP+e.row*STEP+1.5+(run?.descentProgress||0)}function enemyW(e){return (e.v16Footprint||(e.boss?3:1))*CS-3}function enemyH(e){return (e.v16Footprint||(e.boss?3:1))*STEP-3}
 function shoot(){if(mode!=='aim'||!active()||active().hp<=0)return;const move=active().moves[active().chosen],count=clamp(move.balls+active().globalBalls+(run.relics.includes('echo')&&run.turn%2===0?2:0),1,45);run.firingMove={...move};run.shots=[];run.pending=count;run.launched=0;run.volleyClock=0;run.landing=null;mode='shooting';log(`⚡ ${active().name}: ${move.name} · ${count} proyectiles`);playTone(600,.055,'triangle',.026);refresh()}
 function launchBall(){let move=run.firingMove,speed=520,theta=run.aim;run.shots.push({x:run.shooter,y:SHOOT_Y,vx:Math.cos(theta)*speed,vy:Math.sin(theta)*speed,r:BALL_R,move,trail:[],last:null});run.launched++;run.pending--}
 function circleRect(b,e){let x=enemyX(e),y=enemyY(e),w=enemyW(e),h=enemyH(e);let nearX=clamp(b.x,x,x+w),nearY=clamp(b.y,y,y+h);return (b.x-nearX)**2+(b.y-nearY)**2<=BALL_R*BALL_R}
@@ -3480,7 +3502,7 @@ function v10RecipientPicker(item){
   const current=p.heldItem&&PK9_ITEMS[p.heldItem]?.name;
   const detail=evolution?'Evoluciona a '+(DB[evo.e.to]?.[0]||V10_LABEL(evo.e.to)):
     meta.kind==='hold'?(current?'⚠ Sustituye '+current+' (se pierde)':'Hueco libre'):
-    meta.kind==='tm'?(p.moves.length===4?'Olvidará un movimiento':'Aprenderá '+meta.move):
+    meta.kind==='tm'?(p.moves.length>=3?'Olvidará un movimiento':'Aprenderá '+meta.move):
     meta.kind==='revive'?'Revive al 50 % de PS':'PS: '+p.hp+'/'+p.maxHp;
   return '<button class="v10-recipient" data-action="v10:recipient:'+item+':'+i+'" '+(!ok?'disabled':'')+'>'+
    sImg(p.id,p.shiny)+'<span><b>'+p.name+' <small>NV. '+p.level+'</small></b><small>'+detail+'</small></span>'+
@@ -3496,7 +3518,7 @@ function v10ApplyPurchase(item,slot,forget=null){
  if(!offer||!p||!price||run.money<price||!offer.stock.includes(item)&&!evolution)return false;
  if(evolution&&!(slot===evo.i&&p.id===evo.e.from))return false;
  if(!evolution&&!v10CanUse(item,p))return false;
- if(meta?.kind==='tm'&&p.moves.length>=4&&(!Number.isInteger(forget)||forget<0||forget>=p.moves.length))return false;
+ if(meta?.kind==='tm'&&p.moves.length>=3&&(!Number.isInteger(forget)||forget<0||forget>=p.moves.length))return false;
  run.money-=price;
  if(evolution){
   const result=pk9ApplyEvo(p,evo.e);offer.special=null;
@@ -3526,7 +3548,7 @@ function v10ApplyPurchase(item,slot,forget=null){
 function v10ForgetForTM(item,slot){
  const p=run.team[slot],meta=PK9_ITEMS[item];
  const cards=p.moves.map((m,i)=>'<button class="v10-recipient" data-action="v10:tmforget:'+item+':'+slot+':'+i+'"><b>'+m.name+'</b><small>'+TT[m.type]+' · '+(m.category==='status'?'ESTADO':m.balls+' BOLAS')+'</small><span>OLVIDAR ›</span></button>').join('');
- showModal('<div class="v10-recipient-screen"><div class="emblem">💿 MT · '+meta.name+'</div><h2>'+p.name+' ya conoce cuatro movimientos</h2>'+
+ showModal('<div class="v10-recipient-screen"><div class="emblem">💿 MT · '+meta.name+'</div><h2>'+p.name+' ya conoce tres movimientos</h2>'+
  '<p>Elige cuál olvidar. La MT se consume al confirmar y el movimiento olvidado se pierde.</p><div class="v10-recipients">'+cards+'</div>'+
  '<div class="actions"><button class="secondary" data-action="v09:shop">VOLVER SIN GASTAR</button></div></div>');
 }
@@ -3542,7 +3564,7 @@ handleAction=function(action){
  if(action.startsWith('v10:recipient:')){
   const parts=action.split(':'),item=parts[2],i=Number(parts[3]),p=run?.team[i],meta=PK9_ITEMS[item];
   if(mode!=='event'||!p)return;
-  if(meta?.kind==='tm'&&v10TMCompatible(item,p)&&p.moves.length>=4){v10ForgetForTM(item,i);return}
+  if(meta?.kind==='tm'&&v10TMCompatible(item,p)&&p.moves.length>=3){v10ForgetForTM(item,i);return}
   v10ApplyPurchase(item,i);return;
  }
  if(action.startsWith('v10:tmforget:')){
@@ -3707,9 +3729,8 @@ function v10FloorRecap(boss=false){
  mode='reward';const captures=run.v10FloorCaptures||[],won=(run.money||0)-(run.v10FloorStartMoney||0);
  const entries=captures.map(c=>'<div class="v10-capture">'+sImg(c.id,c.shiny)+
  '<span><b>'+def(c.id).name+(c.shiny?' ✨':'')+'</b><small>+'+c.candies+' 🍬 · '+c.ivs+' IV mejorados'+(c.joined?' · AL EQUIPO':'')+'</small></span></div>').join('');
- const chanceEvent=!boss&&run.floor<zone().rooms&&!run.v10OfferUsed&&Math.random()<.22;
- run.v10NextChoice=chanceEvent;
- const choice=chanceEvent?'<div class="v10-between-event"><div><b>📜 Un entrenador te propone un desafío</b><p>Consigue '+(run.zone<=1?8:12)+' impactos efectivos en una misma ráfaga del próximo combate. Sin penalización si fallas: premio de ₽25 y 3 fragmentos de ticket.</p></div><button class="v10-event-button" data-action="v10:challenge">ACEPTAR DESAFÍO · PREMIO ₽25</button></div>':'';
+ run.v10NextChoice=false;
+ const choice='';
  showModal('<div class="v10-floor-summary"><div class="emblem">'+(boss?'👑 JEFE DERROTADO':'✦ PISO COMPLETADO')+'</div>'+
  '<h2>'+(boss?'¡Victoria en '+zone().name+'!':'Piso '+run.floor+' superado')+'</h2>'+
  '<div class="v10-results"><div><small>POKÉDÓLARES OBTENIDOS</small><strong>₽ +'+Math.max(0,won)+'</strong><em>Enemigos derrotados y recompensas</em></div><div><small>CAPTURAS DE ESTE PISO</small><strong>'+captures.length+'</strong><em>'+((run.v10ShinyLuck||0)*100).toFixed(0)+' % bonificación por shinies</em></div></div>'+
@@ -3719,11 +3740,6 @@ function v10FloorRecap(boss=false){
 showBattleClear=function(boss){v10FloorRecap(boss)};
 const v10ProgressAction=handleAction;
 handleAction=function(action){
- if(action==='v10:challenge'&&mode==='reward'&&run.v10NextChoice){
-  run.v10NextChoice=false;run.v10OfferUsed=true;run.money+=20;run.v10ChallengeNext=true;
-  v08WaveToast('📜 RETO ACEPTADO · +₽20');
-  v10FloorRecap(run.encounter==='boss');return;
- }
  if(action==='v10:continue'&&mode==='reward'){
   hideModal();const next=run.afterReward;run.afterReward=null;
   if(next)next();return;
@@ -4438,7 +4454,7 @@ startBattle=function(kind){
  if(!run)return;
  run.v13Combo={hits:0,peak:0,triggered:[]};
  run.v13FightBest=0;run.v13BattleRewarded=false;
- if(run.v13Mission&&!run.v13Mission.active)run.v13Mission.active=true;
+ run.v13Mission=null;
  // Quince filas de desgaste no son necesarias para cada combate corriente.
  const rows=kind==='boss'?16:kind==='miniboss'?13:kind==='swarm'||kind==='elite'?12:
   kind==='rare'||kind==='hunt'||kind==='fortress'?11:run.zone===0?9:run.zone===1?10:11;
@@ -4551,12 +4567,7 @@ enemyDown=function(e){
 // The training challenge is optional, never increases the enemy HP.
 const v13ActionOriginal=handleAction;
 handleAction=function(action){
- if(action==='v10:challenge'&&run&&mode==='reward'&&run.v10NextChoice){
-  run.v10NextChoice=false;run.v10OfferUsed=true;
-  run.v13Mission={target:run.zone<=1?8:12,active:false};
-  v08WaveToast('🎯 DESAFÍO ACEPTADO · COMBO ×'+run.v13Mission.target);
-  v10FloorRecap(run.encounter==='boss');return;
- }
+ if(action==='v10:challenge')return;
  if(action==='v13:lastreport'&&saved.v13LastSummary){
   showModal(v13ReportHtml(saved.v13LastSummary,true));return;
  }
@@ -4631,19 +4642,19 @@ showHome=function(tab='inicio'){
    '📊 ÚLTIMA EXPEDICIÓN · MEJOR COMBO ×'+saved.v13LastSummary.maxCombo+' · VER INFORME →</button>');
  }
  const badge=modal.querySelector('.home-header .emblem');
- if(badge)badge.textContent=badge.textContent.replace(/V1\.2|V0\.9|V1\.4/g,'V1.5');
+ if(badge)badge.textContent=badge.textContent.replace(/V1\.2|V0\.9|V1\.4|V1\.5/g,'V1.6');
  if(tab==='inicio'){
   const tip=modal.querySelector('.home-tip');
   if(tip){
    const headline=tip.querySelector('b'),detail=tip.querySelector('span');
-   if(headline)headline.textContent='✦ NUEVO EN V1.5';
-   if(detail)detail.textContent='Dominantes escalonados · Jefes únicos · Pokétienda real · Gachapón renovado';
+   if(headline)headline.textContent='✦ NUEVO EN V1.6';
+   if(detail)detail.textContent='Dominantes 2×2 tras oleadas · Jefes 3×3 · Tres movimientos · Ráfagas mixtas';
   }
  }
  return out;
 };
 const v13Badge=document.querySelector('.brand small');
-if(v13Badge)v13Badge.textContent='EXPEDITION EDITION · V1.5';
+if(v13Badge)v13Badge.textContent='EXPEDITION EDITION · V1.6';
 const v13ComboHud=document.createElement('div');
 v13ComboHud.id='v13ComboHud';v13ComboHud.className='v13-combo-hud';
 document.getElementById('boardFrame')?.appendChild(v13ComboHud);
@@ -4779,8 +4790,8 @@ const v15FinishPrevious=finishDescent;
 finishDescent=function(){
  const encounter=run?.v15Encounter;
  if(encounter){
-  const main=run.blocks.find(e=>e.v15Boss||e.v11Dominant&&encounter.kind==='dominant');
-  if(main)main.row=-1; // remains on screen; supports descend, boss itself does not
+  const main=run.blocks.find(e=>e.v15Boss);
+  if(main)main.row=-1; // only the main boss anchors; dominantes march toward the base
  }
  const result=v15FinishPrevious();
  if(!run||!encounter||mode==='over')return result;
@@ -5184,6 +5195,295 @@ showLevelUp=function(){
  v15LevelDisplayPrevious();
  const odds=modal.querySelector('.v10-odds');
  if(odds)odds.textContent='ELIGE UNA DIRECCIÓN: POTENCIA · SUPERVIVENCIA · ESTILO DE COMBATE. LAS RAREZAS MODIFICAN EL PESO DEL SORTEO.';
+};
+
+
+/* 1.6 — Dominantes as genuine 2×2 last-wave threats, following multiple enemy rows. */
+const V16_ALPHA_ROWS=[7,8,8,9];
+const v16OriginalStart=startBattle;
+startBattle=function(kind){
+ v16OriginalStart(kind);
+ if(!run)return;
+ if(kind==='boss'){
+  const boss=run.blocks.find(e=>e.v15Boss);
+  if(boss){boss.v16Footprint=3;boss.col=2;boss.row=0;}
+  return;
+ }
+ if(kind!=='miniboss')return;
+ run.v16AlphaMode=true;
+ run.v16AlphaSpawned=false;
+ run.v16NormalRows=V16_ALPHA_ROWS[Math.min(run.zone,3)]||8;
+ run.v09RowsTotal=run.v16NormalRows+1;
+ run.v09RowsEmitted=0;run.v09Active=true;
+ run.v09Turns=0;run.v09IsBoss=false;
+ run.blocks=[];run.drops=[];run.shots=[];run.enemyBullets=[];
+ run.v15Encounter=null;run.turn=1;run.pending=0;
+ for(let n=0;n<3;n++)pk9EmitRow(n);
+ run.v09InitialSize=run.blocks.length;
+ v08WaveToast('⚠ DOMINANTE AL FINAL · '+run.v16NormalRows+' FILAS PARA PREPARARTE');
+ refresh();
+};
+const v16OriginalRow=pk9EmitRow;
+pk9EmitRow=function(row=0){
+ if(!run?.v16AlphaMode||run.encounter!=='miniboss')return v16OriginalRow(row);
+ if(run.v09RowsEmitted>=run.v09RowsTotal||!run.v09Active)return false;
+ if(run.v09RowsEmitted>=run.v16NormalRows){
+  if(run.v16AlphaSpawned)return false;
+  run.v16AlphaSpawned=true;run.v09RowsEmitted++;
+  const allies=run.blocks.slice();
+  v15Dominant('miniboss');
+  const alpha=run.blocks.find(e=>e.v11Dominant);
+  if(!alpha){run.blocks=allies;return false}
+  alpha.v16Footprint=2;alpha.col=2;alpha.row=Math.min(row,-2);
+  alpha.v16Unleashed=true;
+  run.blocks=[...allies,alpha];
+  v08WaveToast('👑 ¡DOMINANTE 2×2! · '+alpha.name.toUpperCase());
+  return true;
+ }
+ const original=run.encounter;
+ // Legacy champion rows must not spawn an unrelated extra alpha on row six.
+ run.encounter='wild';
+ let result=false;
+ try{result=v16OriginalRow(row)}finally{run.encounter=original}
+ return result;
+};
+const v16OriginalBattleWin=winBattle;
+winBattle=function(){
+ if(run?.v16AlphaMode&&run.v09Active&&run.v09RowsEmitted<run.v09RowsTotal&&run.blocks.length===0){
+  pk9EmitRow(0);mode='aim';run.pending=0;run.shots=[];refresh();return;
+ }
+ return v16OriginalBattleWin();
+};
+
+
+/* 1.6 — ONE move system: 3 slots, weighted mixed attack balls, real-move techniques.
+   No generic special charge: only selected signature attacks trigger their own technique. */
+Object.assign(V08_MOVEDATA,{
+ 'Hidrobomba':['water',15,5,'special'],
+ 'Rayo':['electric',13,5,'special'],
+ 'Picotazo Veneno':['poison',7,7,'physical'],
+ 'Picadura':['bug',8,7,'physical']
+});
+const V16_LEARN={
+ 10:[['Placaje',5]],258:[['Placaje',5],['Pistola Agua',8],['Disparo Lodo',14],['Hidrobomba',28]],
+ 7:[['Placaje',5],['Pistola Agua',7],['Mordisco',13],['Hidrobomba',28]],
+ 1:[['Placaje',5],['Látigo Cepa',8],['Drenadoras',14],['Hoja Afilada',23]],
+ 4:[['Placaje',5],['Ascuas',7],['Giro Fuego',14],['Lanzallamas',25]],
+ 25:[['Impactrueno',5],['Ataque Rápido',8],['Chispa',13],['Rayo',25]],
+ 415:[['Picadura',5],['Picotazo Veneno',12]]
+};
+function v16AvailableMoves(p){
+ const root=rootOf(p.id);
+ if(V16_LEARN[root])return V16_LEARN[root].filter(([n])=>V08_MOVEDATA[n]).map(([name,level])=>({name,level}));
+ const family=(V08_LEARNSETS[root]||[]).filter(n=>V08_MOVEDATA[n]);
+ if(family.length)return family.map((name,i)=>({name,level:5+i*6}));
+ return pk9LearnsetFor(p).filter(m=>m&&V08_MOVEDATA[m.name]);
+}
+const v16OldMon=mkMon;
+mkMon=function(id,lvl=5,shiny=false){
+ const p=v16OldMon(id,lvl,shiny);
+ if(V16_LEARN[rootOf(id)]){
+  const pool=v16AvailableMoves(p).filter(m=>m.level<=lvl);
+  p.moves=pool.slice(-3).map(m=>v08Move(m.name));
+ }
+ p.moves=p.moves.filter(Boolean).slice(0,3);
+ if(!p.moves.length)p.moves=[v08Move('Placaje')];
+ p.chosen=Math.min(p.chosen||0,p.moves.length-1);
+ p.v16Charge={};p.v16Ready={};
+ return p;
+};
+
+/* PokéAPI asynchronous learnsets use exactly the same curated 3-slot rules. */
+pk9AcquireMoves=function(p){
+ if(!p||p.level<=5)return;
+ const pool=v16AvailableMoves(p).filter(m=>m.level<=p.level);
+ for(const item of pool){
+  if(p.moves.some(m=>m.name===item.name))continue;
+  const move=v08Move(item.name);if(!move)continue;
+  if(p.moves.length<3){p.moves.push(move);p.chosen=clamp(p.chosen||0,0,p.moves.length-1)}
+  // Async arrival only fills genuine free slots. When all three are full,
+  // the level-up handler (which knows the actual newly reached level) offers swaps.
+  else continue;
+ }
+ if(p.moves.length>3){p.moves=p.moves.slice(0,3);p.chosen=Math.min(p.chosen||0,2)}
+};
+const v16OldExperience=addXP;
+addXP=function(amount){
+ const previous=run?.team.map(p=>p.level)||[];
+ const result=v16OldExperience(amount);
+ if(!run)return result;
+ run.v16PendingMoves??=[];
+ for(let i=0;i<run.team.length;i++){
+  const p=run.team[i];if(p.level<=previous[i])continue;
+  for(const m of v16AvailableMoves(p)){
+   if(m.level<=previous[i]||m.level>p.level||p.moves.some(x=>x.name===m.name))continue;
+   const learned=v08Move(m.name);if(!learned)continue;
+   if(p.moves.length<3){p.moves.push(learned);v08WaveToast('📖 '+p.name+' APRENDE '+m.name.toUpperCase())}
+   else if(!run.v16PendingMoves.some(x=>x.slot===i&&x.name===m.name))
+    run.v16PendingMoves.push({slot:i,name:m.name});
+  }
+ }
+ return result;
+};
+const v16AfterUpgradeBefore=afterUpgrades;
+function v16ShowLearn(){
+ const entry=run?.v16PendingMoves?.[0];
+ if(!entry)return false;
+ const p=run.team[entry.slot];if(!p){run.v16PendingMoves.shift();return false}
+ mode='v16learn';
+ showModal('<div class="v16-learn"><div class="emblem">📖 NUEVO MOVIMIENTO · '+p.name+'</div>'+
+  '<h2>¡Puede aprender '+entry.name+'!</h2><p>Máximo tres movimientos. ¿Cuál quieres sustituir?</p>'+
+  '<div class="v10-recipients">'+p.moves.map((m,i)=>
+   '<button class="v10-recipient" data-action="v16:forget:'+i+'"><b>'+m.name+
+   '</b><small>'+TT[m.type]+' · '+(m.category==='status'?'ESTADO':m.category==='physical'?'FÍSICO':'ESPECIAL')+
+   ' · POT. '+m.power+'</small><strong>SUSTITUIR →</strong></button>').join('')+'</div>'+
+  '<button class="secondary" data-action="v16:forget:skip">NO APRENDER</button></div>');
+ return true;
+}
+afterUpgrades=function(){if(v16ShowLearn())return;return v16AfterUpgradeBefore()};
+const v16HandleBefore=handleAction;
+handleAction=function(action){
+ if(action==='v10:challenge')return;
+ if(action==='v16:learnopen'&&run?.v16PendingMoves?.length&&mode==='aim'){
+  run.v16LearnReturnMode='aim';v16ShowLearn();return;
+ }
+ if(action.startsWith('v16:forget:')&&mode==='v16learn'){
+  const selected=action.split(':')[2],entry=run?.v16PendingMoves?.shift();
+  const p=entry&&run.team[entry.slot];
+  if(p&&selected!=='skip'){
+   const index=Number(selected),newMove=v08Move(entry.name);
+   if(Number.isInteger(index)&&index>=0&&index<p.moves.length&&newMove){
+    p.moves.splice(index,1,newMove);p.chosen=index;
+    log('📖 '+p.name+' aprendió '+entry.name);
+   }
+  }
+  hideModal();
+  if(!v16ShowLearn()){
+   if(run?.v16LearnReturnMode==='aim'){run.v16LearnReturnMode=null;mode='aim';refresh()}
+   else v16AfterUpgradeBefore();
+  }
+  refresh();return;
+ }
+ return v16HandleBefore(action);
+};
+v07SpecialFor=function(){return null};
+const v16OldShoot=shoot;
+shoot=function(){
+ if(!run||mode!=='aim'||!active())return v16OldShoot();
+ const p=active(),chosen=p.moves[p.chosen],attacks=p.moves.filter(m=>m.category!=='status');
+ run.v07SpecialArmed=false;run.v16Mixed=null;
+ const result=v16OldShoot();
+ if(mode!=='shooting'||chosen?.category==='status'||!attacks.length)return result;
+ const count=clamp(Math.max(6,chosen.balls)+(p.globalBalls||0)+(run.relics.includes('echo')&&run.turn%2===0?2:0)+(p.v10OpeningBalls&&run.turn===1?p.v10OpeningBalls:0),5,26);
+ const sources=[];
+ // The chosen move leads the volley; other equipped offensive moves remain useful.
+ if(attacks.length===1){for(let i=0;i<count;i++)sources.push(chosen)}
+ else{
+  const other=attacks.filter(m=>m!==chosen);
+  for(let i=0;i<count;i++)sources.push(i%5<3?chosen:other[Math.floor(i/5*2+i%2)%other.length]);
+ }
+ run.v16Mixed=sources;run.pending=count;run.launched=0;
+ run.firingMove={...chosen};run.v16Count=count;
+ log('⚡ RÁFAGA MIXTA · '+attacks.map(m=>m.name).join(' / ')+' · '+count+' bolas');
+ return result;
+};
+const V16_SIGNATURES={
+ 'Mordisco':{hits:52,label:'FAUCES',type:'bite'},
+ 'Hidrobomba':{hits:64,label:'CHORRO PERFORANTE',type:'drill'},
+ 'Rayo':{hits:62,label:'DESCARGA EN CADENA',type:'chain'},
+ 'Lanzallamas':{hits:65,label:'LLAMARADA',type:'fire'},
+ 'Hoja Afilada':{hits:55,label:'CUCHILLADA',type:'cut'}
+};
+function v16TechniqueLimit(p,name){
+ const base=V16_SIGNATURES[name]?.hits||Infinity;
+ const speed=p.stats?.[5]||pk9OneStat(p,5);
+ return Math.max(Math.ceil(base*.72),Math.round(base*(1-Math.min(.28,Math.max(0,speed-20)*.0019))));
+}
+const v16OldLaunch=launchBall;
+launchBall=function(){
+ v16OldLaunch();
+ const b=run?.shots?.at(-1),p=active();if(!b||!p)return;
+ const m=run.v16Mixed?.[Math.max(0,run.launched-1)];
+ if(m)b.move={...m};
+ const signature=V16_SIGNATURES[b.move.name];
+ if(signature&&p.v16Ready?.[b.move.name]){
+  delete p.v16Ready[b.move.name];b.v16Technique=signature.type;
+  if(signature.type==='drill')b.move.pierce=1;
+  else if(signature.type==='chain')b.move.chain=Math.max(3,b.move.chain||0);
+  else if(signature.type==='fire')b.move.v08Burn=true;
+  textFx(run.shooter,SHOOT_Y-45,'✦ '+signature.label,'#ffe2ad');
+  playTone(760,.12,'triangle',.035);
+ }
+};
+const v16OldHit=hit;
+hit=function(e,b){
+ const was=run?.blocks?.includes(e),oldHP=e?.hp||0,p=active();
+ const result=v16OldHit(e,b);
+ if(!run||!was||!p||oldHP<=e.hp||!b?.move)return result;
+ const name=b.move.name,signature=V16_SIGNATURES[name];
+ if(signature){
+  p.v16Charge??={};p.v16Ready??={};
+  const limit=v16TechniqueLimit(p,name),current=(p.v16Charge[name]||0)+1;
+  if(current>=limit){p.v16Charge[name]=0;p.v16Ready[name]=true;
+   v08WaveToast('✨ '+name.toUpperCase()+' · TÉCNICA LISTA')}
+  else p.v16Charge[name]=current;
+ }
+ if(b.v16Technique&&!b.v16TechniqueUsed){
+  b.v16TechniqueUsed=true;
+  const cx=enemyX(e)+enemyW(e)/2,cy=enemyY(e)+enemyH(e)/2;
+  if(b.v16Technique==='bite'||b.v16Technique==='cut'){
+   let n=0;for(const other of [...run.blocks]){
+    if(other===e||other.hp<=0||Math.hypot(enemyX(other)+enemyW(other)/2-cx,enemyY(other)+enemyH(other)/2-cy)>CS*2.5)continue;
+    const eff=effectiveness(b.move.type,other.types);
+    if(eff===0)continue;
+    const amount=Math.max(1,Math.round((b.move.power||7)*eff*.65));
+    other.hp-=amount;textFx(enemyX(other),enemyY(other),'-'+amount,'#ffdca2');n++;
+    if(other.hp<=0)enemyDown(other);
+    if(n>=3)break;
+   }
+   burst(cx,cy,'#ffdb97',18);
+  }
+ }
+ return result;
+};
+const v16OldRefresh=refresh;
+refresh=function(){
+ v16OldRefresh();
+ if(typeof SPECIAL_BUTTON!=='undefined'){SPECIAL_BUTTON.style.display='none';SPECIAL_BUTTON.disabled=true}
+ v16RefreshMovePanel();
+};
+const v16MovePanel=document.createElement('div');v16MovePanel.className='v16-moves-panel';
+document.querySelector('.sidebar')?.appendChild(v16MovePanel);
+const v16MoveMobile=document.createElement('div');v16MoveMobile.className='v16-moves-mobile';
+document.querySelector('.arena-bottom')?.appendChild(v16MoveMobile);
+function v16RefreshMovePanel(){
+ const p=active();if(!p)return;
+ const html=p.moves.slice(0,3).map((m,i)=>{
+  const sig=V16_SIGNATURES[m.name],need=sig?v16TechniqueLimit(p,m.name):0;
+  return '<div class="v16-move '+(i===p.chosen?'active':'')+'"><b>'+m.name+'</b>'+
+   '<small>'+TT[m.type]+' · '+(m.category==='physical'?'FÍS':m.category==='special'?'ESP':'EST')+
+   ' · POT '+m.power+'</small>'+(sig?'<span>✦ '+(p.v16Ready?.[m.name]?'LISTA':(p.v16Charge?.[m.name]||0)+'/'+need)+'</span>':'')+'</div>';
+ }).join('');
+ const pending=run?.v16PendingMoves?.length&&mode==='aim'?
+  '<button class="v16-learn-alert" data-action="v16:learnopen">📖 MOVIMIENTO NUEVO · ELEGIR →</button>':'';
+ v16MovePanel.innerHTML='<strong>📘 MOVIMIENTOS · RÁFAGA MIXTA</strong>'+html+pending;
+ v16MoveMobile.innerHTML=html+pending;
+}
+
+
+/* Foreshadow the real final encounter. Never obscure the bouncing balls. */
+const v16AlphaNotice=document.createElement('div');v16AlphaNotice.className='v16-alpha-notice';
+document.querySelector('.sidebar')?.appendChild(v16AlphaNotice);
+const v16OldBoard=renderBoard;
+let v16LastNotice='';
+renderBoard=function(now){
+ v16OldBoard(now);
+ const showing=!!run?.v16AlphaMode&&['aim','shooting','descending','retaliating'].includes(mode)&&!run.v16AlphaSpawned;
+ v16AlphaNotice.style.display=showing?'block':'none';
+ if(!showing){v16LastNotice='';return}
+ const remaining=Math.max(0,run.v16NormalRows-run.v09RowsEmitted);
+ const label='👑 SE ACERCA UN DOMINANTE · '+remaining+' FILAS';
+ if(v16LastNotice!==label){v16LastNotice=label;v16AlphaNotice.textContent=label}
 };
 
 fitBoard();startMenu();requestAnimationFrame(render);
