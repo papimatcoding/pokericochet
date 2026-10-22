@@ -41,3 +41,21 @@ Se sigue usando `pokeRicochet-v04` en el almacenamiento local del navegador. Se 
 **Proyecto fan no oficial.** Pokémon y los personajes, sprites y sonidos asociados pertenecen a sus titulares. Que los recursos estén disponibles en internet no los convierte en contenido libre de derechos. No hay monetización.
 
 El juego continúa siendo un prototipo: falta implementar todos los movimientos, habilidades, formas y condiciones evolutivas, así como más pruebas visuales y de balance en navegadores reales. Los datos referenciados se seleccionan con Escarlata/Púrpura como generación objetivo; se usan alternativas compatibles cuando esa versión no tiene información.
+
+
+## Cambios de la rama 1.1 — dominantes, balance y móvil
+
+Esta rama continúa el juego original, sin cambiar la clave de guardado pokeRicochet-v04 ni borrar la colección.
+
+- Director de dificultad: primeras rondas más ligeras; la dificultad crece después.
+- Dominantes: minijefes alfa con habilidades propias. Teracristalización defensiva ocasional; Llovizna, Sequía, Chorro Arena o Nevada solo si el Pokémon tiene esa habilidad. Ya no se lanza clima aleatorio por piso.
+- Jefes: Mega-Beedrill, Mega-Gengar, Mega-Gyarados y Charizard Gigamax con presentación diferenciada. Los sprites de formas alternativas se intentan cargar, conservando los originales si fallan.
+- Velocidad: recuperación gradual de energía especial por impactos, sin disparar la velocidad física de la bola. Nuevas mejoras de ritmo y rebote.
+- Física: rescate de trayectorias horizontales y recuperación de ráfagas bloqueadas.
+- Gachapón: tickets x1, tiradas x10 con tickets acumulados, tickets x10 poco frecuentes y conversión de los fragmentos heredados.
+- PC: ordenación por IVs, caramelos, estadísticas base, shinies y nombre; búsqueda, detalle individual y caramelos por especie.
+- Móvil: menús compactos, estadísticas en una columna y acciones secundarias plegables.
+
+### Pruebas pendientes
+
+Se ha validado la sintaxis del script completo. Falta comprobar manualmente partidas enteras en navegador y móvil, el balance final, las formas especiales disponibles, y los guardados antiguos. Rama de revisión: no sustituye main hasta pasar las pruebas.
