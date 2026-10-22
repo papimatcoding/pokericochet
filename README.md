@@ -1,6 +1,6 @@
-# POKÉRICOCHET 1.2 — Expedition Edition
+# POKÉRICOCHET 1.3 — Expedition Edition
 
-[▶ Jugar en GitHub Pages](https://papimatcoding.github.io/pokericochet/?v=1.2.0)
+[▶ Jugar en GitHub Pages](https://papimatcoding.github.io/pokericochet/?v=1.3.0)
 
 Juego fan roguelite de Pokémon y rebotes, en HTML/CSS/JavaScript sin servidor ni compilación.
 
