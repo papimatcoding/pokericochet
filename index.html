@@ -1398,6 +1398,7 @@ function v07Encounter(f,rooms){
  if(f<=3)return v06Choose(['wild','swarm','hunt']);
  return v06Choose(f%3===0?['storm','ambush','hunt','rare','duel']:V07_COMBAT_TYPES);
 }
+ZONES.forEach((z,i)=>{z.rooms=[5,6,7,7][i]});
 generateMap=function(){
  const rooms=zone().rooms,rows=[];
  for(let f=1;f<=rooms;f++){
@@ -4906,9 +4907,9 @@ generateMap=function(){
  const normal=['wild','hunt','swarm','rare','ambush','fortress','duel'];
  for(let f=1;f<=rooms;f++){
   const kinds=f===1?['wild','wild','hunt']:
-   f===2||f===rooms?['miniboss','miniboss','miniboss']:
+   f===2||f===rooms||rooms>=7&&f===5?['miniboss','miniboss','miniboss']:
    f===3?['rare','camp','swarm']:
-   f===rooms-1?['elite','camp','hunt']:
+   f===rooms-1&&rooms>=6?['elite','camp','hunt']:
    [pick(normal),'rare',pick(['elite','fortress','swarm'])];
   rows.push(kinds.map((kind,lane)=>({floor:f,lane,kind,edges:f===1?[]:
    lane===0?[0,1]:lane===1?[0,1,2]:[1,2]})));
