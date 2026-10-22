@@ -4147,7 +4147,7 @@ function v12CapsuleCard(result){
  const ball=V12_BALLS[result.rarity],id=result.id;
  return '<div class="v12-prize-card '+result.rarity+'">'+
   '<div class="v12-prize-art">'+sImg(id,result.shiny)+
-  '<img class="v12-prize-ball" src="'+v12BallUrl(result.rarity)+'" alt="'+ball.label+'" loading="lazy"></div>'+
+  '<span class="v15-ball v15-'+result.rarity+' v15-prize-icon" role="img" aria-label="'+ball.label+'"></span></div>'+
   '<b>'+def(id).name+(result.shiny?' ✨':'')+'</b>'+
   '<small style="color:'+ball.color+'">'+ball.label+' · '+ball.name+'</small>'+
   '<em>'+(result.reward.isFirst?'✦ NUEVO':'Duplicado')+' · +'+result.reward.reward+' 🍬</em></div>';
@@ -4185,25 +4185,25 @@ v11GachaRoll=function(count){
  v12PendingCapsules=results;save();mode='capsule';
  const best=results.reduce((b,x)=>['common','uncommon','rare','ultra'].indexOf(x.rarity)>['common','uncommon','rare','ultra'].indexOf(b.rarity)?x:b);
  const capsule=V12_BALLS[best.rarity];
- const filled=['common','uncommon','rare','ultra','common','uncommon','common','rare','common'];
- const inner=filled.map((r,i)=>'<img style="--i:'+i+'" src="'+v12BallUrl(r)+'" aria-hidden="true">').join('');
- showModal('<div class="v12-machine-stage" style="--capsule-color:'+capsule.color+'">'+
-  '<div class="emblem">🎰 MÁQUINA CÁPSULA · '+count+' TIRADA'+(count===1?'':'S')+'</div>'+
-  '<h2>¡Gira la máquina!</h2>'+
-  '<div class="v12-gacha-machine" aria-label="Máquina cápsula animada">'+
-   '<div class="v12-gacha-dome"><div class="v12-gacha-balls">'+inner+'</div></div>'+
-   '<div class="v12-gacha-body"><div class="v12-knob"></div><div class="v12-output">'+
-   '<img src="'+v12BallUrl(best.rarity)+'" alt="'+capsule.label+'"></div></div>'+
-   '<div class="v12-gacha-feet"></div>'+
-  '</div>'+
-  '<div class="v12-machine-txt">✦ SELECCIONANDO CÁPSULA'+(count===10?'S':'')+'... ✦</div>'+
-  '<div class="v12-machine-progress"><i></i></div>'+
-  '<button class="secondary v12-skip" data-action="v12:skip">VER RESULTADO ›</button>'+
-  '<small>La esfera representa la rareza. Solo pueden salir Pokémon sin evolucionar.</small></div>');
+ const filled=['common','uncommon','rare','ultra','common','uncommon','common','rare','common','uncommon','common'];
+ const balls=filled.map((r,i)=>'<span class="v15-ball v15-'+r+'" style="--i:'+i+'"></span>').join('');
+ showModal('<div class="v15-arcade" style="--capsule-color:'+capsule.color+'">'+
+  '<div class="emblem">✦ CENTRO DE CÁPSULAS · '+count+' TIRADA'+(count===1?'':'S')+'</div>'+
+  '<h2>¡A por un nuevo compañero!</h2>'+
+  '<div class="v15-arcade-machine" aria-label="Máquina de cápsulas en movimiento">'+
+   '<div class="v15-arcade-dome"><div class="v15-arcade-sheen"></div><div class="v15-arcade-balls">'+balls+'</div></div>'+
+   '<div class="v15-arcade-chassis"><div class="v15-arcade-seal">PK</div>'+
+   '<div class="v15-arcade-knob"><i></i></div>'+
+   '<div class="v15-arcade-slot"><span class="v15-ball v15-'+best.rarity+' v15-arcade-prize"></span></div></div>'+
+   '<div class="v15-arcade-base"></div></div>'+
+  '<div class="v15-arcade-caption">✦ '+(count===10?'DIEZ SORPRESAS':'UNA SORPRESA')+' · '+capsule.label.toUpperCase()+' ✦</div>'+
+  '<div class="v15-arcade-progress"><i></i></div>'+
+  '<button class="secondary" data-action="v12:skip">REVELAR AHORA →</button>'+
+  '<small>Solo Pokémon básicos. La Poké Ball indica la rareza; no es un objeto consumible.</small></div>');
  playTone(370,.09,'triangle',.028);
  clearTimeout(v12CapsuleTimer);
  const thisResults=results;
- v12CapsuleTimer=setTimeout(()=>{if(v12PendingCapsules===thisResults&&mode==='capsule')v12FinishCapsule()},count===1?1950:1600);
+ v12CapsuleTimer=setTimeout(()=>{if(v12PendingCapsules===thisResults&&mode==='capsule')v12FinishCapsule()},count===1?2700:2250);
 };
 const v12OldChoose=v11ChooseGacha;
 v11ChooseGacha=function(rarity){
@@ -4857,6 +4857,70 @@ v10RecipientPicker=function(item){
   '<h2>¿A quién quieres entrenar?</h2><p>₽'+meta.price+' · El aporte respeta los límites de 252 EV por estadística y 510 totales.</p>'+
   '<div class="v10-recipients">'+candidates+'</div>'+
   '<div class="actions"><button class="secondary" data-action="v09:shop">CANCELAR</button></div></div>');
+};
+
+
+/* Boss arrival: stage, animated sprite, ability and a single encounter. */
+const v15IntroPrevious=startBattle;
+startBattle=function(kind){
+ v15IntroPrevious(kind);
+ if(kind!=='boss'||!run||mode!=='bossIntro')return;
+ const boss=run.blocks.find(e=>e.v15Boss),info=boss&&V12_BOSS_INFO[boss.id];
+ if(!boss||!info)return;
+ clearTimeout(v12BossTimer);
+ const gif='https://play.pokemonshowdown.com/sprites/ani/'+info.form+'.gif';
+ showModal('<div class="v15-boss-debut '+(info.kind==='GIGAMAX'?'gmax':'mega')+'">'+
+  '<div class="v15-debut-noise" aria-hidden="true"></div>'+
+  '<div class="v15-debut-kicker">⚠ ALERTA · JEFE DE ZONA · '+info.kind+'</div>'+
+  '<div class="v15-debut-art"><span class="v15-debut-rings"></span>'+
+  '<img src="'+gif+'" alt="'+info.title+'" onerror="this.onerror=null;this.src=\''+sprite(boss.id)+'\'"></div>'+
+  '<div class="v15-debut-name">'+info.title+'</div>'+
+  '<div class="v15-debut-descr">'+(V15_BOSS_DESCRIPTIONS[boss.id]||info.tagline)+'</div>'+
+  '<div class="v15-debut-warning">ENCUENTRO ÚNICO · DERROTA SU ESCOLTA PARA ROMPER LA PROTECCIÓN</div>'+
+  '<button class="v15-debut-button" data-action="v12:bossbegin">⚔ ENFRENTAR AL JEFE →</button>'+
+  '</div>');
+ const thisRun=run;
+ v12BossTimer=setTimeout(()=>{if(run===thisRun&&mode==='bossIntro')v12BeginBoss()},3600);
+};
+const v15BossSprite=document.createElement('img');
+v15BossSprite.className='v15-boss-animated';v15BossSprite.alt='';v15BossSprite.setAttribute('aria-hidden','true');
+document.getElementById('boardFrame')?.appendChild(v15BossSprite);
+let v15SpriteCacheId=0;
+const v15DrawPrevious=renderBoard;
+renderBoard=function(now){
+ v15DrawPrevious(now);
+ const boss=run?.blocks?.find(e=>e.v15Boss&&e.hp>0);
+ const show=!!boss&&['aim','shooting','descending','retaliating'].includes(mode);
+ v15BossSprite.style.display=show?'block':'none';
+ if(!show)return;
+ if(v15SpriteCacheId!==boss.id){
+  v15SpriteCacheId=boss.id;
+  const art=V12_BOSS_INFO[boss.id];
+  v15BossSprite.src=art?'https://play.pokemonshowdown.com/sprites/ani/'+art.form+'.gif':sprite(boss.id);
+  v15BossSprite.onerror=()=>{v15BossSprite.onerror=null;v15BossSprite.src=sprite(boss.id)};
+ }
+ v15BossSprite.style.left=(enemyX(boss)/W*100)+'%';
+ v15BossSprite.style.top=(enemyY(boss)/H*100)+'%';
+ v15BossSprite.style.width=(enemyW(boss)/W*100)+'%';
+ v15BossSprite.style.height=(enemyH(boss)/H*100)+'%';
+};
+const v15StatusDesktop=document.createElement('div');
+v15StatusDesktop.className='v15-status-display';
+document.querySelector('.sidebar .side-card')?.appendChild(v15StatusDesktop);
+const v15StatusMobile=document.createElement('div');
+v15StatusMobile.className='v15-status-mobile';
+document.querySelector('.arena-top')?.appendChild(v15StatusMobile);
+const v15RefreshPrevious=refresh;
+refresh=function(){
+ v15RefreshPrevious();
+ const p=active();
+ if(!p)return;
+ const tags=[p.v10Poisoned>0?'☠ VENENO · '+p.v10Poisoned:'',p.v10Burned>0?'🔥 QUEMADURA · '+p.v10Burned:'',
+ p.v10Paralyzed>0?'⚡ PARÁLISIS · '+p.v10Paralyzed:''].filter(Boolean);
+ v15StatusDesktop.textContent=tags.length?tags.join(' · '):'✓ SIN ESTADOS ALTERADOS';
+ v15StatusMobile.textContent=tags.join(' · ');
+ v15StatusDesktop.classList.toggle('has-status',tags.length>0);
+ v15StatusMobile.classList.toggle('has-status',tags.length>0);
 };
 
 fitBoard();startMenu();requestAnimationFrame(render);
