@@ -4501,6 +4501,14 @@ showHome=function(tab='inicio'){
  }
  const badge=modal.querySelector('.home-header .emblem');
  if(badge)badge.textContent=badge.textContent.replace(/V1\.2|V0\.9/g,'V1.3');
+ if(tab==='inicio'){
+  const tip=modal.querySelector('.home-tip');
+  if(tip){
+   const headline=tip.querySelector('b'),detail=tip.querySelector('span');
+   if(headline)headline.textContent='✦ NUEVO EN V1.3';
+   if(detail)detail.textContent='Combos incrementales · Mejoras reforzadas · Ritmo equilibrado · Informes finales';
+  }
+ }
  return out;
 };
 const v13Badge=document.querySelector('.brand small');
