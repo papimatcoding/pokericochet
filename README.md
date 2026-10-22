@@ -91,7 +91,7 @@ Continuación del motor original. Se conserva la clave de guardado `pokeRicochet
 - Pequeñas bonificaciones de energía, Pokédólares limitados por ráfaga, efectos visuales y contador encima del tablero. Un combo empieza de nuevo en cada lanzamiento.
 
 ### Misiones y estadísticas
-- Los retos voluntarios ya no endurecen al enemigo. Piden una ráfaga de 12 impactos en el siguiente combate; si se consigue se obtienen ₽25 y 3 fragmentos de ticket, sin castigo al fallar.
+- Los retos voluntarios ya no endurecen al enemigo. Piden una ráfaga de 8 impactos en las dos primeras regiones o 12 en las siguientes, en el próximo combate; si se consigue se obtienen ₽25 y 3 fragmentos de ticket, sin castigo al fallar.
 - Al finalizar la partida se muestra un resumen de turnos, impactos, daño directo registrado, récord de combos, capturas, KOs, dominantes, jefes y contribución de cada integrante. El informe se conserva en el historial del menú.
 
 ### Verificaciones
