@@ -4988,6 +4988,7 @@ v10RecipientPicker=function(item){
 const v15IntroPrevious=startBattle;
 startBattle=function(kind){
  v15IntroPrevious(kind);
+ if(run)run.v15VictoryPaid=false;
  if(kind!=='boss'||!run||mode!=='bossIntro')return;
  const boss=run.blocks.find(e=>e.v15Boss),info=boss&&V12_BOSS_INFO[boss.id];
  if(!boss||!info)return;
