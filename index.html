@@ -5142,6 +5142,44 @@ winBattle=function(){
  save();return out;
 };
 
+
+/* Meaningful drafts: power, survival and distinctive synergy rather than three flat +1s. */
+const v15ComboUpgrade=V10_UPGRADES.find(u=>u.id==='v13combo');
+if(v15ComboUpgrade){v15ComboUpgrade.rarity='epic';v15ComboUpgrade.max=1}
+const v15CadenceUpgrade=V10_UPGRADES.find(u=>u.id==='v13cadence');
+if(v15CadenceUpgrade){v15CadenceUpgrade.rarity='rare';v15CadenceUpgrade.max=1}
+const V15_DRAFT={
+ power:['attack','special','balls','focus','stab','v15piercing','v15execution'],
+ survival:['hp','defense','resilience','eviolite','v15guardrail','v15momentum','guard','sash'],
+ style:['water','electric','grass','flame','pulse','weather','v15bossbreaker','v15piercing','v15execution','adapt','v13cadence','v13combo','hyper']
+};
+levelOptions=function(p){
+ const used=new Set(),choices=[];
+ const eligible=(key)=>V10_UPGRADES.filter(u=>!used.has(u.id)&&u.ok(p)&&v10UpgradeLevel(p,u.id)<u.max&&
+ (!key||V15_DRAFT[key]?.includes(u.id)));
+ function pickWeighted(pool){
+  if(!pool.length)return null;
+  return v10Weighted(pool.map(u=>({id:u.id,u,weight:Math.max(1,V10_TIERS[u.rarity]?.percent||5)}))).u;
+ }
+ for(const k of ['power','survival','style']){
+  const pool=eligible(k);
+  const u=pickWeighted(pool.length?pool:eligible());
+  if(!u)continue;
+  used.add(u.id);
+  const tier=V10_TIERS[u.rarity],rank=v10UpgradeLevel(p,u.id);
+  choices.push({key:'v10-'+u.id,upgrade:u,rarity:u.rarity,
+   title:tier.symbol+' '+tier.name+' · '+u.name+' '+['I','II','III'][rank]+'/'+['I','II','III'][u.max-1],
+   desc:u.desc(p),emoji:u.icon});
+ }
+ return choices;
+};
+const v15LevelDisplayPrevious=showLevelUp;
+showLevelUp=function(){
+ v15LevelDisplayPrevious();
+ const odds=modal.querySelector('.v10-odds');
+ if(odds)odds.textContent='ELIGE UNA DIRECCIÓN: POTENCIA · SUPERVIVENCIA · ESTILO DE COMBATE. LAS RAREZAS MODIFICAN EL PESO DEL SORTEO.';
+};
+
 fitBoard();startMenu();requestAnimationFrame(render);
 })();
 </script>
