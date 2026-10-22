@@ -296,6 +296,26 @@
  .v15-arcade-prize{opacity:1!important;transform:none!important}
 }
 
+
+.v15-threat-panel{display:none;background:linear-gradient(160deg,#4f253c,#191c37);
+ border:1px solid #d99ab0;border-radius:13px;padding:10px 12px;margin-bottom:6px;
+ box-shadow:0 3px 20px #14051666}
+.v15-threat-kicker{color:#f2b4ab;font-weight:1000;letter-spacing:.14em;font-size:10px;margin-bottom:6px}
+.v15-threat-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.v15-threat-head b{font-size:14px;color:#fff1d8}.v15-threat-head strong{font-size:12px;color:#ffe3b6;white-space:nowrap}
+.v15-threat-bar{width:100%;height:9px;overflow:hidden;border-radius:8px;background:#2b2638;margin:9px 0}
+.v15-threat-bar i{display:block;height:100%;background:linear-gradient(90deg,#ec957f,#ffc5a0);transition:width .22s ease}
+.v15-threat-description{font-size:10px;line-height:1.4;color:#f2c6cd}
+.v15-threat-mobile{display:none}
+@media(max-width:775px){
+ .v15-threat-panel{display:none!important}
+ .v15-threat-mobile{min-height:28px;align-items:center;justify-content:space-between;gap:7px;padding:5px 8px;
+   border-top:1px solid #9f6f78;background:#3a263c;color:#fff3d9;overflow:hidden;line-height:1.3}
+ .v15-threat-mobile b{font-size:10px;white-space:nowrap}
+ .v15-threat-mobile span{font-size:10px;font-weight:900;white-space:nowrap}
+ .v15-threat-mobile small{font-size:9px;color:#ffd2c6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:35%}
+}
+@media(max-width:440px){.v15-threat-mobile small{display:none}}
 </style>
 <link rel="stylesheet" href="./v09.css">
 <link rel="stylesheet" href="./v10.css">
@@ -5061,6 +5081,40 @@ finishDescent=function(){
  }
  return out;
 };
+
+
+/* Threat telemetry lives OUTSIDE the physics canvas, with contextual boss mechanics. */
+const v15ThreatPanel=document.createElement('div');v15ThreatPanel.className='v15-threat-panel';
+const v15ThreatMobile=document.createElement('div');v15ThreatMobile.className='v15-threat-mobile';
+document.querySelector('.sidebar')?.insertBefore(v15ThreatPanel,document.querySelector('.sidebar')?.firstChild);
+const v15ArenaArea=document.querySelector('.arena'),v15ArenaBottom=document.querySelector('.arena-bottom');
+if(v15ArenaArea&&v15ArenaBottom)v15ArenaArea.insertBefore(v15ThreatMobile,v15ArenaBottom);
+let v15ThreatLast='';
+function v15RefreshThreat(){
+ const ev=run?.v15Encounter,e=ev&&run.blocks.find(x=>x.v15Boss||x.v11Dominant&&ev.kind==='dominant');
+ const visible=!!e&&e.hp>0&&!['menu','over'].includes(mode);
+ v15ThreatPanel.style.display=visible?'block':'none';
+ v15ThreatMobile.style.display=visible?'flex':'none';
+ if(!visible){v15ThreatLast='';return}
+ const guards=run.blocks.filter(x=>x.v15Escort&&x.hp>0).length;
+ const shield=e.v15Boss&&e.id===15&&guards?'🛡 Combee '+guards+' · protección activa':
+  e.v15Boss&&e.id===94?'👻 Sombra Trampa · bloquea el relevo':
+  e.v15Boss&&e.id===130?'🐉 Rompemoldes · rompe defensas':
+  e.v15Boss&&e.id===6?'🔥 Giga-Llamarada · daño residual':
+  e.v10Skill?(PK9_ABILITY_NAMES[e.v10Skill]||e.v10Skill):'Resistencia especial';
+ const hp=Math.max(0,Math.ceil(e.hp)),percent=clamp(hp/e.maxHp*100,0,100);
+ const id=e.id+'|'+hp+'|'+guards+'|'+shield+'|'+mode;
+ if(id===v15ThreatLast)return;
+ v15ThreatLast=id;
+ v15ThreatPanel.innerHTML='<div class="v15-threat-kicker">'+(e.v15Boss?'⚠ JEFE DE ZONA':'👑 DOMINANTE')+'</div>'+
+ '<div class="v15-threat-head"><b>'+e.name.toUpperCase()+'</b><strong>'+hp+'/'+e.maxHp+' PS</strong></div>'+
+ '<div class="v15-threat-bar"><i style="width:'+percent+'%"></i></div>'+
+ '<div class="v15-threat-description">'+shield+'</div>';
+ v15ThreatMobile.innerHTML='<b>'+(e.v15Boss?'⚠ JEFE':'👑 DOMINANTE')+' · '+e.name+'</b>'+
+ '<span>'+hp+'/'+e.maxHp+' PS</span><small>'+shield+'</small>';
+}
+const v15DrawWithThreat=renderBoard;
+renderBoard=function(now){v15DrawWithThreat(now);v15RefreshThreat()};
 
 fitBoard();startMenu();requestAnimationFrame(render);
 })();
