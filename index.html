@@ -1306,8 +1306,7 @@ handleAction=function(action){
   run.v07UpcomingWeather=null;
   if(['storm','wild','rare','duel','ambush','hunt','fortress','swarm','elite'].includes(node.kind)){
     const weather=['sun','rain','sand','snow'];
-    if(node.kind==='storm')run.v07UpcomingWeather='rain';
-    else if(Math.random()<.25)run.v07UpcomingWeather=weather[Math.floor(Math.random()*weather.length)];
+    /* Solo habilidades activan el clima. */
   }
   advanceRoom(node);return;
  }
@@ -1659,8 +1658,7 @@ nextRoute=function(){
  const kind=node.kind;
  run.v07UpcomingWeather=null;
  if(['storm','wild','rare','duel','ambush','hunt','fortress','swarm','elite'].includes(kind)){
-  if(kind==='storm')run.v07UpcomingWeather='rain';
-  else if(chance(.22))run.v07UpcomingWeather=pick(['sun','rain','sand','snow']);
+  /* Solo habilidades activan el clima. */
  }
  advanceRoom(node);
  v08WaveToast('PISO '+run.floor+' · '+(V07_DETAILS[kind]?.[1]||'Encuentro'));
@@ -3481,7 +3479,7 @@ V07_DETAILS.miniboss=['👹','¡Minijefe!','Un encuentro de alta presión con Po
 ZONES[3].rooms=5;
 generateMap=function(){
  const rooms=zone().rooms,rows=[];
- const dangerous=['wild','hunt','duel','storm','ambush','fortress','rare','swarm'];
+ const dangerous=['wild','hunt','duel','ambush','fortress','rare','swarm'];
  for(let floor=1;floor<=rooms;floor++){
   let kind=floor===1?'wild':floor===3?'camp':floor===rooms?'miniboss':pick(dangerous);
   rows.push(Array.from({length:3},(_,lane)=>({floor,lane,kind,edges:floor===1?[]:[lane]})));
@@ -3508,12 +3506,7 @@ startBattle=function(kind){
 const v10IncomingRows=pk9EmitRow;
 pk9EmitRow=function(row=0){
  const emitted=v10IncomingRows(row);
- if(emitted&&[5,10,14].includes(run.v09RowsEmitted)&&chance(.27)){
-  const weather=pick(['sun','rain','sand','snow']);
-  run.weather=weather;
-  const label={sun:'☀️ EL SOL SE INTENSIFICA',rain:'🌧️ EMPIEZA A LLOVER',sand:'🌪️ TORMENTA ARENA',snow:'❄️ EMPIEZA A NEVAR'}[weather];
-  v08WaveToast(label);log(label);
- }
+ // El clima no aparece por azar; lo activan las habilidades Pokémon.
  return emitted;
 };
 const v10PreviousEfficacy=attackInfo;
@@ -3747,6 +3740,495 @@ refresh=function(){
   if(el)el.innerHTML='<strong>P'+run.floor+' · '+(run.v09RowsEmitted||0)+'/'+(run.v09RowsTotal||15)+' FILAS</strong> <span class="v10-money">₽'+(run.money||0)+'</span>';
  }
 };
+
+
+/* ===== POKÉRICOCHET 1.1: evolución del proyecto original ===== */
+const V11_WEATHER={drizzle:['rain','Llovizna'],drought:['sun','Sequía'],'sand-stream':['sand','Chorro Arena'],'snow-warning':['snow','Nevada']};
+const V11_FORMS={15:['Mega-Beedrill',10090],94:['Mega-Gengar',10038],130:['Mega-Gyarados',10041],6:['Charizard Gigamax',0]};
+const v11OriginalRow=pk9EmitRow;
+pk9EmitRow=function(row=0){
+ const before=run?.blocks?.length||0,ok=v11OriginalRow(row);
+ if(!ok||!run)return ok;
+ let added=run.blocks.slice(before),number=run.v09RowsEmitted;
+ if(run.zone===0&&run.floor<=2&&run.encounter!=='boss'){
+  const limit=number<=3?2:number<=6?3:5;
+  for(const e of added.slice(limit))run.blocks.splice(run.blocks.indexOf(e),1);
+  added=added.slice(0,limit);
+ }
+ for(const e of added){
+  if(run.zone===0&&run.floor<=3&&!e.v10Champion){
+   e.maxHp=Math.max(9,Math.round(e.maxHp*(number<=4?.73:number<=8?.85:.96)));e.hp=e.maxHp;
+   e.attack=Math.max(1,e.attack-(number<=5?1:0));
+   if(number<=4)e.ranged=e.ranged&&chance(.24);
+  }
+  if(!e.v10Champion)continue;
+  e.v11Dominant=true;
+  if(chance(.24+run.zone*.04)){e.v11Tera=chance(.7)?pick(e.types):pick(Object.keys(TT));v08WaveToast('💎 '+e.name+' · TERA '+TT[e.v11Tera])}
+  else v08WaveToast('👑 '+e.name+' DOMINANTE');
+  const weather=V11_WEATHER[e.v10Skill];
+  if(weather){run.weather=weather[0];v08WaveToast('🌤 '+e.name+' · '+weather[1]);log('🌤 '+e.name+' activa '+weather[1])}
+  if(e.v10Skill==='intimidate'){run.v11Intimidate=2;v08WaveToast('⚔ ¡INTIMIDACIÓN!')}
+ }
+ return ok;
+};
+const v11OriginalStart=startBattle;
+startBattle=function(kind){
+ v11OriginalStart(kind);if(!run)return;
+ run.v11Intimidate=0;run.v11VolleyAge=0;
+ if(run.zone===0&&run.floor<=2&&kind!=='boss')run.v09RowsTotal=12;
+ if(kind==='boss'){
+  const boss=run.blocks.find(e=>e.boss);
+  if(boss&&V11_FORMS[boss.id]){
+   boss.v11Form=V11_FORMS[boss.id];
+   boss.maxHp=Math.ceil(boss.maxHp*(1+run.zone*.1));boss.hp=boss.maxHp;
+   v08WaveToast('👑 ¡'+boss.v11Form[0].toUpperCase()+'!');
+  }
+ }
+};
+const v11OriginalAttack=attackInfo;
+attackInfo=function(m,e){
+ const types=e.types;
+ if(e.v11Tera)e.types=[e.v11Tera];
+ let info;
+ try{info=v11OriginalAttack(m,e)}finally{e.types=types}
+ if(info.dmg>0&&run?.v11Intimidate&&m.category==='physical')info.dmg=Math.max(1,Math.ceil(info.dmg*.85));
+ if(info.dmg>0&&e.v10Skill==='thick-fat'&&['fire','ice'].includes(m.type))info.dmg=Math.max(1,Math.ceil(info.dmg*.6));
+ return info;
+};
+const v11OriginalHit=hit;
+hit=function(e,b){
+ const prev=e.hp,p=active();v11OriginalHit(e,b);
+ if(!p||e.hp>=prev)return;
+ const spd=(p.stats?.[5]||pk9OneStat(p,5))+(p.v11Tempo||0),interval=clamp(Math.round(10-(spd-25)/21),4,10);
+ p.v11TempoHits=(p.v11TempoHits||0)+1;
+ if(p.v11TempoHits%interval===0)p.ult=Math.min(70,(p.ult||0)+1);
+ if(p.v11BankBonus&&b.wallBounces&&run.blocks.includes(e)){
+  e.hp-=p.v11BankBonus;textFx(b.x,b.y-12,'↩ +'+p.v11BankBonus,'#b5ffe1');
+  if(e.hp<=0)enemyDown(e);
+ }
+};
+const v11OriginalLaunch=launchBall;
+launchBall=function(){
+ v11OriginalLaunch();const b=run.shots?.at(-1),p=active();
+ if(!b||!p)return;
+ const v=Math.hypot(b.vx,b.vy)||1,target=520*clamp(1+((p.stats?.[5]||pk9OneStat(p,5))-50)/1400,.97,1.05);
+ b.vx*=target/v;b.vy*=target/v;b.v11Age=0;
+};
+const v11OriginalPhysics=advanceVolley;
+advanceVolley=function(dt){
+ if(run&&mode==='shooting'){
+  const d=dt*(run.fast?2.5:1);run.v11VolleyAge=(run.v11VolleyAge||0)+d;
+  for(const b of run.shots){
+   b.v11Age=(b.v11Age||0)+d;
+   if(b.v11Age>2.8&&Math.abs(b.vy)<120){
+    const v=Math.hypot(b.vx,b.vy)||520,vy=Math.min(v*.7,Math.max(160,Math.abs(b.vy)+65));
+    b.vy=vy;b.vx=(b.vx<0?-1:1)*Math.sqrt(Math.max(0,v*v-vy*vy));b.v11Age=2.1;
+   }
+  }
+  if(run.v11VolleyAge>19){
+   run.pending=0;run.shots.length=0;run.landing??=run.shooter;
+   run.v11VolleyAge=0;v08WaveToast('↩ RÁFAGA RECUPERADA');
+  }
+ }
+ return v11OriginalPhysics(dt);
+};
+const v11OriginalEnd=endVolley;
+endVolley=function(){if(run){run.v11VolleyAge=0;if(run.v11Intimidate>0)run.v11Intimidate--}return v11OriginalEnd()};
+V10_UPGRADES.push(
+ {id:'v11speed',name:'Entrenamiento de Velocidad',rarity:'uncommon',max:2,icon:'💨',desc:p=>'Recarga antes el especial al encadenar impactos',ok:p=>p.moves.some(m=>m.category!=='status'),apply:p=>{p.v11Tempo=(p.v11Tempo||0)+12}},
+ {id:'v11bank',name:'Rebote Preciso',rarity:'rare',max:2,icon:'↩',desc:p=>'+1 daño tras rebotar contra las paredes (por nivel)',ok:p=>p.moves.some(m=>m.category!=='status'),apply:p=>{p.v11BankBonus=(p.v11BankBonus||0)+1}}
+);
+const v11FormImages=new Map(),v11OriginalRender=renderBoard;
+renderBoard=function(now){
+ v11OriginalRender(now);
+ if(!run||!['aim','shooting','descending','retaliating'].includes(mode))return;
+ ctx.save();
+ for(const e of run.blocks){
+  if(!e.v11Dominant&&!e.v11Form)continue;
+  const x=enemyX(e),y=enemyY(e),w=enemyW(e),h=enemyH(e);
+  if(y<0||y>FLOOR_Y+20)continue;
+  const tint=e.v11Tera?TYPE_COLOR[e.v11Tera]:'#ffe0a1';
+  ctx.strokeStyle=tint;ctx.shadowColor=tint;ctx.shadowBlur=e.boss?20:12;ctx.lineWidth=e.boss?4:2.5;
+  ctx.strokeRect(x-2,y-2,w+4,h+4);ctx.shadowBlur=0;
+  ctx.textAlign='center';ctx.font='bold 10px system-ui';ctx.fillStyle=tint;
+  if(e.v11Tera)ctx.fillText('◆ '+TT[e.v11Tera],x+w/2,y-5);
+  if(e.v11Form){
+   ctx.fillText(e.v11Form[0].toUpperCase(),x+w/2,y-10);
+   const form=e.v11Form[1];
+   if(form){
+    if(!v11FormImages.has(form)){
+     const im=new Image(),entry={im,ready:false};
+     im.onload=()=>{entry.ready=true};im.onerror=()=>{entry.ready=false};
+     im.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/'+form+'.png';
+     v11FormImages.set(form,entry);
+    }
+    const spriteEntry=v11FormImages.get(form);
+    if(spriteEntry.ready)ctx.drawImage(spriteEntry.im,x+3,y+2,w-6,h-18);
+   }
+  }
+ }
+ ctx.restore();
+};
+
+
+/* ===== 1.1: tickets, PC ordenable y ficha individual de caramelos ===== */
+saved.v11Tickets??=0;
+saved.v11TenTickets??=0;
+saved.v11TicketMilestones??=0;
+let v11Sort='ivs',v11Filter='',v11CapsuleLocked=false;
+const V11_TICKET_FRAGMENTS=12;
+function v11TicketSync(){
+ let earned=0;
+ while(saved.tokens>=V11_TICKET_FRAGMENTS){
+  saved.tokens-=V11_TICKET_FRAGMENTS;saved.v11Tickets++;earned++;
+ }
+ if(earned)save();
+ return earned;
+}
+v11TicketSync();
+function v11BalanceLabel(){
+ return '🎟 '+saved.v11Tickets+' sencillos · 🎫 '+saved.v11TenTickets+' x10 · '+saved.tokens+'/'+V11_TICKET_FRAGMENTS+' fragmentos';
+}
+function v11DrawGacha(){
+ v11TicketSync();mode='menu';
+ const available=saved.v11Tickets>=10||saved.v11TenTickets>0;
+ v04Shell('gacha','<div class="v11-gacha"><div class="emblem">🎰 GACHAPÓN · CÁPSULAS DE EXPLORACIÓN</div><h2>¡A ver qué Pokémon sale!</h2>'+
+ '<p>Las capturas siguen siendo la forma principal de ampliar tu equipo. Los combates te dan fragmentos de ticket y los jefes pueden recompensarte con un ticket especial.</p>'+
+ '<div class="v11-wallet"><b>🎟 '+saved.v11Tickets+' tickets sencillos</b><b>🎫 '+saved.v11TenTickets+' tickets x10</b><small>Próximo ticket: '+saved.tokens+'/'+V11_TICKET_FRAGMENTS+' fragmentos</small></div>'+
+ '<div class="v11-pullbuttons"><button class="primary" data-action="v11:roll:1" '+(saved.v11Tickets<1?'disabled':'')+'>◉ UNA TIRADA · 1 🎟</button>'+
+ '<button class="secondary" data-action="v11:roll:10" '+(!available?'disabled':'')+'>✦ DIEZ TIRADAS · 10 🎟 O 1 🎫</button></div>'+
+ '<p class="v11-help">Solo especies básicas · duplicados: caramelos · shiny: 1/4096. Una tanda de 10 incluye al menos un resultado poco común o superior.</p></div>');
+}
+function v11PullRarity(){
+ const x=Math.random();return x<.82?'common':x<.97?'uncommon':x<.995?'rare':'ultra';
+}
+function v11ChooseGacha(rarity){
+ const pool=Object.keys(DB).map(Number).filter(id=>v10Stage(id)===0&&DB[id]&&PK9.stats[id]);
+ const eligible=pool.filter(id=>v10SpeciesRarity(id)===(rarity==='ultra'?'ultra':rarity));
+ return pick(eligible.length?eligible:pool);
+}
+function v11GachaRoll(count){
+ v11TicketSync();
+ if(v11CapsuleLocked||mode!=='menu'||(count!==1&&count!==10))return;
+ if(count===1){if(saved.v11Tickets<1)return;saved.v11Tickets--}
+ else if(saved.v11TenTickets>0)saved.v11TenTickets--;
+ else if(saved.v11Tickets>=10)saved.v11Tickets-=10;
+ else return;
+ v11CapsuleLocked=true;
+ const results=[];
+ for(let i=0;i<count;i++){
+  let rarity=v11PullRarity();
+  if(count===10&&i===9&&results.every(x=>x.rarity==='common'))rarity='uncommon';
+  const id=v11ChooseGacha(rarity),shiny=chance(1/4096),reward=registerReward(id,shiny,'gacha');
+  results.push({id,rarity,shiny,reward});
+ }
+ save();v11CapsuleLocked=false;mode='menu';
+ const cards=results.map(x=>'<div class="v11-capsule-card '+x.rarity+'">'+sImg(x.id,x.shiny)+
+ '<b>'+def(x.id).name+(x.shiny?' ✨ SHINY':'')+'</b>'+
+ '<small>'+({common:'COMÚN',uncommon:'POCO COMÚN',rare:'RARO',ultra:'EXTRAORDINARIO'})[x.rarity]+
+ '</small><em>'+(x.reward.isFirst?'¡NUEVO!':'Duplicado')+' · +'+x.reward.reward+' 🍬</em></div>').join('');
+ showModal('<div class="v11-results"><div class="emblem">✦ '+count+' CÁPSULA'+(count>1?'S':'')+' ABIERTA'+(count>1?'S':'')+'</div>'+
+ '<h2>'+(results.some(x=>x.shiny)?'✨ ¡SHINY!':results.some(x=>x.rarity==='ultra')?'🌟 ¡HALLAZGO EXTRAORDINARIO!':'¡Nuevos compañeros!')+'</h2>'+
+ '<div class="v11-pullgrid">'+cards+'</div><div class="actions"><button class="primary" data-action="ui:tab:gacha">OTRA TIRADA</button>'+
+ '<button class="secondary" data-action="ui:tab:pc">ABRIR PC</button></div></div>');
+}
+const v11OriginalWin=winBattle;
+winBattle=function(){
+ const state=mode,kind=run?.encounter,earnedBefore=saved.tokens;
+ const out=v11OriginalWin();
+ const tickets=v11TicketSync();
+ const completed=run&&!run.v09Active&&run.blocks.length===0&&run.v09RowsEmitted>=run.v09RowsTotal;
+ if(completed&&kind==='boss'&&state!=='reward'&&mode!=='over'&&chance(.09)){
+  saved.v11TenTickets++;save();v08WaveToast('🎫 ¡TICKET X10 DE JEFE!');
+ }
+ if(tickets)message('🎟 ¡Has reunido '+tickets+' ticket'+(tickets===1?'':'s')+'!');
+ return out;
+};
+function v11Owned(){
+ const result=[];
+ for(const [raw,amounts] of Object.entries(saved.collection||{})){
+  const id=Number(raw);if(!DB[id])continue;
+  if(amounts.normal>0)result.push({id,shiny:false,count:amounts.normal});
+  if(amounts.shiny>0)result.push({id,shiny:true,count:amounts.shiny});
+ }
+ return result;
+}
+function v11PcPage(){
+ mode='menu';const owned=v11Owned();
+ const sorted=owned.filter(m=>!v11Filter||def(m.id).name.toLowerCase().includes(v11Filter.toLowerCase()));
+ sorted.sort((a,b)=>{
+  if(v11Sort==='ivs')return pk9IV(b.id).reduce((x,y)=>x+y,0)-pk9IV(a.id).reduce((x,y)=>x+y,0)||a.id-b.id;
+  if(v11Sort==='candy')return candiesOf(b.id)-candiesOf(a.id)||a.id-b.id;
+  if(v11Sort==='shiny')return Number(b.shiny)-Number(a.shiny)||a.id-b.id;
+  if(v11Sort==='power')return PK9_STATS(b.id).reduce((x,y)=>x+y,0)-PK9_STATS(a.id).reduce((x,y)=>x+y,0)||a.id-b.id;
+  return def(a.id).name.localeCompare(def(b.id).name,'es');
+ });
+ const sortOptions=[['ivs','Mejores IVs'],['candy','Más caramelos'],['power','Estadísticas base'],['shiny','Shinies primero'],['name','Nombre']];
+ const controls='<div class="v11-pc-tools"><div class="v11-pc-sorts">'+sortOptions.map(([key,label])=>
+  '<button data-action="v11:sort:'+key+'" class="'+(v11Sort===key?'selected':'')+'">'+label+'</button>').join('')+'</div>'+
+  '<div class="v11-pc-search"><label for="v11PcSearch">Buscar Pokémon</label><input id="v11PcSearch" placeholder="Nombre..." value="'+v11Filter.replace(/["<>]/g,'')+'" autocomplete="off"></div></div>';
+ const cards=sorted.map(m=>'<button class="v11-storage" data-action="v11:pcmon:'+m.id+':'+Number(m.shiny)+'">'+sImg(m.id,m.shiny)+
+  '<span><b>'+def(m.id).name+(m.shiny?' ✨':'')+'</b><small>IVs '+pk9IV(m.id).reduce((x,y)=>x+y,0)+'/186 · 🍬 '+candiesOf(m.id)+'</small>'+
+  '<small>×'+m.count+' · '+def(m.id).types.map(t=>TT[t]).join(' / ')+'</small></span><strong>›</strong></button>').join('');
+ v04Shell('pc','<div class="v11-pc"><h2>PC Pokémon <small>· '+owned.length+' variantes</small></h2>'+
+ '<p>Toca cualquier Pokémon para ver sus IVs, estadísticas, habilidades y caramelos. Los IVs son independientes de los caramelos y se comparten por familia evolutiva.</p>'+
+ controls+'<div class="v11-storage-grid">'+(cards||'<p>Ningún Pokémon coincide con la búsqueda.</p>')+'</div></div>');
+ const input=modal.querySelector('#v11PcSearch');
+ if(input)input.addEventListener('input',()=>{v11Filter=input.value;const pos=input.selectionStart;v11PcPage();const next=modal.querySelector('#v11PcSearch');next?.focus();try{next?.setSelectionRange(pos,pos)}catch{}});
+}
+function v11PcDetail(id,shiny=false){
+ if(!DB[id])return;
+ if(!v11Owned().some(m=>m.id===id&&m.shiny===shiny))shiny=v11Owned().some(m=>m.id===id&&m.shiny)?true:shiny;
+ if(!v11Owned().some(m=>m.id===id&&m.shiny===shiny))return;
+ const iv=pk9IV(id),base=PK9_STATS(id),p={id,level:5,ivs:iv,evs:[0,0,0,0,0,0],natureIndex:saved.natureBest?.[rootOf(id)]??0};
+ const bars=iv.map((n,i)=>'<div class="v11-iv-line"><b>'+PK9_STAT_LABELS[i]+'</b><span class="v11-iv-track"><i style="width:'+(n/31*100)+'%"></i></span><strong>'+n+'/31</strong><small>Base '+base[i]+' · Nv.5 '+pk9OneStat(p,i)+'</small></div>').join('');
+ const ab=(PK9.abilities[id]||[]).map(x=>(PK9_ABILITY_NAMES[x.name]||x.name.replaceAll('-',' '))+(x.hidden?' (oculta)':'')).join(' · ');
+ showModal('<div class="v11-profile"><div class="emblem">🧬 FICHA DEL PC</div><div class="v11-profile-top">'+sImg(id,shiny)+
+ '<div><h2>'+def(id).name+(shiny?' ✨':'')+'</h2><p>'+def(id).types.map(t=>TT[t]).join(' / ')+'</p>'+
+ '<b>IVs totales '+iv.reduce((x,y)=>x+y,0)+'/186</b><small>🍬 '+candiesOf(id)+' caramelos · '+ab+'</small></div></div>'+
+ '<div class="v11-iv-grid">'+bars+'</div><p><b>Velocidad:</b> mejora ligeramente el ritmo de carga de los especiales. El daño físico utiliza Ataque/Defensa y el especial At. Especial/Def. Especial.</p>'+
+ '<div class="actions"><button class="primary" data-action="v11:candy:'+id+'">🍬 SUS CARAMELOS</button><button class="secondary" data-action="ui:tab:pc">VOLVER AL PC</button></div></div>');
+}
+function v11CandyPage(){
+ const items=v11Owned(),ids=[...new Set(items.map(m=>m.id).concat(Object.keys(saved.candies||{}).map(Number)))].filter(id=>DB[id]);
+ ids.sort((a,b)=>candiesOf(b)-candiesOf(a)||a-b);
+ const cards=ids.map(id=>'<button class="v11-storage" data-action="v11:candy:'+id+'">'+sImg(id)+
+ '<span><b>'+def(id).name+'</b><small>🍬 '+candiesOf(id)+' caramelos propios · IVs '+pk9IV(id).reduce((a,b)=>a+b,0)+'/186</small></span><strong>›</strong></button>').join('');
+ v04Shell('caramelos','<div class="v11-pc"><h2>Laboratorio de caramelos</h2>'+
+ '<p>Selecciona una especie para gastar exclusivamente sus caramelos. La ficha mostrará costes y niveles de cada mejora.</p>'+
+ '<div class="v11-storage-grid">'+cards+'</div></div>');
+}
+function v11CandyDetail(id){
+ if(!DB[id])return;
+ const state=saved.v10Training?.[id]||{},n=candiesOf(id),
+ bond=V10_CANDY_COST.bond[state.bond||0],focus=V10_CANDY_COST.focus[state.focus||0];
+ const hidden=(PK9.abilities[id]||[]).find(a=>a.hidden),unlocked=!!saved.abilityUnlocked?.[id];
+ const options=[
+  ['bond','❤️ Vínculo '+(state.bond||0)+'/3','+1 PS máximo',bond],
+  ['focus','🎯 Afinidad '+(state.focus||0)+'/2','+3 % crítico',focus]
+ ];
+ if(hidden)options.push(['ability','✨ Habilidad oculta',PK9_ABILITY_NAMES[hidden.name]||hidden.name,unlocked?null:45]);
+ const controls=options.map(([key,title,desc,cost])=>'<button class="v11-candy-buy" data-action="v11:buy:'+key+':'+id+'" '+(!cost||n<cost?'disabled':'')+'><b>'+title+'</b>'+
+ '<small>'+desc+' · '+(cost?cost+' 🍬':'COMPLETADO')+'</small></button>').join('');
+ showModal('<div class="v11-profile"><div class="emblem">🍬 MEJORAS PERMANENTES · POR ESPECIE</div><div class="v11-profile-top">'+sImg(id)+
+ '<div><h2>'+def(id).name+'</h2><b>'+n+' caramelos disponibles</b><small>Las mejoras se guardan entre expediciones.</small></div></div>'+
+ '<div class="v11-candy-actions">'+controls+'</div><div class="actions"><button class="secondary" data-action="ui:tab:caramelos">VOLVER AL LABORATORIO</button>'+
+ '<button class="secondary" data-action="v11:pcmon:'+id+':0">VER IVs</button></div></div>');
+}
+const v11OriginalShell=v04Shell;
+v04Shell=function(tab,content){
+ v11OriginalShell(tab,content);
+ const currency=modal.querySelector('.home-currency');
+ if(currency)currency.textContent=v11BalanceLabel();
+};
+const v11OriginalHome=showHome;
+showHome=function(tab='inicio'){
+ if(!saved.hasStarter)return v11OriginalHome(tab);
+ if(tab==='gacha')return v11DrawGacha();
+ if(tab==='pc')return v11PcPage();
+ if(tab==='caramelos')return v11CandyPage();
+ const result=v11OriginalHome(tab);
+ const money=modal.querySelector('.home-currency');
+ if(money)money.textContent=v11BalanceLabel();
+ return result;
+};
+const v11OriginalActions=handleAction;
+handleAction=function(action){
+ if(action.startsWith('ui:tab:')&&mode==='menu'&&saved.hasStarter){showHome(action.slice(7));return}
+ if(action==='v11:roll:1'){v11GachaRoll(1);return}
+ if(action==='v11:roll:10'){v11GachaRoll(10);return}
+ if(action.startsWith('v11:sort:')){v11Sort=action.slice(9);v11PcPage();return}
+ if(action.startsWith('v11:pcmon:')){const [, ,id,shiny]=action.split(':');v11PcDetail(+id,shiny==='1');return}
+ if(action.startsWith('v11:candy:')){v11CandyDetail(+action.split(':')[2]);return}
+ if(action.startsWith('v11:buy:')){
+  const [, ,kind,id]=action.split(':');v11OriginalActions('v10:candy:'+kind+':'+id);v11CandyDetail(+id);return;
+ }
+ if(action==='ui:roll'){v11GachaRoll(1);return}
+ return v11OriginalActions(action);
+};
+
+
+/* Mobile: actions are still available, but collapsed while aiming. */
+const v11MobileDetails=document.createElement('details');
+v11MobileDetails.className='v11-mobile-details';
+const v11MobileSummary=document.createElement('summary');
+v11MobileSummary.textContent='⚙ MÁS ACCIONES · CAMBIAR / MOVIMIENTOS';
+v11MobileDetails.appendChild(v11MobileSummary);
+if(v10MobileActions.parentElement){
+ v10MobileActions.parentElement.insertBefore(v11MobileDetails,v10MobileActions);
+ v11MobileDetails.appendChild(v10MobileActions);
+}
+
+
+/* ==== 1.2 · Cinematic boss introductions & authentic gacha-machine reveal ==== */
+const V12_BOSS_INFO={
+  15:{title:'MEGA-BEEDRILL',form:'beedrill-mega',kind:'MEGAEVOLUCIÓN',tagline:'¡Un aguijón que no da tregua!',ability:'Adaptabilidad'},
+  94:{title:'MEGA-GENGAR',form:'gengar-mega',kind:'MEGAEVOLUCIÓN',tagline:'Las sombras cierran el paso.',ability:'Sombra Trampa'},
+  130:{title:'MEGA-GYARADOS',form:'gyarados-mega',kind:'MEGAEVOLUCIÓN',tagline:'¡El terror emerge del abismo!',ability:'Rompemoldes'},
+  6:{title:'CHARIZARD GIGAMAX',form:'charizard-gmax',kind:'GIGAMAX',tagline:'Una llamarada que cubre el cielo.',ability:'Giga-Llamarada'}
+};
+const V12_BALLS={
+ common:{label:'Poké Ball',item:'poke-ball',color:'#ff8584',name:'COMÚN'},
+ uncommon:{label:'Super Ball',item:'great-ball',color:'#6bbcfb',name:'POCO COMÚN'},
+ rare:{label:'Ultra Ball',item:'ultra-ball',color:'#ffe087',name:'RARO'},
+ ultra:{label:'Master Ball',item:'master-ball',color:'#cb9cff',name:'EXTRAORDINARIO'}
+};
+const v12BallUrl=(rarity)=>'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/'+(V12_BALLS[rarity]||V12_BALLS.common).item+'.png';
+let v12BossTimer=null,v12CapsuleTimer=null,v12PendingCapsules=null;
+const v12StartOriginal=startBattle;
+startBattle=function(kind){
+ v12StartOriginal(kind);
+ if(kind!=='boss'||!run||mode!=='aim')return;
+ const boss=run.blocks.find(e=>e.boss),info=boss&&V12_BOSS_INFO[boss.id];
+ if(!info)return;
+ run.v12BossInfo=info;
+ mode='bossIntro';
+ const gif='https://play.pokemonshowdown.com/sprites/ani/'+info.form+'.gif';
+ showModal('<div class="v12-boss-intro '+(info.kind==='GIGAMAX'?'is-gmax':'is-mega')+'">'+
+  '<div class="v12-boss-stars" aria-hidden="true">✦　·　✧　✦　·　✧</div>'+
+  '<div class="v12-boss-kicker">⚠ JEFE DE ZONA · '+info.kind+'</div>'+
+  '<div class="v12-boss-sprite"><div class="v12-boss-aura"></div>'+
+  '<img alt="'+info.title+'" src="'+gif+'" onerror="this.onerror=null;this.src=\''+sprite(boss.id)+'\'"></div>'+
+  '<h2>'+info.title+'</h2><p>'+info.tagline+'</p>'+
+  '<div class="v12-boss-ability">✦ '+info.ability+' · '+zone().name+'</div>'+
+  '<button class="v12-boss-fight" data-action="v12:bossbegin">⚔ ¡A COMBATIR! →</button>'+
+  '<small>El combate comienza automáticamente</small></div>');
+ playTone(190,.25,'sawtooth',.042);
+ clearTimeout(v12BossTimer);
+ const thisRun=run;
+ v12BossTimer=setTimeout(()=>{if(run===thisRun&&mode==='bossIntro')v12BeginBoss()},2700);
+};
+function v12BeginBoss(){
+ if(mode!=='bossIntro')return;
+ clearTimeout(v12BossTimer);v12BossTimer=null;hideModal();mode='aim';
+ v08WaveToast('👑 '+(run?.v12BossInfo?.title||'¡JEFE!')+' · ¡A COMBATIR!');
+ refresh();
+}
+const v12OldSwitch=v10PartySwitch;
+v10PartySwitch=function(){
+ const trap=run?.blocks?.some(e=>e.boss&&e.id===94&&e.hp>0);
+ if(trap){v08WaveToast('👻 SOMBRA TRAMPA · NO PUEDES CAMBIAR');message('¡Mega-Gengar impide el relevo con Sombra Trampa!');return}
+ return v12OldSwitch();
+};
+const v12OldDescent=finishDescent;
+finishDescent=function(){
+ if(run&&run.blocks)for(const boss of run.blocks){
+  if(!boss.boss||!boss.v12BossPhase&&!(boss.id in V12_BOSS_INFO))continue;
+  if(!boss.v12BossPhase&&boss.hp>0&&boss.hp<=boss.maxHp*.50){
+   boss.v12BossPhase=1;
+   boss.attack=Math.max(1,boss.attack+1);
+   boss.interval=Math.max(2,(boss.interval||3)-1);
+   boss.cooldown=Math.min(boss.cooldown||3,boss.interval);
+   v08WaveToast('⚠ ¡'+V12_BOSS_INFO[boss.id].title+' ENTRA EN FASE 2!');
+   textFx(enemyX(boss)+enemyW(boss)/2,enemyY(boss)-14,'¡FASE 2!','#ffdf9e');
+  }
+ }
+ const out=v12OldDescent();
+ if(run&&mode!=='over'&&run.v12BossInfo?.form==='charizard-gmax'&&run.turn%3===0&&
+    run.blocks.some(e=>e.boss&&e.id===6&&e.v12BossPhase===1&&e.hp>0)){
+   v08WaveToast('🔥 GIGA-LLAMARADA · DAÑO RESIDUAL');
+   takeDamage(1,'Giga-Llamarada');
+ }
+ return out;
+};
+// Rarity is expressed with a ball-like capsule, never awarded as an actual capture item.
+function v12CapsuleCard(result){
+ const ball=V12_BALLS[result.rarity],id=result.id;
+ return '<div class="v12-prize-card '+result.rarity+'">'+
+  '<div class="v12-prize-art">'+sImg(id,result.shiny)+
+  '<img class="v12-prize-ball" src="'+v12BallUrl(result.rarity)+'" alt="'+ball.label+'" loading="lazy"></div>'+
+  '<b>'+def(id).name+(result.shiny?' ✨':'')+'</b>'+
+  '<small style="color:'+ball.color+'">'+ball.label+' · '+ball.name+'</small>'+
+  '<em>'+(result.reward.isFirst?'✦ NUEVO':'Duplicado')+' · +'+result.reward.reward+' 🍬</em></div>';
+}
+function v12FinishCapsule(){
+ if(!v12PendingCapsules||mode!=='capsule')return;
+ clearTimeout(v12CapsuleTimer);v12CapsuleTimer=null;
+ const results=v12PendingCapsules;v12PendingCapsules=null;
+ v11CapsuleLocked=false;mode='menu';
+ const shiny=results.some(x=>x.shiny),rare=results.some(x=>x.rarity==='ultra');
+ showModal('<div class="v12-gacha-results"><div class="emblem">🎰 '+results.length+' TIRADA'+(results.length===1?'':'S')+'</div>'+
+ '<h2>'+(shiny?'✨ ¡SHINY!':rare?'🌟 ¡PREMIO EXTRAORDINARIO!':'¡Cápsula abierta!')+'</h2>'+
+ '<div class="v12-prize-grid">'+results.map(v12CapsuleCard).join('')+'</div>'+
+ '<p>El modelo de Poké Ball representa la rareza del resultado. Has recibido Pokémon y caramelos, no Poké Balls consumibles.</p>'+
+ '<div class="actions"><button class="primary" data-action="ui:tab:gacha">🎟 VOLVER A LA MÁQUINA</button>'+
+ '<button class="secondary" data-action="ui:tab:pc">▦ VER MI PC</button></div></div>');
+ if(shiny)playTone(1000,.20,'triangle',.04);
+ else playTone(790,.12,'triangle',.025);
+}
+v11GachaRoll=function(count){
+ v11TicketSync();
+ if(v11CapsuleLocked||mode!=='menu'||(count!==1&&count!==10))return;
+ if(count===1){if(saved.v11Tickets<1)return;saved.v11Tickets--}
+ else if(saved.v11TenTickets>0)saved.v11TenTickets--;
+ else if(saved.v11Tickets>=10)saved.v11Tickets-=10;
+ else return;
+ v11CapsuleLocked=true;save();
+ const results=[];
+ for(let i=0;i<count;i++){
+  let rarity=v11PullRarity();
+  if(count===10&&i===9&&results.every(r=>r.rarity==='common'))rarity='uncommon';
+  const id=v11ChooseGacha(rarity),shiny=chance(1/4096),reward=registerReward(id,shiny,'gacha');
+  results.push({id,rarity,shiny,reward});
+ }
+ v12PendingCapsules=results;save();mode='capsule';
+ const best=results.reduce((b,x)=>['common','uncommon','rare','ultra'].indexOf(x.rarity)>['common','uncommon','rare','ultra'].indexOf(b.rarity)?x:b);
+ const capsule=V12_BALLS[best.rarity];
+ const filled=['common','uncommon','rare','ultra','common','uncommon','common','rare','common'];
+ const inner=filled.map((r,i)=>'<img style="--i:'+i+'" src="'+v12BallUrl(r)+'" aria-hidden="true">').join('');
+ showModal('<div class="v12-machine-stage" style="--capsule-color:'+capsule.color+'">'+
+  '<div class="emblem">🎰 MÁQUINA CÁPSULA · '+count+' TIRADA'+(count===1?'':'S')+'</div>'+
+  '<h2>¡Gira la máquina!</h2>'+
+  '<div class="v12-gacha-machine" aria-label="Máquina cápsula animada">'+
+   '<div class="v12-gacha-dome"><div class="v12-gacha-balls">'+inner+'</div></div>'+
+   '<div class="v12-gacha-body"><div class="v12-knob"></div><div class="v12-output">'+
+   '<img src="'+v12BallUrl(best.rarity)+'" alt="'+capsule.label+'"></div></div>'+
+   '<div class="v12-gacha-feet"></div>'+
+  '</div>'+
+  '<div class="v12-machine-txt">✦ SELECCIONANDO CÁPSULA'+(count===10?'S':'')+'... ✦</div>'+
+  '<div class="v12-machine-progress"><i></i></div>'+
+  '<button class="secondary v12-skip" data-action="v12:skip">VER RESULTADO ›</button>'+
+  '<small>La esfera representa la rareza. Solo pueden salir Pokémon sin evolucionar.</small></div>');
+ playTone(370,.09,'triangle',.028);
+ clearTimeout(v12CapsuleTimer);
+ const thisResults=results;
+ v12CapsuleTimer=setTimeout(()=>{if(v12PendingCapsules===thisResults&&mode==='capsule')v12FinishCapsule()},count===1?1950:1600);
+};
+const v12OldChoose=v11ChooseGacha;
+v11ChooseGacha=function(rarity){
+ // Depend only on verified basic-stage encounter pools: no evolved, boss-only forms or Mega/Gigamax.
+ const basePool=[...new Set(V10_POOLS.flat())].filter(id=>PK9.stats[id]&&v10Stage(id)===0&&DB[id]);
+ const eligible=basePool.filter(id=>v10SpeciesRarity(id)===(rarity==='ultra'?'ultra':rarity));
+ if(eligible.length)return pick(eligible);
+ return pick(basePool.length?basePool:[1,4,7]);
+};
+const v12HandlePrevious=handleAction;
+handleAction=function(action){
+ if(action==='v12:skip'){v12FinishCapsule();return}
+ if(action==='v12:bossbegin'){v12BeginBoss();return}
+ return v12HandlePrevious(action);
+};
+
+
+/* Display the current version and accurate highlights without replacing saved DOM handlers. */
+const v12HomeOriginal=showHome;
+showHome=function(tab='inicio'){
+ const result=v12HomeOriginal(tab);
+ const home=modal.querySelector('.home-screen');
+ if(home){
+  const label=home.querySelector('.home-header .emblem');
+  if(label)label.textContent=label.textContent.replace(/V0\.9|V1\.0/g,'V1.2');
+  const highlights=home.querySelector('.home-tip');
+  if(tab==='inicio'&&highlights){
+   const headline=highlights.querySelector('b'),detail=highlights.querySelector('span');
+   if(headline)headline.textContent='✦ NUEVO EN V1.2';
+   if(detail)detail.textContent='Dominantes · Megas y Gigamax · Tickets · PC ordenable · Máquina cápsula';
+  }
+ }
+ return result;
+};
+const v12BrandSubtitle=document.querySelector('.brand small');
+if(v12BrandSubtitle)v12BrandSubtitle.textContent='EXPEDITION EDITION · V1.2';
 
 fitBoard();startMenu();requestAnimationFrame(render);
 })();
