@@ -4661,12 +4661,12 @@ endVolley=function(){
 /* ================== 1.5 — meaningful encounters, bosses & economy ================== */
 /* One memorable boss encounter rather than sixteen rows of interchangeable enemies. */
 const V15_MINIBOSSES=[[2,12],[42,75],[8,73],[58,126]];
-const V15_BOSS_SUMMONS={15:415,94:92,130:129,6:5};
+const V15_BOSS_SUMMONS={15:415,94:92};
 const V15_BOSS_DESCRIPTIONS={
  15:'Adaptabilidad · Combee protege a Mega-Beedrill · Aguijones venenosos',
  94:'Sombra Trampa · Gastly bloquean líneas de tiro · ataques espectrales',
- 130:'Rompemoldes · Magikarp sirven de escolta · oleadas acuáticas',
- 6:'Gigamax · Charmeleon protege los flancos · Giga-Llamarada'
+ 130:'Rompemoldes · ignora barreras de defensa · oleadas acuáticas',
+ 6:'Gigamax · Giga-Llamarada y daño residual al avanzar de fase'
 };
 function v15PowerBudget(){
  return Math.max(42,...run.team.filter(p=>p.hp>0).flatMap(p=>
@@ -4705,7 +4705,8 @@ startBattle=function(kind){
   run.v09RowsEmitted=run.v09RowsTotal;
   run.v09CatchChance=true;
   // The first guards create an actual objective: defeat them to expose the boss.
-  v15SpawnGuards(2,false);
+  if(boss.id===15)v15SpawnGuards(2,false);
+  else if(boss.id===94)v15SpawnGuards(1,false);
  }else if(kind==='miniboss'){
   v15Dominant(kind);
   run.v09Active=false;run.v09RowsEmitted=run.v09RowsTotal;run.v09CatchChance=true;
@@ -4744,7 +4745,7 @@ attackInfo=function(m,e){
  if(info.dmg<=0)return info;
  if(e.v15Boss){
   const guards=run.blocks.filter(x=>x.v15Escort&&x.hp>0);
-  if(guards.length){
+  if(e.id===15&&guards.length){
    info.dmg=Math.max(1,Math.ceil(info.dmg*(guards.length>=2?.45:.72)));
    if(run.turn!==run.v15ScreenNoticeTurn){
     run.v15ScreenNoticeTurn=run.turn;
@@ -4766,7 +4767,8 @@ finishDescent=function(){
  encounter.turn++;
  if(encounter.kind==='boss'&&run.blocks.some(e=>e.v15Boss&&e.hp>0)){
   const escorts=run.blocks.filter(e=>e.v15Escort&&e.hp>0).length;
-  if(encounter.turn%2===0&&escorts<2)v15SpawnGuards(Math.min(2-escorts,1+(encounter.turn%4===0)),true);
+  if(encounter.turn%2===0&&encounter.id===15&&escorts<2)v15SpawnGuards(Math.min(2-escorts,1+(encounter.turn%4===0)),true);
+  else if(encounter.turn%3===0&&encounter.id===94&&escorts<1)v15SpawnGuards(1,true);
  }
  return result;
 };
@@ -4774,6 +4776,10 @@ finishDescent=function(){
 const v15DamagePlayerPrevious=takeDamage;
 takeDamage=function(amount,source){
  const before=active(),old=before?.hp??0,enemy=run?.blocks?.find(e=>e.name===source);
+ if(enemy?.v15Boss&&enemy.id===130&&before?.shield>0){
+  before.shield=Math.max(0,before.shield-1);
+  if(run.v15BreakerTurn!==run.turn){run.v15BreakerTurn=run.turn;v08WaveToast('🐉 ROMPEMOLDES · ¡IGNORA PARTE DEL ESCUDO!')}
+ }
  const result=v15DamagePlayerPrevious(amount,source);
  if(!before||before!==active()||before.hp>=old||before.hp<=0||!enemy||run.v10StatusAppliedTurn===run.turn)return result;
  let status=null;
@@ -4973,7 +4979,7 @@ startBattle=function(kind){
   '<img src="'+gif+'" alt="'+info.title+'" onerror="this.onerror=null;this.src=\''+sprite(boss.id)+'\'"></div>'+
   '<div class="v15-debut-name">'+info.title+'</div>'+
   '<div class="v15-debut-descr">'+(V15_BOSS_DESCRIPTIONS[boss.id]||info.tagline)+'</div>'+
-  '<div class="v15-debut-warning">ENCUENTRO ÚNICO · DERROTA SU ESCOLTA PARA ROMPER LA PROTECCIÓN</div>'+
+  '<div class="v15-debut-warning">ENCUENTRO ÚNICO · '+(boss.id===15?'DERROTA LOS COMBEE PARA ABRIR SU DEFENSA':'LA HABILIDAD DEL JEFE MARCA EL COMBATE')+'</div>'+
   '<button class="v15-debut-button" data-action="v12:bossbegin">⚔ ENFRENTAR AL JEFE →</button>'+
   '</div>');
  const thisRun=run;
