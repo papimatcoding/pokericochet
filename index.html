@@ -4039,6 +4039,18 @@ handleAction=function(action){
  return v11OriginalActions(action);
 };
 
+
+/* Mobile: actions are still available, but collapsed while aiming. */
+const v11MobileDetails=document.createElement('details');
+v11MobileDetails.className='v11-mobile-details';
+const v11MobileSummary=document.createElement('summary');
+v11MobileSummary.textContent='⚙ MÁS ACCIONES · CAMBIAR / MOVIMIENTOS';
+v11MobileDetails.appendChild(v11MobileSummary);
+if(v10MobileActions.parentElement){
+ v10MobileActions.parentElement.insertBefore(v11MobileDetails,v10MobileActions);
+ v11MobileDetails.appendChild(v10MobileActions);
+}
+
 fitBoard();startMenu();requestAnimationFrame(render);
 })();
 </script>
