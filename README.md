@@ -119,7 +119,7 @@ La clave de guardado `pokeRicochet-v04` no cambia. Se conservan los Pokémon, ca
 
 **Siguiente etapa (1.5):** movesets de hasta tres movimientos, repertorios curados por especie, y ráfagas mixtas. Posteriormente, técnicas por movimiento y misiones diarias/semanales.
 
-## 1.5 — Expedicones estratégicas y jefes memorables
+## 1.5 — Expediciones estratégicas y jefes memorables
 
 - **Ritmo:** cuatro regiones de 5, 6, 7 y 7 pisos antes del jefe. Dominantes tempranos y posteriores para anticipar desafíos; ya no hay que recorrer 15-18 pisos de desgaste por región.
 - **Rutas:** caminos realmente diferentes y una Pokétienda visible en cada región, con oportunidades adicionales según el trayecto. Riesgo y preparación son una decisión.
