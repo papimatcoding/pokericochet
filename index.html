@@ -336,6 +336,7 @@
  .v16-moves-mobile .v16-move small{font-size:7px}
  .v16-moves-mobile .v16-move span{font-size:8px}
 }
+.v16-alpha-notice{padding:9px 12px;background:#3c2937;border:1px solid #d3a1ad;border-radius:10px;color:#ffe4c8;font-size:10px;font-weight:950;letter-spacing:.07em;margin-top:8px}@media(max-width:775px){.v16-alpha-notice{display:none!important}}
 </style>
 <link rel="stylesheet" href="./v09.css">
 <link rel="stylesheet" href="./v10.css">
@@ -5302,6 +5303,23 @@ mkMon=function(id,lvl=5,shiny=false){
  p.v16Charge={};p.v16Ready={};
  return p;
 };
+
+/* PokéAPI asynchronous learnsets use exactly the same curated 3-slot rules. */
+pk9AcquireMoves=function(p){
+ if(!p||p.level<=5)return;
+ const pool=v16AvailableMoves(p).filter(m=>m.level<=p.level);
+ for(const item of pool){
+  if(p.moves.some(m=>m.name===item.name))continue;
+  const move=v08Move(item.name);if(!move)continue;
+  if(p.moves.length<3){p.moves.push(move);p.chosen=clamp(p.chosen||0,0,p.moves.length-1)}
+  else if(run?.team.includes(p)){
+   run.v16PendingMoves??=[];
+   if(!run.v16PendingMoves.some(x=>x.slot===run.team.indexOf(p)&&x.name===item.name))
+    run.v16PendingMoves.push({slot:run.team.indexOf(p),name:item.name});
+  }
+ }
+ if(p.moves.length>3){p.moves=p.moves.slice(0,3);p.chosen=Math.min(p.chosen||0,2)}
+};
 const v16OldExperience=addXP;
 addXP=function(amount){
  const previous=run?.team.map(p=>p.level)||[];
@@ -5358,7 +5376,7 @@ const v16OldShoot=shoot;
 shoot=function(){
  if(!run||mode!=='aim'||!active())return v16OldShoot();
  const p=active(),chosen=p.moves[p.chosen],attacks=p.moves.filter(m=>m.category!=='status');
- run.v07SpecialArmed=false;
+ run.v07SpecialArmed=false;run.v16Mixed=null;
  const result=v16OldShoot();
  if(mode!=='shooting'||chosen?.category==='status'||!attacks.length)return result;
  const count=clamp(Math.max(6,chosen.balls)+(p.globalBalls||0)+(run.relics.includes('echo')&&run.turn%2===0?2:0)+(p.v10OpeningBalls&&run.turn===1?p.v10OpeningBalls:0),5,26);
@@ -5454,6 +5472,22 @@ function v16RefreshMovePanel(){
  v16MovePanel.innerHTML='<strong>📘 MOVIMIENTOS · RÁFAGA MIXTA</strong>'+html;
  v16MoveMobile.innerHTML=html;
 }
+
+
+/* Foreshadow the real final encounter. Never obscure the bouncing balls. */
+const v16AlphaNotice=document.createElement('div');v16AlphaNotice.className='v16-alpha-notice';
+document.querySelector('.sidebar')?.appendChild(v16AlphaNotice);
+const v16OldBoard=renderBoard;
+let v16LastNotice='';
+renderBoard=function(now){
+ v16OldBoard(now);
+ const showing=!!run?.v16AlphaMode&&['aim','shooting','descending','retaliating'].includes(mode)&&!run.v16AlphaSpawned;
+ v16AlphaNotice.style.display=showing?'block':'none';
+ if(!showing){v16LastNotice='';return}
+ const remaining=Math.max(0,run.v16NormalRows-run.v09RowsEmitted);
+ const label='👑 SE ACERCA UN DOMINANTE · '+remaining+' FILAS';
+ if(v16LastNotice!==label){v16LastNotice=label;v16AlphaNotice.textContent=label}
+};
 
 fitBoard();startMenu();requestAnimationFrame(render);
 })();
