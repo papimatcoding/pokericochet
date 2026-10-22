@@ -385,3 +385,49 @@
  .v12-boss-intro *, .v12-machine-stage *, .v12-prize-card{animation:none!important;transition:none!important}
  .v12-output img{opacity:1!important;transform:none!important}
 }
+
+
+/* Pokéricochet 1.3 - combos, incremental feedback and expedition recap */
+.v13-combo-hud{
+ position:absolute;z-index:8;top:9px;left:50%;transform:translate(-50%,-8px) scale(.95);
+ pointer-events:none;opacity:0;display:flex;flex-direction:column;align-items:center;gap:3px;
+ min-width:118px;padding:6px 13px;border-radius:13px;
+ background:linear-gradient(135deg,#0c2b35e8,#1f3c4ae0);border:1px solid #8dd8bc;
+ box-shadow:0 5px 24px #03151cc9,0 0 16px #60d7ab24;
+ color:#ffeab4;transition:opacity .15s ease,transform .17s ease;text-shadow:0 2px 5px #001a2c;
+}
+.v13-combo-hud.is-live{opacity:1;transform:translate(-50%,0) scale(1)}
+.v13-combo-hud b{font-weight:1000;letter-spacing:.015em;font-size:16px}
+.v13-combo-hud small{font-size:8px;font-weight:850;letter-spacing:.08em;color:#b0e8d0;white-space:nowrap}
+.v13-combo-meter{display:block;width:100%;height:4px;border-radius:4px;overflow:hidden;background:#245354}
+.v13-combo-meter i{height:100%;display:block;border-radius:4px;background:linear-gradient(90deg,#64e3b5,#ffe098);transition:width .15s ease}
+.modal:has(.v13-report){width:min(96vw,900px);max-width:900px;max-height:95dvh;overflow:auto;padding:clamp(15px,2.6vw,30px)}
+.v13-report{max-width:860px;margin:auto}
+.v13-report h2{font-size:clamp(26px,4vw,42px);line-height:1.05;color:#fff0c4}
+.v13-report>p{font-size:12px;color:#b4d9cc}
+.v13-report h3{font-size:14px;letter-spacing:.08em;color:#ccebd7;border-top:1px solid #3c766d;padding-top:13px;margin:15px 0 10px}
+.v13-report-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:16px 0}
+.v13-report-metrics>div{min-width:0;display:flex;flex-direction:column;align-items:center;gap:5px;padding:13px 5px;background:linear-gradient(145deg,#23454b,#112e3e);border:1px solid #4b867a;border-radius:12px}
+.v13-report-metrics span{font-size:19px}
+.v13-report-metrics strong{font-size:clamp(15px,2vw,23px);font-weight:950;color:#ffe4a0;font-variant-numeric:tabular-nums}
+.v13-report-metrics small{font-size:8px;letter-spacing:.06em;font-weight:900;color:#b5d7c8;text-align:center}
+.v13-report-team{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:18px}
+.v13-report-pokemon{display:flex;gap:9px;align-items:center;min-width:0;border-radius:11px;background:#153643;border:1px solid #407567;padding:7px 10px}
+.v13-report-pokemon img{width:48px;height:48px;object-fit:contain;image-rendering:pixelated;flex:none}
+.v13-report-pokemon span{display:flex;flex-direction:column;min-width:0;gap:4px}
+.v13-report-pokemon b{font-size:12px;color:#faf1d5;overflow-wrap:anywhere}
+.v13-report-pokemon small{font-size:10px;color:#c0dfce}
+.v13-report-link{width:100%;padding:12px;border:1px solid #92bca7;border-radius:11px;background:#22564e;color:#ecfbe8;font-weight:900;text-align:left;margin:6px 0 15px}
+.v13-report-link:hover{background:#337666}
+@media(max-width:700px){
+ .v13-report-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:10px 0}
+ .v13-report-metrics>div{padding:8px 4px}
+ .v13-report-metrics strong{font-size:19px}
+ .v13-report-metrics span{font-size:15px}
+ .v13-report-team{grid-template-columns:1fr;gap:6px}
+ .v13-report-pokemon img{width:37px;height:37px}
+ .v13-combo-hud{top:4px;padding:4px 8px;min-width:91px}
+ .v13-combo-hud b{font-size:12px}.v13-combo-hud small{font-size:7px}
+ .v13-combo-meter{height:3px}
+}
+@media(prefers-reduced-motion:reduce){.v13-combo-hud,.v13-combo-meter i{transition:none!important}}
