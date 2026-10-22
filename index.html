@@ -4558,6 +4558,227 @@ endVolley=function(){
  return result;
 };
 
+
+/* ================== 1.5 — meaningful encounters, bosses & economy ================== */
+/* One memorable boss encounter rather than sixteen rows of interchangeable enemies. */
+const V15_MINIBOSSES=[[2,12],[42,75],[8,73],[58,126]];
+const V15_BOSS_SUMMONS={15:415,94:92,130:129,6:5};
+const V15_BOSS_DESCRIPTIONS={
+ 15:'Adaptabilidad · Combee protege a Mega-Beedrill · Aguijones venenosos',
+ 94:'Sombra Trampa · Gastly bloquean líneas de tiro · ataques espectrales',
+ 130:'Rompemoldes · Magikarp sirven de escolta · oleadas acuáticas',
+ 6:'Gigamax · Charmeleon protege los flancos · Giga-Llamarada'
+};
+function v15PowerBudget(){
+ return Math.max(42,...run.team.filter(p=>p.hp>0).flatMap(p=>
+  p.moves.filter(m=>m.category!=='status').map(m=>(m.power+(p.level-5)*.7+(p.v10Atk||0)+(p.v10SpAtk||0))*
+     (m.balls+(p.globalBalls||0))*1.05)));
+}
+function v15Dominant(kind){
+ const ids=V15_MINIBOSSES[run.zone]||V15_MINIBOSSES[0];
+ const id=ids[Math.min(1,(run.floor||1)>2?1:0)];
+ v10RegisterSpecies(id);
+ const e=newEnemy(id,2,0,false,true);
+ const lvl=Math.max(6,Math.round(run.team.reduce((sum,p)=>sum+p.level,0)/run.team.length)+2+run.zone*2);
+ e.level=lvl;e.v10Champion=true;e.v11Dominant=true;e.v10Evolution=v10Stage(id)>0;
+ e.v10Skill=(PK9.abilities[id]||[]).find(a=>!a.hidden)?.name||'';
+ e.v10AI='striker';e.ranged=true;e.cooldown=2;e.interval=2;
+ e.attack=Math.min(8,2+run.zone+Math.ceil(run.floor/2));
+ e.maxHp=Math.round(Math.max(125+run.zone*50,v15PowerBudget()*(1.85+run.zone*.17)));
+ e.hp=e.maxHp;e.drop=.04;
+ run.blocks=[e];run.v15Encounter={kind:'dominant',id,turn:0};
+ v08WaveToast('👑 ¡DOMINANTE '+e.name.toUpperCase()+'!');
+}
+const v15StartPrevious=startBattle;
+startBattle=function(kind){
+ v15StartPrevious(kind);
+ if(!run)return;
+ if(kind==='boss'){
+  const boss=run.blocks.find(e=>e.boss);if(!boss)return;
+  run.blocks=[boss];
+  boss.row=0;boss.col=2;boss.v15Boss=true;boss.ranged=true;
+  boss.attack=Math.min(11,4+run.zone*2);
+  boss.interval=2;boss.cooldown=2;
+  boss.maxHp=Math.round(Math.max(220+run.zone*100,v15PowerBudget()*(3.6+run.zone*.45)));
+  boss.hp=boss.maxHp;
+  run.v15Encounter={kind:'boss',id:boss.id,turn:0,summons:0};
+  run.v09Active=false;
+  run.v09RowsEmitted=run.v09RowsTotal;
+  run.v09CatchChance=true;
+  // The first guards create an actual objective: defeat them to expose the boss.
+  v15SpawnGuards(2,false);
+ }else if(kind==='miniboss'){
+  v15Dominant(kind);
+  run.v09Active=false;run.v09RowsEmitted=run.v09RowsTotal;run.v09CatchChance=true;
+ }else{
+  // Later routes scale toward the boss without spoiling the first expedition floor.
+  const depth=(run.zone||0)*.12+Math.max(0,(run.floor||1)-1)*.075;
+  for(const e of run.blocks){
+   if(e.boss||e.v10Champion)continue;
+   e.maxHp=Math.round(e.maxHp*(1+depth));e.hp=e.maxHp;
+   if(run.floor>=3)e.attack=Math.min(7,e.attack+1);
+   if(run.floor>=3&&['caster','fast'].includes(e.role))e.ranged=true;
+  }
+ }
+};
+function v15SpawnGuards(count=1,announce=true){
+ const ev=run?.v15Encounter;
+ if(!ev||ev.kind!=='boss'||ev.summons>=7)return 0;
+ const boss=run.blocks.find(e=>e.v15Boss&&e.hp>0);
+ if(!boss)return 0;
+ const id=V15_BOSS_SUMMONS[boss.id];
+ if(!id||!v10RegisterSpecies(id))return 0;
+ let created=0;
+ for(const col of [0,5]){
+  if(created>=count||ev.summons>=7)break;
+  if(run.blocks.some(e=>e.col===col&&e.row===0))continue;
+  const guard=newEnemy(id,col,0,false,false);
+  guard.v15Escort=true;guard.ranged=true;guard.cooldown=2;guard.interval=3;
+  guard.attack=Math.min(5,2+run.zone);
+  guard.maxHp=Math.max(26,Math.round(v15PowerBudget()*.43+run.zone*10));
+  guard.hp=guard.maxHp;guard.drop=0;
+  run.blocks.push(guard);created++;ev.summons++;
+ }
+ if(created&&announce){
+  const label=boss.id===15?'¡ENJAMBRE DE COMBEE!':boss.id===94?'¡APARECEN GASTLY!':boss.id===130?'¡MAGIKARP ACUDEN!':'¡REFUERZOS ÍGNEOS!';
+  v08WaveToast('⚠ '+label);
+ }
+ return created;
+}
+const v15DamagePrevious=attackInfo;
+attackInfo=function(m,e){
+ const info=v15DamagePrevious(m,e);
+ if(info.dmg<=0)return info;
+ if(e.v15Boss){
+  const guards=run.blocks.filter(x=>x.v15Escort&&x.hp>0);
+  if(guards.length){
+   info.dmg=Math.max(1,Math.ceil(info.dmg*(guards.length>=2?.45:.72)));
+   if(run.turn!==run.v15ScreenNoticeTurn){
+    run.v15ScreenNoticeTurn=run.turn;
+    v08WaveToast('🛡 ¡LA ESCOLTA PROTEGE AL JEFE!');
+   }
+  }
+ }
+ return info;
+};
+const v15FinishPrevious=finishDescent;
+finishDescent=function(){
+ const encounter=run?.v15Encounter;
+ if(encounter){
+  const main=run.blocks.find(e=>e.v15Boss||e.v11Dominant&&encounter.kind==='dominant');
+  if(main)main.row=-1; // remains on screen; supports descend, boss itself does not
+ }
+ const result=v15FinishPrevious();
+ if(!run||!encounter||mode==='over')return result;
+ encounter.turn++;
+ if(encounter.kind==='boss'&&run.blocks.some(e=>e.v15Boss&&e.hp>0)){
+  const escorts=run.blocks.filter(e=>e.v15Escort&&e.hp>0).length;
+  if(encounter.turn%2===0&&escorts<2)v15SpawnGuards(Math.min(2-escorts,1+(encounter.turn%4===0)),true);
+ }
+ return result;
+};
+// Boss projectiles apply readable, short-lived canonical statuses.
+const v15DamagePlayerPrevious=takeDamage;
+takeDamage=function(amount,source){
+ const before=active(),old=before?.hp??0,enemy=run?.blocks?.find(e=>e.name===source);
+ const result=v15DamagePlayerPrevious(amount,source);
+ if(!before||before!==active()||before.hp>=old||before.hp<=0||!enemy||run.v10StatusAppliedTurn===run.turn)return result;
+ let status=null;
+ if(enemy.boss||enemy.v15Escort||enemy.v11Dominant){
+  if(enemy.types.includes('poison')&&chance(.23))status='poison';
+  else if(enemy.types.includes('electric')&&chance(.20))status='paralysis';
+  else if(enemy.types.includes('fire')&&chance(.17))status='burn';
+ }
+ if(!status)return result;
+ run.v10StatusAppliedTurn=run.turn;
+ if(before.heldItem==='lum-berry'&&!before.v09HeldUsed){
+  before.v09HeldUsed=true;v08WaveToast('🍋 ¡BAYA ZIUELA!');
+ }else{
+  if(status==='poison')before.v10Poisoned=2;
+  if(status==='paralysis')before.v10Paralyzed=1;
+  if(status==='burn')before.v10Burned=2;
+  v08WaveToast(({poison:'☠ ¡ENVENENADO! · 2 RONDAS',paralysis:'⚡ ¡PARALIZADO! · 1 RONDA',burn:'🔥 ¡QUEMADO! · 2 RONDAS'})[status]);
+ }
+ refresh();return result;
+};
+// The old "free camp" was removing preparation choices and the value of the shop.
+const v15StoreItems=['potion','super-potion','oran-berry','sitrus-berry','leftovers','scope-lens',
+ 'eviolite','focus-sash','life-orb','choice-band','choice-specs','expert-belt','lum-berry',
+ 'tm-protect','tm-thunder-wave','tm-swords-dance','tm-flamethrower','tm-shadow-ball','tm-light-screen',
+ 'protein','calcium','iron','zinc','carbos','hp-up'];
+const v15Vitamins=[
+ ['protein','Proteína',1],['calcium','Calcio',3],['iron','Hierro',2],
+ ['zinc','Zinc',4],['carbos','Carburante',5],['hp-up','Más PS',0]
+];
+for(const [id,name,stat] of v15Vitamins){
+ PK9_ITEMS[id]={name,price:68,kind:'vitamin',stat,icon:'💊',desc:'Aumenta 20 EVs de '+PK9_STAT_LABELS[stat]+' a un Pokémon elegible'};
+}
+const v15CanUsePrevious=v10CanUse;
+v10CanUse=function(item,p){
+ if(PK9_ITEMS[item]?.kind==='vitamin')
+  return p.hp>0&&(p.evs||[0,0,0,0,0,0])[PK9_ITEMS[item].stat]<252&&(p.evs||[]).reduce((a,b)=>a+b,0)<510;
+ return v15CanUsePrevious(item,p);
+};
+pk9CampStock=function(){
+ const team=run.team;
+ const usable=id=>PK9_ITEMS[id]&&team.some(p=>v10CanUse(id,p));
+ const heal=['potion','super-potion'].filter(usable);
+ const candidates=v15StoreItems.filter(usable);
+ const weighted=candidates.map(id=>({id,weight:PK9_ITEMS[id].kind==='vitamin'?26:
+  PK9_ITEMS[id].kind==='tm'?22:PK9_ITEMS[id].kind==='heal'?26:
+  PK9_ITEMS[id].kind==='hold'?16:9}));
+ const stock=[];
+ if(heal.length)stock.push(pick(heal));
+ const vitamins=candidates.filter(id=>PK9_ITEMS[id].kind==='vitamin');
+ if(vitamins.length)stock.push(pick(vitamins));
+ while(stock.length<6&&weighted.length){
+  const available=weighted.filter(x=>!stock.includes(x.id));
+  if(!available.length)break;
+  const choice=v10Weighted(available);stock.push(choice.id);
+  weighted.splice(weighted.findIndex(x=>x.id===choice.id),1);
+ }
+ const evo=pk9EvoOffers(),special=evo.length&&chance(.26)?pick(evo):null;
+ return {stock,special};
+};
+pk9ShowCamp=function(){
+ mode='event';run.v09Camp??=pk9CampStock();
+ showModal('<div class="v09-camp v15-camp"><div class="emblem">🏕️ CAMPAMENTO · '+zone().name.toUpperCase()+'</div>'+
+  '<h2>Prepara tu equipo para el siguiente desafío</h2>'+
+  '<p>Sin curación ni entrenamientos gratuitos: administra tus Pokédólares. La tienda solo vende objetos utilizables por tu equipo actual.</p>'+
+  '<div class="v09-purse">₽ '+Math.round(run.money||0)+'</div><div class="v09-party-row">'+
+  run.team.map(p=>'<div class="v09-party-mini">'+sImg(p.id,p.shiny)+'<b>'+p.name+'</b><small>'+p.hp+'/'+p.maxHp+' PS</small></div>').join('')+'</div>'+
+  '<div class="actions"><button class="primary" data-action="v09:shop">🛍 ENTRAR EN LA POKÉTIENDA</button>'+
+  '<button class="secondary" data-action="v09:leave">CONTINUAR SIN COMPRAR →</button></div></div>');
+};
+const v15BuyPrevious=v10ApplyPurchase;
+v10ApplyPurchase=function(item,slot,forget=null){
+ const meta=PK9_ITEMS[item],p=run?.team?.[slot],offer=run?.v09Camp;
+ if(meta?.kind!=='vitamin')return v15BuyPrevious(item,slot,forget);
+ if(!offer||!offer.stock.includes(item)||!p||!v10CanUse(item,p)||run.money<meta.price)return false;
+ const evs=p.evs??=[0,0,0,0,0,0],room=Math.min(20,252-evs[meta.stat],510-evs.reduce((a,b)=>a+b,0));
+ if(room<=0)return false;
+ run.money-=meta.price;evs[meta.stat]+=room;pk9Recacl(p,false);
+ offer.stock=offer.stock.filter(x=>x!==item);
+ v08WaveToast('💊 '+meta.name.toUpperCase()+' · '+p.name+' +'+room+' EV');
+ pk9ShowShop();refresh();return true;
+};
+const v15ActionPrevious=handleAction;
+handleAction=function(action){
+ if(action==='v09:rest'||action==='v09:train'){message('El entrenamiento y la curación se compran en la Pokétienda.');return}
+ return v15ActionPrevious(action);
+};
+// Scarcer meaningful IV gains: compare complete individuals, never independently maximize six stats.
+pk9RollIV=function(id,shiny=false){
+ const root=rootOf(id),old=pk9IV(root),fresh=old.map(()=>Math.floor(Math.random()*32));
+ if(shiny)fresh[Math.floor(Math.random()*6)]=31;
+ const oldTotal=old.reduce((a,b)=>a+b,0),newTotal=fresh.reduce((a,b)=>a+b,0);
+ const improve=newTotal>=oldTotal+(oldTotal<90?9:12);
+ if(improve)saved.ivBest[root]=fresh;
+ if(!Object.hasOwn(saved.natureBest,root))saved.natureBest[root]=Math.floor(Math.random()*PK9_NATURES.length);
+ save();
+ return {fresh,best:improve?fresh:old,improvements:improve?1:0};
+};
+
 fitBoard();startMenu();requestAnimationFrame(render);
 })();
 </script>
