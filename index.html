@@ -1398,7 +1398,6 @@ function v07Encounter(f,rooms){
  if(f<=3)return v06Choose(['wild','swarm','hunt']);
  return v06Choose(f%3===0?['storm','ambush','hunt','rare','duel']:V07_COMBAT_TYPES);
 }
-ZONES.forEach((z,i)=>{z.rooms=[5,6,7,7][i]});
 generateMap=function(){
  const rooms=zone().rooms,rows=[];
  for(let f=1;f<=rooms;f++){
@@ -4902,6 +4901,7 @@ pk9RollIV=function(id,shiny=false){
 
 
 /* Branching paths: a dominant early, a guaranteed visible shop choice, tougher paths. */
+ZONES.forEach((z,i)=>{z.rooms=[5,6,7,7][i]});
 generateMap=function(){
  const rooms=zone().rooms,rows=[];
  const normal=['wild','hunt','swarm','rare','ambush','fortress','duel'];
