@@ -4711,13 +4711,7 @@ startBattle=function(kind){
   run.v09Active=false;run.v09RowsEmitted=run.v09RowsTotal;run.v09CatchChance=true;
  }else{
   // Later routes scale toward the boss without spoiling the first expedition floor.
-  const depth=(run.zone||0)*.12+Math.max(0,(run.floor||1)-1)*.075;
-  for(const e of run.blocks){
-   if(e.boss||e.v10Champion)continue;
-   e.maxHp=Math.round(e.maxHp*(1+depth));e.hp=e.maxHp;
-   if(run.floor>=3)e.attack=Math.min(7,e.attack+1);
-   if(run.floor>=3&&['caster','fast'].includes(e.role))e.ranged=true;
-  }
+  for(const e of run.blocks)v15ScaleOrdinary(e);
  }
 };
 function v15SpawnGuards(count=1,announce=true){
@@ -5024,6 +5018,42 @@ refresh=function(){
  v15StatusMobile.textContent=tags.join(' · ');
  v15StatusDesktop.classList.toggle('has-status',tags.length>0);
  v15StatusMobile.classList.toggle('has-status',tags.length>0);
+};
+
+
+/* Every subsequent enemy row follows the same slope as the initial row. */
+function v15ScaleOrdinary(e){
+ if(!run||!e||e.v15Balanced||e.boss||e.v10Champion||e.v15Escort)return;
+ e.v15Balanced=true;
+ const depth=1.08+(run.zone||0)*.12+Math.max(0,(run.floor||1)-1)*.12;
+ e.maxHp=Math.max(10,Math.round(e.maxHp*depth));e.hp=e.maxHp;
+ if(run.floor>=3)e.attack=Math.min(7,e.attack+1);
+ if(run.floor>=3&&['caster','fast'].includes(e.role))e.ranged=true;
+}
+const v15NextRowPrevious=pk9EmitRow;
+pk9EmitRow=function(row=0){
+ const before=run?.blocks?.length||0,result=v15NextRowPrevious(row);
+ if(result&&run)for(const e of run.blocks.slice(before))v15ScaleOrdinary(e);
+ return result;
+};
+// The strongest part of a dominant comes from its ability, not arbitrary HP.
+const v15DominantTurnPrevious=finishDescent;
+finishDescent=function(){
+ const out=v15DominantTurnPrevious();
+ if(!run||mode==='over')return out;
+ const e=run.blocks.find(x=>x.v11Dominant&&x.hp>0&&run.v15Encounter?.kind==='dominant');
+ if(!e||e.v15AbilityUsed||e.hp>e.maxHp*.5)return out;
+ e.v15AbilityUsed=true;
+ if(e.v10Skill==='overgrow'&&e.types.includes('grass')){
+  e.attack+=2;v08WaveToast('🌿 ¡ESPESURA! · '+e.name+' SE POTENCIA');
+ }else if(e.v10Skill==='intimidate'){
+  run.v11Intimidate=2;v08WaveToast('⚔ ¡INTIMIDACIÓN DE '+e.name.toUpperCase()+'!');
+ }else if(e.v10Skill==='inner-focus'){
+  e.cooldown=Math.max(1,e.cooldown-1);v08WaveToast('👁 FOCO INTERNO · ATAQUE ANTICIPADO');
+ }else{
+  e.cooldown=Math.max(1,e.cooldown-1);v08WaveToast('👑 ¡'+e.name.toUpperCase()+' RESISTE!');
+ }
+ return out;
 };
 
 fitBoard();startMenu();requestAnimationFrame(render);
