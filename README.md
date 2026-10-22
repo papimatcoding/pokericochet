@@ -1,6 +1,6 @@
-# POKÉRICOCHET 0.9 — Expedition Edition
+# POKÉRICOCHET 1.2 — Expedition Edition
 
-[▶ Jugar en GitHub Pages](https://papimatcoding.github.io/the-last-menagerie/?v=0.9.0)
+[▶ Jugar en GitHub Pages](https://papimatcoding.github.io/pokericochet/?v=1.2.0)
 
 Juego fan roguelite de Pokémon y rebotes, en HTML/CSS/JavaScript sin servidor ni compilación.
 
@@ -59,3 +59,13 @@ Esta rama continúa el juego original, sin cambiar la clave de guardado pokeRico
 ### Pruebas pendientes
 
 Se ha validado la sintaxis del script completo. Falta comprobar manualmente partidas enteras en navegador y móvil, el balance final, las formas especiales disponibles, y los guardados antiguos. Rama de revisión: no sustituye main hasta pasar las pruebas.
+
+## Versión 1.2 — Animaciones de jefes y máquina cápsula
+
+- **Navegación de escritorio:** se corrige el solape del logotipo con el contenido reservando un carril izquierdo suficientemente ancho, también a resoluciones intermedias. La pantalla móvil mantiene navegación horizontal.
+- **Gachapón animado:** máquina de cápsulas, giro, bolas agitándose y salida de una Poké Ball según rareza: Poké Ball (común), Super Ball (poco común), Ultra Ball (rara) y Master Ball (extraordinaria). Son indicadores visuales, no objetos obtenidos. Las diez tiradas generan diez recompensas y al menos una poco común o superior. **Las cápsulas nunca contienen especies evolucionadas, megas ni Gigamax**; duplicados siguen dando caramelos.
+- **Entradas de jefes:** escena corta con nombre grande, categoría de Mega o Gigamax y sprite GIF animado de Pokémon Showdown, con sprite estándar de reserva si el GIF falla. Inicio automático o mediante el botón visible.
+- **Jefes con reglas:** Mega-Gengar usa Sombra Trampa para impedir relevos mientras permanezca vivo; los jefes ganan una segunda fase a mitad de PS, y Gigamax Charizard puede causar daño residual en esa segunda fase.
+- **Persistencia:** se respeta la colección y su clave local `pokeRicochet-v04` y las mejoras/fragmentos del sistema previo.
+
+**Estado:** el script del juego pasa revisión de sintaxis JavaScript. Las animaciones y el balance todavía requieren validación manual visual y partidas completas, sobre todo en dispositivos móviles. Los sprites remotos requieren conexión a internet; se mantienen imágenes de reserva cuando fallan.
