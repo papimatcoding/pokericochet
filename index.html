@@ -5313,11 +5313,9 @@ pk9AcquireMoves=function(p){
   if(p.moves.some(m=>m.name===item.name))continue;
   const move=v08Move(item.name);if(!move)continue;
   if(p.moves.length<3){p.moves.push(move);p.chosen=clamp(p.chosen||0,0,p.moves.length-1)}
-  else if(run?.team.includes(p)){
-   run.v16PendingMoves??=[];
-   if(!run.v16PendingMoves.some(x=>x.slot===run.team.indexOf(p)&&x.name===item.name))
-    run.v16PendingMoves.push({slot:run.team.indexOf(p),name:item.name});
-  }
+  // Async arrival only fills genuine free slots. When all three are full,
+  // the level-up handler (which knows the actual newly reached level) offers swaps.
+  else continue;
  }
  if(p.moves.length>3){p.moves=p.moves.slice(0,3);p.chosen=Math.min(p.chosen||0,2)}
 };
