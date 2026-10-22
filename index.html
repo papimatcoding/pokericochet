@@ -4209,6 +4209,27 @@ handleAction=function(action){
  return v12HandlePrevious(action);
 };
 
+
+/* Display the current version and accurate highlights without replacing saved DOM handlers. */
+const v12HomeOriginal=showHome;
+showHome=function(tab='inicio'){
+ const result=v12HomeOriginal(tab);
+ const home=modal.querySelector('.home-screen');
+ if(home){
+  const label=home.querySelector('.home-header .emblem');
+  if(label)label.textContent=label.textContent.replace(/V0\.9|V1\.0/g,'V1.2');
+  const highlights=home.querySelector('.home-tip');
+  if(tab==='inicio'&&highlights){
+   const headline=highlights.querySelector('b'),detail=highlights.querySelector('span');
+   if(headline)headline.textContent='✦ NUEVO EN V1.2';
+   if(detail)detail.textContent='Dominantes · Megas y Gigamax · Tickets · PC ordenable · Máquina cápsula';
+  }
+ }
+ return result;
+};
+const v12BrandSubtitle=document.querySelector('.brand small');
+if(v12BrandSubtitle)v12BrandSubtitle.textContent='EXPEDITION EDITION · V1.2';
+
 fitBoard();startMenu();requestAnimationFrame(render);
 })();
 </script>
