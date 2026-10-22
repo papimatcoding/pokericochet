@@ -3977,7 +3977,9 @@ function v11PcPage(){
  if(input)input.addEventListener('input',()=>{v11Filter=input.value;const pos=input.selectionStart;v11PcPage();const next=modal.querySelector('#v11PcSearch');next?.focus();try{next?.setSelectionRange(pos,pos)}catch{}});
 }
 function v11PcDetail(id,shiny=false){
- if(!DB[id]||!v11Owned().some(m=>m.id===id&&m.shiny===shiny))return;
+ if(!DB[id])return;
+ if(!v11Owned().some(m=>m.id===id&&m.shiny===shiny))shiny=v11Owned().some(m=>m.id===id&&m.shiny)?true:shiny;
+ if(!v11Owned().some(m=>m.id===id&&m.shiny===shiny))return;
  const iv=pk9IV(id),base=PK9_STATS(id),p={id,level:5,ivs:iv,evs:[0,0,0,0,0,0],natureIndex:saved.natureBest?.[rootOf(id)]??0};
  const bars=iv.map((n,i)=>'<div class="v11-iv-line"><b>'+PK9_STAT_LABELS[i]+'</b><span class="v11-iv-track"><i style="width:'+(n/31*100)+'%"></i></span><strong>'+n+'/31</strong><small>Base '+base[i]+' · Nv.5 '+pk9OneStat(p,i)+'</small></div>').join('');
  const ab=(PK9.abilities[id]||[]).map(x=>(PK9_ABILITY_NAMES[x.name]||x.name.replaceAll('-',' '))+(x.hidden?' (oculta)':'')).join(' · ');
@@ -4013,6 +4015,12 @@ function v11CandyDetail(id){
  '<div class="v11-candy-actions">'+controls+'</div><div class="actions"><button class="secondary" data-action="ui:tab:caramelos">VOLVER AL LABORATORIO</button>'+
  '<button class="secondary" data-action="v11:pcmon:'+id+':0">VER IVs</button></div></div>');
 }
+const v11OriginalShell=v04Shell;
+v04Shell=function(tab,content){
+ v11OriginalShell(tab,content);
+ const currency=modal.querySelector('.home-currency');
+ if(currency)currency.textContent=v11BalanceLabel();
+};
 const v11OriginalHome=showHome;
 showHome=function(tab='inicio'){
  if(!saved.hasStarter)return v11OriginalHome(tab);
