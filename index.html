@@ -3729,9 +3729,8 @@ function v10FloorRecap(boss=false){
  mode='reward';const captures=run.v10FloorCaptures||[],won=(run.money||0)-(run.v10FloorStartMoney||0);
  const entries=captures.map(c=>'<div class="v10-capture">'+sImg(c.id,c.shiny)+
  '<span><b>'+def(c.id).name+(c.shiny?' ✨':'')+'</b><small>+'+c.candies+' 🍬 · '+c.ivs+' IV mejorados'+(c.joined?' · AL EQUIPO':'')+'</small></span></div>').join('');
- const chanceEvent=false; // no more trainer contracts between floors
- run.v10NextChoice=chanceEvent;
- const choice=chanceEvent?'<div class="v10-between-event"><div><b>📜 Un entrenador te propone un desafío</b><p>Consigue '+(run.zone<=1?8:12)+' impactos efectivos en una misma ráfaga del próximo combate. Sin penalización si fallas: premio de ₽25 y 3 fragmentos de ticket.</p></div><button class="v10-event-button" data-action="v10:challenge">ACEPTAR DESAFÍO · PREMIO ₽25</button></div>':'';
+ run.v10NextChoice=false;
+ const choice='';
  showModal('<div class="v10-floor-summary"><div class="emblem">'+(boss?'👑 JEFE DERROTADO':'✦ PISO COMPLETADO')+'</div>'+
  '<h2>'+(boss?'¡Victoria en '+zone().name+'!':'Piso '+run.floor+' superado')+'</h2>'+
  '<div class="v10-results"><div><small>POKÉDÓLARES OBTENIDOS</small><strong>₽ +'+Math.max(0,won)+'</strong><em>Enemigos derrotados y recompensas</em></div><div><small>CAPTURAS DE ESTE PISO</small><strong>'+captures.length+'</strong><em>'+((run.v10ShinyLuck||0)*100).toFixed(0)+' % bonificación por shinies</em></div></div>'+
@@ -3741,11 +3740,6 @@ function v10FloorRecap(boss=false){
 showBattleClear=function(boss){v10FloorRecap(boss)};
 const v10ProgressAction=handleAction;
 handleAction=function(action){
- if(action==='v10:challenge'&&mode==='reward'&&run.v10NextChoice){
-  run.v10NextChoice=false;run.v10OfferUsed=true;run.money+=20;run.v10ChallengeNext=true;
-  v08WaveToast('📜 RETO ACEPTADO · +₽20');
-  v10FloorRecap(run.encounter==='boss');return;
- }
  if(action==='v10:continue'&&mode==='reward'){
   hideModal();const next=run.afterReward;run.afterReward=null;
   if(next)next();return;
@@ -4574,12 +4568,6 @@ enemyDown=function(e){
 const v13ActionOriginal=handleAction;
 handleAction=function(action){
  if(action==='v10:challenge')return;
- if(false&&action==='v10:challenge'&&run&&mode==='reward'&&run.v10NextChoice){
-  run.v10NextChoice=false;run.v10OfferUsed=true;
-  run.v13Mission={target:run.zone<=1?8:12,active:false};
-  v08WaveToast('🎯 DESAFÍO ACEPTADO · COMBO ×'+run.v13Mission.target);
-  v10FloorRecap(run.encounter==='boss');return;
- }
  if(action==='v13:lastreport'&&saved.v13LastSummary){
   showModal(v13ReportHtml(saved.v13LastSummary,true));return;
  }
