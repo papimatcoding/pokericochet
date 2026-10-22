@@ -3870,6 +3870,175 @@ renderBoard=function(now){
  ctx.restore();
 };
 
+
+/* ===== 1.1: tickets, PC ordenable y ficha individual de caramelos ===== */
+saved.v11Tickets??=0;
+saved.v11TenTickets??=0;
+saved.v11TicketMilestones??=0;
+let v11Sort='ivs',v11Filter='',v11CapsuleLocked=false;
+const V11_TICKET_FRAGMENTS=12;
+function v11TicketSync(){
+ let earned=0;
+ while(saved.tokens>=V11_TICKET_FRAGMENTS){
+  saved.tokens-=V11_TICKET_FRAGMENTS;saved.v11Tickets++;earned++;
+ }
+ if(earned)save();
+ return earned;
+}
+v11TicketSync();
+function v11BalanceLabel(){
+ return '🎟 '+saved.v11Tickets+' sencillos · 🎫 '+saved.v11TenTickets+' x10 · '+saved.tokens+'/'+V11_TICKET_FRAGMENTS+' fragmentos';
+}
+function v11DrawGacha(){
+ v11TicketSync();mode='menu';
+ const available=saved.v11Tickets>=10||saved.v11TenTickets>0;
+ v04Shell('gacha','<div class="v11-gacha"><div class="emblem">🎰 GACHAPÓN · CÁPSULAS DE EXPLORACIÓN</div><h2>¡A ver qué Pokémon sale!</h2>'+
+ '<p>Las capturas siguen siendo la forma principal de ampliar tu equipo. Los combates te dan fragmentos de ticket y los jefes pueden recompensarte con un ticket especial.</p>'+
+ '<div class="v11-wallet"><b>🎟 '+saved.v11Tickets+' tickets sencillos</b><b>🎫 '+saved.v11TenTickets+' tickets x10</b><small>Próximo ticket: '+saved.tokens+'/'+V11_TICKET_FRAGMENTS+' fragmentos</small></div>'+
+ '<div class="v11-pullbuttons"><button class="primary" data-action="v11:roll:1" '+(saved.v11Tickets<1?'disabled':'')+'>◉ UNA TIRADA · 1 🎟</button>'+
+ '<button class="secondary" data-action="v11:roll:10" '+(!available?'disabled':'')+'>✦ DIEZ TIRADAS · 10 🎟 O 1 🎫</button></div>'+
+ '<p class="v11-help">Solo especies básicas · duplicados: caramelos · shiny: 1/4096. Una tanda de 10 incluye al menos un resultado poco común o superior.</p></div>');
+}
+function v11PullRarity(){
+ const x=Math.random();return x<.82?'common':x<.97?'uncommon':x<.995?'rare':'ultra';
+}
+function v11ChooseGacha(rarity){
+ const pool=Object.keys(DB).map(Number).filter(id=>v10Stage(id)===0&&DB[id]&&PK9.stats[id]);
+ const eligible=pool.filter(id=>v10SpeciesRarity(id)===(rarity==='ultra'?'ultra':rarity));
+ return pick(eligible.length?eligible:pool);
+}
+function v11GachaRoll(count){
+ v11TicketSync();
+ if(v11CapsuleLocked||mode!=='menu'||(count!==1&&count!==10))return;
+ if(count===1){if(saved.v11Tickets<1)return;saved.v11Tickets--}
+ else if(saved.v11TenTickets>0)saved.v11TenTickets--;
+ else if(saved.v11Tickets>=10)saved.v11Tickets-=10;
+ else return;
+ v11CapsuleLocked=true;
+ const results=[];
+ for(let i=0;i<count;i++){
+  let rarity=v11PullRarity();
+  if(count===10&&i===9&&results.every(x=>x.rarity==='common'))rarity='uncommon';
+  const id=v11ChooseGacha(rarity),shiny=chance(1/4096),reward=registerReward(id,shiny,'gacha');
+  results.push({id,rarity,shiny,reward});
+ }
+ save();v11CapsuleLocked=false;mode='menu';
+ const cards=results.map(x=>'<div class="v11-capsule-card '+x.rarity+'">'+sImg(x.id,x.shiny)+
+ '<b>'+def(x.id).name+(x.shiny?' ✨ SHINY':'')+'</b>'+
+ '<small>'+({common:'COMÚN',uncommon:'POCO COMÚN',rare:'RARO',ultra:'EXTRAORDINARIO'})[x.rarity]+
+ '</small><em>'+(x.reward.isFirst?'¡NUEVO!':'Duplicado')+' · +'+x.reward.reward+' 🍬</em></div>').join('');
+ showModal('<div class="v11-results"><div class="emblem">✦ '+count+' CÁPSULA'+(count>1?'S':'')+' ABIERTA'+(count>1?'S':'')+'</div>'+
+ '<h2>'+(results.some(x=>x.shiny)?'✨ ¡SHINY!':results.some(x=>x.rarity==='ultra')?'🌟 ¡HALLAZGO EXTRAORDINARIO!':'¡Nuevos compañeros!')+'</h2>'+
+ '<div class="v11-pullgrid">'+cards+'</div><div class="actions"><button class="primary" data-action="ui:tab:gacha">OTRA TIRADA</button>'+
+ '<button class="secondary" data-action="ui:tab:pc">ABRIR PC</button></div></div>');
+}
+const v11OriginalWin=winBattle;
+winBattle=function(){
+ const state=mode,kind=run?.encounter,earnedBefore=saved.tokens;
+ const out=v11OriginalWin();
+ const tickets=v11TicketSync();
+ const completed=run&&run.blocks.length===0&&run.v09RowsEmitted>=run.v09RowsTotal;
+ if(completed&&kind==='boss'&&state!=='reward'&&mode!=='over'&&chance(.09)){
+  saved.v11TenTickets++;save();v08WaveToast('🎫 ¡TICKET X10 DE JEFE!');
+ }
+ if(tickets)message('🎟 ¡Has reunido '+tickets+' ticket'+(tickets===1?'':'s')+'!');
+ return out;
+};
+function v11Owned(){
+ const result=[];
+ for(const [raw,amounts] of Object.entries(saved.collection||{})){
+  const id=Number(raw);if(!DB[id])continue;
+  if(amounts.normal>0)result.push({id,shiny:false,count:amounts.normal});
+  if(amounts.shiny>0)result.push({id,shiny:true,count:amounts.shiny});
+ }
+ return result;
+}
+function v11PcPage(){
+ mode='menu';const owned=v11Owned();
+ const sorted=owned.filter(m=>!v11Filter||def(m.id).name.toLowerCase().includes(v11Filter.toLowerCase()));
+ sorted.sort((a,b)=>{
+  if(v11Sort==='ivs')return pk9IV(b.id).reduce((x,y)=>x+y,0)-pk9IV(a.id).reduce((x,y)=>x+y,0)||a.id-b.id;
+  if(v11Sort==='candy')return candiesOf(b.id)-candiesOf(a.id)||a.id-b.id;
+  if(v11Sort==='shiny')return Number(b.shiny)-Number(a.shiny)||a.id-b.id;
+  if(v11Sort==='power')return PK9_STATS(b.id).reduce((x,y)=>x+y,0)-PK9_STATS(a.id).reduce((x,y)=>x+y,0)||a.id-b.id;
+  return def(a.id).name.localeCompare(def(b.id).name,'es');
+ });
+ const sortOptions=[['ivs','Mejores IVs'],['candy','Más caramelos'],['power','Estadísticas base'],['shiny','Shinies primero'],['name','Nombre']];
+ const controls='<div class="v11-pc-tools"><div class="v11-pc-sorts">'+sortOptions.map(([key,label])=>
+  '<button data-action="v11:sort:'+key+'" class="'+(v11Sort===key?'selected':'')+'">'+label+'</button>').join('')+'</div>'+
+  '<div class="v11-pc-search"><label for="v11PcSearch">Buscar Pokémon</label><input id="v11PcSearch" placeholder="Nombre..." value="'+v11Filter.replace(/["<>]/g,'')+'" autocomplete="off"></div></div>';
+ const cards=sorted.map(m=>'<button class="v11-storage" data-action="v11:pcmon:'+m.id+':'+Number(m.shiny)+'">'+sImg(m.id,m.shiny)+
+  '<span><b>'+def(m.id).name+(m.shiny?' ✨':'')+'</b><small>IVs '+pk9IV(m.id).reduce((x,y)=>x+y,0)+'/186 · 🍬 '+candiesOf(m.id)+'</small>'+
+  '<small>×'+m.count+' · '+def(m.id).types.map(t=>TT[t]).join(' / ')+'</small></span><strong>›</strong></button>').join('');
+ v04Shell('pc','<div class="v11-pc"><h2>PC Pokémon <small>· '+owned.length+' variantes</small></h2>'+
+ '<p>Toca cualquier Pokémon para ver sus IVs, estadísticas, habilidades y caramelos. Los IVs son independientes de los caramelos y se comparten por familia evolutiva.</p>'+
+ controls+'<div class="v11-storage-grid">'+(cards||'<p>Ningún Pokémon coincide con la búsqueda.</p>')+'</div></div>');
+ const input=modal.querySelector('#v11PcSearch');
+ if(input)input.addEventListener('input',()=>{v11Filter=input.value;const pos=input.selectionStart;v11PcPage();const next=modal.querySelector('#v11PcSearch');next?.focus();try{next?.setSelectionRange(pos,pos)}catch{}});
+}
+function v11PcDetail(id,shiny=false){
+ if(!DB[id]||!v11Owned().some(m=>m.id===id&&m.shiny===shiny))return;
+ const iv=pk9IV(id),base=PK9_STATS(id),p={id,level:5,ivs:iv,evs:[0,0,0,0,0,0],natureIndex:saved.natureBest?.[rootOf(id)]??0};
+ const bars=iv.map((n,i)=>'<div class="v11-iv-line"><b>'+PK9_STAT_LABELS[i]+'</b><span class="v11-iv-track"><i style="width:'+(n/31*100)+'%"></i></span><strong>'+n+'/31</strong><small>Base '+base[i]+' · Nv.5 '+pk9OneStat(p,i)+'</small></div>').join('');
+ const ab=(PK9.abilities[id]||[]).map(x=>(PK9_ABILITY_NAMES[x.name]||x.name.replaceAll('-',' '))+(x.hidden?' (oculta)':'')).join(' · ');
+ showModal('<div class="v11-profile"><div class="emblem">🧬 FICHA DEL PC</div><div class="v11-profile-top">'+sImg(id,shiny)+
+ '<div><h2>'+def(id).name+(shiny?' ✨':'')+'</h2><p>'+def(id).types.map(t=>TT[t]).join(' / ')+'</p>'+
+ '<b>IVs totales '+iv.reduce((x,y)=>x+y,0)+'/186</b><small>🍬 '+candiesOf(id)+' caramelos · '+ab+'</small></div></div>'+
+ '<div class="v11-iv-grid">'+bars+'</div><p><b>Velocidad:</b> mejora ligeramente el ritmo de carga de los especiales. El daño físico utiliza Ataque/Defensa y el especial At. Especial/Def. Especial.</p>'+
+ '<div class="actions"><button class="primary" data-action="v11:candy:'+id+'">🍬 SUS CARAMELOS</button><button class="secondary" data-action="ui:tab:pc">VOLVER AL PC</button></div></div>');
+}
+function v11CandyPage(){
+ const items=v11Owned(),ids=[...new Set(items.map(m=>m.id).concat(Object.keys(saved.candies||{}).map(Number)))].filter(id=>DB[id]);
+ ids.sort((a,b)=>candiesOf(b)-candiesOf(a)||a-b);
+ const cards=ids.map(id=>'<button class="v11-storage" data-action="v11:candy:'+id+'">'+sImg(id)+
+ '<span><b>'+def(id).name+'</b><small>🍬 '+candiesOf(id)+' caramelos propios · IVs '+pk9IV(id).reduce((a,b)=>a+b,0)+'/186</small></span><strong>›</strong></button>').join('');
+ v04Shell('caramelos','<div class="v11-pc"><h2>Laboratorio de caramelos</h2>'+
+ '<p>Selecciona una especie para gastar exclusivamente sus caramelos. La ficha mostrará costes y niveles de cada mejora.</p>'+
+ '<div class="v11-storage-grid">'+cards+'</div></div>');
+}
+function v11CandyDetail(id){
+ if(!DB[id])return;
+ const state=saved.v10Training?.[id]||{},n=candiesOf(id),
+ bond=V10_CANDY_COST.bond[state.bond||0],focus=V10_CANDY_COST.focus[state.focus||0];
+ const hidden=(PK9.abilities[id]||[]).find(a=>a.hidden),unlocked=!!saved.abilityUnlocked?.[id];
+ const options=[
+  ['bond','❤️ Vínculo '+(state.bond||0)+'/3','+1 PS máximo',bond],
+  ['focus','🎯 Afinidad '+(state.focus||0)+'/2','+3 % crítico',focus]
+ ];
+ if(hidden)options.push(['ability','✨ Habilidad oculta',PK9_ABILITY_NAMES[hidden.name]||hidden.name,unlocked?null:45]);
+ const controls=options.map(([key,title,desc,cost])=>'<button class="v11-candy-buy" data-action="v11:buy:'+key+':'+id+'" '+(!cost||n<cost?'disabled':'')+'><b>'+title+'</b>'+
+ '<small>'+desc+' · '+(cost?cost+' 🍬':'COMPLETADO')+'</small></button>').join('');
+ showModal('<div class="v11-profile"><div class="emblem">🍬 MEJORAS PERMANENTES · POR ESPECIE</div><div class="v11-profile-top">'+sImg(id)+
+ '<div><h2>'+def(id).name+'</h2><b>'+n+' caramelos disponibles</b><small>Las mejoras se guardan entre expediciones.</small></div></div>'+
+ '<div class="v11-candy-actions">'+controls+'</div><div class="actions"><button class="secondary" data-action="ui:tab:caramelos">VOLVER AL LABORATORIO</button>'+
+ '<button class="secondary" data-action="v11:pcmon:'+id+':0">VER IVs</button></div></div>');
+}
+const v11OriginalHome=showHome;
+showHome=function(tab='inicio'){
+ if(!saved.hasStarter)return v11OriginalHome(tab);
+ if(tab==='gacha')return v11DrawGacha();
+ if(tab==='pc')return v11PcPage();
+ if(tab==='caramelos')return v11CandyPage();
+ const result=v11OriginalHome(tab);
+ const money=modal.querySelector('.home-currency');
+ if(money)money.textContent=v11BalanceLabel();
+ return result;
+};
+const v11OriginalActions=handleAction;
+handleAction=function(action){
+ if(action.startsWith('ui:tab:')&&mode==='menu'&&saved.hasStarter){showHome(action.slice(7));return}
+ if(action==='v11:roll:1'){v11GachaRoll(1);return}
+ if(action==='v11:roll:10'){v11GachaRoll(10);return}
+ if(action.startsWith('v11:sort:')){v11Sort=action.slice(9);v11PcPage();return}
+ if(action.startsWith('v11:pcmon:')){const [, ,id,shiny]=action.split(':');v11PcDetail(+id,shiny==='1');return}
+ if(action.startsWith('v11:candy:')){v11CandyDetail(+action.split(':')[2]);return}
+ if(action.startsWith('v11:buy:')){
+  const [, ,kind,id]=action.split(':');v11OriginalActions('v10:candy:'+kind+':'+id);v11CandyDetail(+id);return;
+ }
+ if(action==='ui:roll'){v11GachaRoll(1);return}
+ return v11OriginalActions(action);
+};
+
 fitBoard();startMenu();requestAnimationFrame(render);
 })();
 </script>
