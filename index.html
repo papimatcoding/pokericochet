@@ -3498,10 +3498,8 @@ nextRoute=function(){
 const v10EncounterBefore=startBattle;
 startBattle=function(kind){
  v10EncounterBefore(kind);
- if(run.v10ChallengeNext){
-  for(const e of run.blocks){e.maxHp=Math.ceil(e.maxHp*1.16);e.hp=e.maxHp}
-  run.v10ChallengeNext=false;v08WaveToast('⚔ RETO DEL ENTRENADOR · HP ENEMIGO +16 %');
- }
+ // Los desafíos ya no aumentan los PS enemigos.
+ run.v10ChallengeNext=false;
 };
 const v10IncomingRows=pk9EmitRow;
 pk9EmitRow=function(row=0){
@@ -3575,7 +3573,7 @@ function v10FloorRecap(boss=false){
  '<span><b>'+def(c.id).name+(c.shiny?' ✨':'')+'</b><small>+'+c.candies+' 🍬 · '+c.ivs+' IV mejorados'+(c.joined?' · AL EQUIPO':'')+'</small></span></div>').join('');
  const chanceEvent=!boss&&run.floor<zone().rooms&&!run.v10OfferUsed&&Math.random()<.22;
  run.v10NextChoice=chanceEvent;
- const choice=chanceEvent?'<div class="v10-between-event"><div><b>📜 Un entrenador te propone un desafío</b><p>Recibe ₽20 ahora, pero los enemigos del próximo combate tendrán un 16 % más de PS.</p></div><button class="v10-event-button" data-action="v10:challenge">ACEPTAR RETO · +₽20</button></div>':'';
+ const choice=chanceEvent?'<div class="v10-between-event"><div><b>📜 Un entrenador te propone un desafío</b><p>Consigue '+(run.zone<=1?8:12)+' impactos efectivos en una misma ráfaga del próximo combate. Sin penalización si fallas: premio de ₽25 y 3 fragmentos de ticket.</p></div><button class="v10-event-button" data-action="v10:challenge">ACEPTAR DESAFÍO · PREMIO ₽25</button></div>':'';
  showModal('<div class="v10-floor-summary"><div class="emblem">'+(boss?'👑 JEFE DERROTADO':'✦ PISO COMPLETADO')+'</div>'+
  '<h2>'+(boss?'¡Victoria en '+zone().name+'!':'Piso '+run.floor+' superado')+'</h2>'+
  '<div class="v10-results"><div><small>POKÉDÓLARES OBTENIDOS</small><strong>₽ +'+Math.max(0,won)+'</strong><em>Enemigos derrotados y recompensas</em></div><div><small>CAPTURAS DE ESTE PISO</small><strong>'+captures.length+'</strong><em>'+((run.v10ShinyLuck||0)*100).toFixed(0)+' % bonificación por shinies</em></div></div>'+
@@ -4229,6 +4227,293 @@ showHome=function(tab='inicio'){
 };
 const v12BrandSubtitle=document.querySelector('.brand small');
 if(v12BrandSubtitle)v12BrandSubtitle.textContent='EXPEDITION EDITION · V1.2';
+
+
+/* ==============================================================
+ POKÉRICOCHET 1.3 · PRIMER PARCHE DE PROGRESIÓN
+ Menos desgaste normal; reto en dominantes y jefes.
+ Combos por impacto efectivo, mejoras con efecto real, informe final.
+ ============================================================== */
+V10_TIERS.common.percent=48;
+V10_TIERS.uncommon.percent=32;
+V10_TIERS.rare.percent=14;
+V10_TIERS.epic.percent=5;
+V10_TIERS.legendary.percent=1;
+function v13Upgrade(id,fields){
+ const u=V10_UPGRADES.find(x=>x.id===id);if(u)Object.assign(u,fields);
+}
+v13Upgrade('hp',{
+ desc:()=>'+7 PS máximos y recupera 10 PS inmediatamente',
+ apply:p=>{p.bonusHp=(p.bonusHp||0)+7;pk9Recacl(p,false);p.hp=Math.min(p.maxHp,p.hp+10)}
+});
+v13Upgrade('attack',{desc:()=>'+2 daño por impacto físico',apply:p=>{p.v10Atk=(p.v10Atk||0)+2}});
+v13Upgrade('special',{desc:()=>'+2 daño por impacto especial',apply:p=>{p.v10SpAtk=(p.v10SpAtk||0)+2}});
+v13Upgrade('defense',{
+ desc:()=>'-1 daño recibido por impacto, +2 PS máximos',
+ apply:p=>{p.v10Def=(p.v10Def||0)+1;p.bonusHp=(p.bonusHp||0)+2;pk9Recacl(p,false)}
+});
+v13Upgrade('balls',{
+ desc:p=>'+1 bola y +1 potencia para '+p.moves[p.chosen].name,
+ apply:p=>{const m=p.moves[p.chosen];m.balls+=1;m.power+=1}
+});
+v13Upgrade('focus',{name:'Concentración',desc:()=>'+8 % de probabilidad de crítico',apply:p=>{p.crit=Math.min(.55,(p.crit||.05)+.08)}});
+v13Upgrade('stab',{desc:()=>'+12 % de daño con movimientos del mismo tipo',apply:p=>{p.v10STAB=(p.v10STAB||0)+.12}});
+v13Upgrade('hyper',{desc:()=>'+3 bolas en la primera ráfaga de cada encuentro',apply:p=>{p.v10OpeningBalls=3}});
+v13Upgrade('resilience',{desc:()=> 'Recuperas 2 PS al derrotar enemigos; se activa cada 3 KOs (nivel II: 2 KOs)',apply:p=>{
+ p.v10HealEvery=Math.max(2,4-(p.v10Upgrades?.resilience||0));p.v13HealBoost=2
+}});
+V10_UPGRADES.push(
+ {id:'v13cadence',name:'Impulso Encadenado',rarity:'uncommon',max:2,icon:'⚡',
+  desc:()=>'+3 puntos de energía especial al alcanzar combos de 8 y 20 impactos (por nivel)',
+  ok:p=>p.moves.some(m=>m.category!=='status'),
+  apply:p=>{p.v13Cadence=(p.v13Cadence||0)+1}},
+ {id:'v13combo',name:'Maestría del Ricochet',rarity:'rare',max:2,icon:'✦',
+  desc:()=>'+5 % daño por nivel cuando el combo supera 5 impactos, limitado al 35 % en total',
+  ok:p=>p.moves.some(m=>m.category!=='status'),
+  apply:p=>{p.v13ComboMastery=(p.v13ComboMastery||0)+1}}
+);
+const v13StateOriginal=newState;
+newState=function(team){
+ const r=v13StateOriginal(team);
+ r.v13Stats={volleys:0,hits:0,damage:0,maxCombo:0,combo25:0,bosses:0,dominants:0};
+ r.v13Combo={hits:0,peak:0,triggered:[]};
+ r.v13Mission=null;r.v13FightBest=0;r.v13BattleRewarded=false;
+ return r;
+};
+function v13Stats(){
+ if(!run)return {volleys:0,hits:0,damage:0,maxCombo:0,combo25:0,bosses:0,dominants:0};
+ run.v13Stats??={volleys:0,hits:0,damage:0,maxCombo:0,combo25:0,bosses:0,dominants:0};
+ return run.v13Stats;
+}
+function v13ComboBar(){
+ if(!run)return;
+ const h=run.v13Combo?.hits||0,el=document.getElementById('v13ComboHud');
+ if(!el)return;
+ el.classList.toggle('is-live',h>0&&mode==='shooting');
+ const tier=h>=35?'LEGENDARIO':h>=20?'DEMOLEDOR':h>=12?'IMPARABLE':h>=5?'EN CADENA':'IMPACTOS';
+ const next=h<5?5:h<12?12:h<20?20:h<35?35:35;
+ const bonus=h>=35?26:h>=20?20:h>=12?14:h>=5?8:0;
+ el.innerHTML='<b>✦ COMBO ×'+h+'</b><small>'+tier+' · +'+bonus+' % DAÑO</small>'+
+ '<span class="v13-combo-meter"><i style="width:'+(h>=35?100:Math.min(100,h/next*100))+'%"></i></span>';
+}
+const v13StartOriginal=startBattle;
+startBattle=function(kind){
+ v13StartOriginal(kind);
+ if(!run)return;
+ run.v13Combo={hits:0,peak:0,triggered:[]};
+ run.v13FightBest=0;run.v13BattleRewarded=false;
+ if(run.v13Mission&&!run.v13Mission.active)run.v13Mission.active=true;
+ // Quince filas de desgaste no son necesarias para cada combate corriente.
+ const rows=kind==='boss'?16:kind==='miniboss'?13:kind==='swarm'||kind==='elite'?12:
+  kind==='rare'||kind==='hunt'||kind==='fortress'?11:run.zone===0?9:run.zone===1?10:11;
+ if(run.v09Active)run.v09RowsTotal=rows;
+ for(const e of run.blocks)v13BalanceEnemy(e);
+ v13ComboBar();
+};
+function v13BalanceEnemy(e){
+ if(e.v13Balanced||e.boss||e.v10Champion)return;
+ e.v13Balanced=true;
+ const zoneFactor=[.84,.90,.94,.97][Math.min(3,run.zone)]||.97;
+ e.maxHp=Math.max(8,Math.round(e.maxHp*zoneFactor));
+ e.hp=Math.min(e.maxHp,Math.max(1,Math.round(e.hp*zoneFactor)));
+ if(run.zone===0&&run.floor<=2)e.attack=Math.max(1,e.attack-1);
+}
+const v13RowOriginal=pk9EmitRow;
+pk9EmitRow=function(row=0){
+ const before=run?.blocks?.length||0,out=v13RowOriginal(row);
+ if(out&&run)for(const e of run.blocks.slice(before))v13BalanceEnemy(e);
+ return out;
+};
+const v13ShootOriginal=shoot;
+shoot=function(){
+ const canFire=mode==='aim'&&active()?.hp>0;
+ const out=v13ShootOriginal();
+ if(canFire&&run&&mode==='shooting'){
+  run.v13Combo={hits:0,peak:0,triggered:[]};
+  v13Stats().volleys++;
+  v13ComboBar();
+ }
+ return out;
+};
+const v13DamageOriginal=attackInfo;
+attackInfo=function(m,e){
+ const info=v13DamageOriginal(m,e);
+ if(info.dmg<=0||!run||mode!=='shooting')return info;
+ const hits=run.v13Combo?.hits||0;
+ const progress=hits>=35?.26:hits>=20?.20:hits>=12?.14:hits>=5?.08:0;
+ const mastery=hits>=5?(active()?.v13ComboMastery||0)*.05:0;
+ const bonus=Math.min(.35,progress+mastery);
+ if(bonus>0)info.dmg=Math.max(1,Math.ceil(info.dmg*(1+bonus)));
+ return info;
+};
+const v13HitOriginal=hit;
+hit=function(e,b){
+ const before=e.hp,p=active(),had=run?.blocks?.includes(e);
+ const out=v13HitOriginal(e,b);
+ if(!run||!p||!had||before<=0||e.hp>=before||mode!=='shooting')return out;
+ const dealt=Math.min(Math.max(0,before),Math.max(0,before-e.hp));
+ if(dealt<=0)return out;
+ const st=v13Stats();
+ st.hits++;st.damage+=dealt;
+ p.v13Damage=(p.v13Damage||0)+dealt;
+ run.v13Combo??={hits:0,peak:0,triggered:[]};
+ const combo=run.v13Combo;
+ combo.hits++;combo.peak=Math.max(combo.peak,combo.hits);
+ st.maxCombo=Math.max(st.maxCombo,combo.hits);
+ run.v13FightBest=Math.max(run.v13FightBest||0,combo.hits);
+ const n=combo.hits;
+ if([5,8,12,20,25,35].includes(n)){
+  let banner={5:'¡EN CADENA!',8:'¡RITMO PERFECTO!',12:'¡COMBO IMPARABLE!',20:'¡RACHA DEMOLEDORA!',25:'¡DOMINIO TOTAL!',35:'¡REBOTE LEGENDARIO!'}[n];
+  textFx(b.x,b.y-18,'✦ '+banner+' ×'+n,n>=20?'#ffe49c':'#bafce1');
+  burst(b.x,b.y,n>=20?'#ffdb84':'#9cebd3',n>=20?17:9);
+  if(n===25)st.combo25++;
+  if([8,20].includes(n)){
+   p.ult=Math.min(70,(p.ult||0)+2+(p.v13Cadence||0)*3);
+  }
+  if([12,25,35].includes(n)){
+   const gain=n===12?2:n===25?3:4;
+   run.money=(run.money||0)+gain;
+   run.v10CoinsGained=(run.v10CoinsGained||0)+gain;
+   textFx(b.x,b.y+17,'₽ +'+gain,'#ffe5a1');
+  }
+  if(n>=12){run.impactShake=Math.min(5,(run.impactShake||0)+1);playTone(n>=25?900:700,.07,'triangle',.02)}
+ }
+ // Update text only on milestones or every third hit to avoid excessive DOM work.
+ if(n<=5||n%3===0||[8,12,20,25,35].includes(n))v13ComboBar();
+ return out;
+};
+const v13EndComboPrevious=endVolley;
+let v13ComboCloseTimer=null;
+endVolley=function(){
+ const was=mode==='shooting',n=run?.v13Combo?.hits||0;
+ const out=v13EndComboPrevious();
+ if(was&&n>=8&&run){
+  v08WaveToast('✦ RÁFAGA · '+n+' IMPACTOS · ¡COMBO!');
+ }
+ if(was){
+  clearTimeout(v13ComboCloseTimer);
+  v13ComboCloseTimer=setTimeout(()=>{
+   const el=document.getElementById('v13ComboHud');
+   if(mode!=='shooting')el?.classList.remove('is-live');
+  },1050);
+ }
+ return out;
+};
+const v13KillOriginal=enemyDown;
+enemyDown=function(e){
+ const present=run?.blocks?.includes(e),p=active();
+ const out=v13KillOriginal(e);
+ if(p&&present&&!run.blocks.includes(e)){
+  p.v13KOs=(p.v13KOs||0)+1;
+  const st=v13Stats();if(e.boss)st.bosses++;if(e.v11Dominant||e.v10Champion)st.dominants++;
+  if(p.v13HealBoost&&p.v10HealEvery&&p.v10HealCounter%p.v10HealEvery===0&&p.hp>0)
+   p.hp=Math.min(p.maxHp,p.hp+1);
+ }
+ return out;
+};
+// The training challenge is optional, never increases the enemy HP.
+const v13ActionOriginal=handleAction;
+handleAction=function(action){
+ if(action==='v10:challenge'&&run&&mode==='reward'&&run.v10NextChoice){
+  run.v10NextChoice=false;run.v10OfferUsed=true;
+  run.v13Mission={target:run.zone<=1?8:12,active:false};
+  v08WaveToast('🎯 DESAFÍO ACEPTADO · COMBO ×'+run.v13Mission.target);
+  v10FloorRecap(run.encounter==='boss');return;
+ }
+ if(action==='v13:lastreport'&&saved.v13LastSummary){
+  showModal(v13ReportHtml(saved.v13LastSummary,true));return;
+ }
+ return v13ActionOriginal(action);
+};
+const v13ClearOriginal=showBattleClear;
+showBattleClear=function(boss){
+ if(run&&!run.v13BattleRewarded){
+  run.v13BattleRewarded=true;
+  const m=run.v13Mission;
+  if(m?.active){
+   const success=(run.v13FightBest||0)>=m.target;
+   if(success){
+    run.money=(run.money||0)+25;saved.tokens=(saved.tokens||0)+3;
+    v11TicketSync();save();v08WaveToast('🎯 ¡DESAFÍO CUMPLIDO! · ₽25 + 3 FRAGMENTOS');
+   }else v08WaveToast('🎯 DESAFÍO NO COMPLETADO · SIN PENALIZACIÓN');
+   run.v13Mission=null;
+  }
+  if(!boss&&run.encounter!=='miniboss'&&run.clearedFights%2===0){
+   for(const p of run.team){
+    if(p.hp>0)p.hp=Math.min(p.maxHp,p.hp+Math.max(2,Math.ceil(p.maxHp*.08)));
+   }
+  }
+ }
+ return v13ClearOriginal(boss);
+};
+function v13Summarize(victory){
+ const st=v13Stats();
+ const team=[...run.team].sort((a,b)=>(b.v13Damage||0)-(a.v13Damage||0));
+ return {
+  victory,zone:zone().name,floor:run.floor,turns:run.turnTotal||0,
+  defeated:run.defeated,captures:run.captures,
+  volleys:st.volleys,hits:st.hits,damage:st.damage,maxCombo:st.maxCombo,
+  combos25:st.combo25,bosses:st.bosses,dominants:st.dominants,
+  team:team.map(p=>({name:p.name,id:p.id,shiny:!!p.shiny,level:p.level,damage:p.v13Damage||0,kos:p.v13KOs||0}))
+ };
+}
+function v13ReportHtml(report,fromHistory=false){
+ const rows=report.team.map((p,i)=>'<div class="v13-report-pokemon">'+
+  sImg(p.id,p.shiny)+'<span><b>'+(i===0?'🏅 ':'')+p.name+(p.shiny?' ✨':'')+'</b>'+
+  '<small>Nv. '+p.level+' · '+nice(p.damage)+' daño · '+p.kos+' KOs</small></span></div>').join('');
+ const data=[['⚡',nice(report.damage),'DAÑO DIRECTO'],['✦','×'+report.maxCombo,'MEJOR COMBO'],
+  ['🎯',nice(report.hits),'IMPACTOS'],['🔴',nice(report.captures),'CAPTURAS'],
+  ['👑',nice(report.bosses),'JEFES'],['⭐',nice(report.dominants),'DOMINANTES'],
+  ['🟢',nice(report.volleys),'RÁFAGAS'],['⚔',nice(report.defeated),'DERROTADOS']];
+ return '<div class="v13-report"><div class="emblem">'+(report.victory?'🏆 EXPEDICIÓN COMPLETADA':'📊 RESUMEN DE EXPEDICIÓN')+'</div>'+
+  '<h2>'+(report.victory?'¡CAMPEÓN DEL RICOCHET!':'¡HASTA LA PRÓXIMA!')+'</h2>'+
+  '<p>'+report.zone+' · Piso '+report.floor+' · '+nice(report.turns)+' turnos. Las capturas y caramelos permanecen en el PC.</p>'+
+  '<div class="v13-report-metrics">'+data.map(([icon,num,label])=>
+   '<div><span>'+icon+'</span><strong>'+num+'</strong><small>'+label+'</small></div>').join('')+'</div>'+
+  '<h3>POKÉMON DESTACADOS</h3><div class="v13-report-team">'+rows+'</div>'+
+  '<div class="actions"><button class="primary" data-action="newrun">🔄 NUEVA EXPEDICIÓN</button>'+
+  '<button class="secondary" data-action="menu:home">⌂ VOLVER AL MENÚ</button></div></div>';
+}
+function v13FinishReport(victory){
+ if(!run||run.v13ReportShown)return;
+ run.v13ReportShown=true;
+ const report=v13Summarize(victory);
+ saved.v13LastSummary=report;save();
+ showModal(v13ReportHtml(report));
+}
+const v13GameOverOriginal=gameOver;
+gameOver=function(){
+ const out=v13GameOverOriginal();v13FinishReport(false);return out;
+};
+const v13VictoryOriginal=endVictory;
+endVictory=function(){
+ const out=v13VictoryOriginal();v13FinishReport(true);return out;
+};
+const v13MenuOriginal=showHome;
+showHome=function(tab='inicio'){
+ const out=v13MenuOriginal(tab);
+ if(saved.v13LastSummary&&tab==='historial'&&mode==='menu'){
+  const place=modal.querySelector('.home-content');
+  if(place)place.insertAdjacentHTML('afterbegin','<button class="v13-report-link" data-action="v13:lastreport">'+
+   '📊 ÚLTIMA EXPEDICIÓN · MEJOR COMBO ×'+saved.v13LastSummary.maxCombo+' · VER INFORME →</button>');
+ }
+ const badge=modal.querySelector('.home-header .emblem');
+ if(badge)badge.textContent=badge.textContent.replace(/V1\.2|V0\.9/g,'V1.3');
+ if(tab==='inicio'){
+  const tip=modal.querySelector('.home-tip');
+  if(tip){
+   const headline=tip.querySelector('b'),detail=tip.querySelector('span');
+   if(headline)headline.textContent='✦ NUEVO EN V1.3';
+   if(detail)detail.textContent='Combos incrementales · Mejoras reforzadas · Ritmo equilibrado · Informes finales';
+  }
+ }
+ return out;
+};
+const v13Badge=document.querySelector('.brand small');
+if(v13Badge)v13Badge.textContent='EXPEDITION EDITION · V1.3';
+const v13ComboHud=document.createElement('div');
+v13ComboHud.id='v13ComboHud';v13ComboHud.className='v13-combo-hud';
+document.getElementById('boardFrame')?.appendChild(v13ComboHud);
 
 fitBoard();startMenu();requestAnimationFrame(render);
 })();
