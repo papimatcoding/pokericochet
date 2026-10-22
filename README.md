@@ -69,3 +69,34 @@ Se ha validado la sintaxis del script completo. Falta comprobar manualmente part
 - **Persistencia:** se respeta la colección y su clave local `pokeRicochet-v04` y las mejoras/fragmentos del sistema previo.
 
 **Estado:** el script del juego pasa revisión de sintaxis JavaScript. Las animaciones y el balance todavía requieren validación manual visual y partidas completas, sobre todo en dispositivos móviles. Los sprites remotos requieren conexión a internet; se mantienen imágenes de reserva cuando fallan.
+
+
+## Versión 1.3 — Primer parche de progresión y combos
+
+Continuación del motor original. Se conserva la clave de guardado `pokeRicochet-v04` y la colección, los IVs, caramelos, tickets y objetos adquiridos anteriormente.
+
+### Ritmo de combate
+- Encuentros corrientes: 9 filas en la primera región, 10 en la segunda y 11 en las restantes. Variantes raras: 11; hordas y élites: 12; dominantes: 13; jefes: 16.
+- La vida de Pokémon corrientes baja suavemente (más al principio); no se debilitan dominantes ni jefes. Daño enemigo moderado en los pisos iniciales.
+- Cada dos victorias de combate normal los Pokémon vivos recuperan un 8 % de sus PS. No hay curación adicional en dominantes ni jefes.
+
+### Mejoras más contundentes
+- Entrenamientos ofensivos: +2 daño por nivel en su categoría; +7 PS y +10 de curación en mejora de PS; Defensa también añade PS; Ráfaga mejora la potencia y añade una bola.
+- Crítico y afinidad de tipo reforzados; nuevo par de especializaciones orientadas a combos y carga del especial.
+- Rarezas reajustadas a 48 % común, 32 % poco común, 14 % raro, 5 % épico y 1 % legendario. Las opciones siguen filtradas por compatibilidad y nivel máximo.
+
+### Combos incrementales por ráfaga
+- Cuentan los impactos que efectivamente hacen daño (no las inmunidades ni los choques vacíos).
+- Escalones ×5 / ×12 / ×20 / ×35 aumentan el daño progresivamente hasta un máximo del 26 % base; Maestría del Ricochet puede elevar el total al 35 %.
+- Pequeñas bonificaciones de energía, Pokédólares limitados por ráfaga, efectos visuales y contador encima del tablero. Un combo empieza de nuevo en cada lanzamiento.
+
+### Misiones y estadísticas
+- Los retos voluntarios ya no endurecen al enemigo. Piden una ráfaga de 12 impactos en el siguiente combate; si se consigue se obtienen ₽25 y 3 fragmentos de ticket, sin castigo al fallar.
+- Al finalizar la partida se muestra un resumen de turnos, impactos, daño directo registrado, récord de combos, capturas, KOs, dominantes, jefes y contribución de cada integrante. El informe se conserva en el historial del menú.
+
+### Verificaciones
+- Sintaxis del JavaScript completo comprobada.
+- Las pruebas de partidas enteras y revisión visual a distintas resoluciones están pendientes. No se modifican los guardados persistentes existentes.
+
+### Siguiente parche propuesto
+- Rutas verdaderamente diferenciadas, mejoras y movimientos más específicos de cada especie, y jefes con patrones más refinados.
