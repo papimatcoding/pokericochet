@@ -3937,7 +3937,7 @@ winBattle=function(){
  const state=mode,kind=run?.encounter,earnedBefore=saved.tokens;
  const out=v11OriginalWin();
  const tickets=v11TicketSync();
- const completed=run&&run.blocks.length===0&&run.v09RowsEmitted>=run.v09RowsTotal;
+ const completed=run&&!run.v09Active&&run.blocks.length===0&&run.v09RowsEmitted>=run.v09RowsTotal;
  if(completed&&kind==='boss'&&state!=='reward'&&mode!=='over'&&chance(.09)){
   saved.v11TenTickets++;save();v08WaveToast('🎫 ¡TICKET X10 DE JEFE!');
  }
