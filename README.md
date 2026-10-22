@@ -1,6 +1,6 @@
-# POKÉRICOCHET 1.3 — Expedition Edition
+# POKÉRICOCHET 1.4 — Expedition Edition
 
-[▶ Jugar en GitHub Pages](https://papimatcoding.github.io/pokericochet/?v=1.3.0)
+[▶ Jugar en GitHub Pages](https://papimatcoding.github.io/pokericochet/?v=1.4.0)
 
 Juego fan roguelite de Pokémon y rebotes, en HTML/CSS/JavaScript sin servidor ni compilación.
 
@@ -100,3 +100,21 @@ Continuación del motor original. Se conserva la clave de guardado `pokeRicochet
 
 ### Siguiente parche propuesto
 - Rutas verdaderamente diferenciadas, mejoras y movimientos más específicos de cada especie, y jefes con patrones más refinados.
+
+## 1.4 — Fundamentos del combate (primer paso del rediseño de movimientos)
+
+**Correcciones verificadas en el motor original:**
+
+- Los límites laterales de rebote ya no están desplazados siete píxeles hacia dentro: las bolas tocan paredes dibujadas en el borde del tablero. También se marca la pared superior, y la predicción de apuntado refleja los mismos límites.
+- La física utiliza hasta 24 subpasos por actualización para reducir impactos omitidos a velocidad acelerada.
+- Los impactos con daño se contabilizan **dentro del núcleo de impacto**, antes de que eliminar al último enemigo cambie el modo. Así se evita perder el último golpe y desincronizar los hitos del combo.
+- Los contactos inmunes quedan registrados como contactos, pero no otorgan daño, bonificación de combo ni energía; las inmunidades siguen funcionando.
+- Los enemigos con comportamiento esquivo no se teletransportan a una casilla ya ocupada. El movimiento muestra marcas visibles de origen y destino.
+- Cuando un enemigo alcanza el borde inferior, la interfaz muestra **¡BRECHA!**, distinguiéndolo de una desaparición no explicada.
+- El contador de combos ya no tapa el tablero: se encuentra en el panel derecho de PC y en una franja compacta debajo del tablero en móvil.
+
+La clave de guardado `pokeRicochet-v04` no cambia. Se conservan los Pokémon, caramelos, IVs, tickets y progreso persistente.
+
+**Verificación:** sintaxis JavaScript, inicialización de partida, primer combate, KO y combo contabilizados una sola vez, contacto inmune sin carga. Las pruebas visuales y partidas completas siguen pendientes.
+
+**Siguiente etapa (1.5):** movesets de hasta tres movimientos, repertorios curados por especie, y ráfagas mixtas. Posteriormente, técnicas por movimiento y misiones diarias/semanales.
