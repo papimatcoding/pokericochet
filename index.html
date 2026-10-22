@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#0a1121">
 <meta name="description" content="PokéRicochet: prototipo fan roguelite de rebotes, captura y progreso Pokémon.">
-<title>POKÉRICOCHET · Rogue Bounce v1.4</title>
+<title>POKÉRICOCHET · Rogue Bounce v1.5</title>
 <style>
 :root{color-scheme:dark;--bg:#080e1b;--panel:#101c32;--panel2:#142540;--line:#2b4262;--faint:#8c9fbb;--white:#f5f8ff;--aqua:#70f2d3;--yellow:#ffdb7c;--pink:#f6a1c4;--red:#ff7383;--blue:#85aaff}
 *{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--white);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}button{font:inherit;cursor:pointer;touch-action:manipulation}button:disabled{cursor:not-allowed;opacity:.4}button:focus-visible{outline:2px solid var(--aqua);outline-offset:3px}body:before{position:fixed;content:"";inset:0;pointer-events:none;background:radial-gradient(ellipse 65% 55% at 20% 0%,#22396383,transparent),radial-gradient(ellipse 43% 60% at 93% 90%,#0f4e5d40,transparent);z-index:0}.app{position:relative;display:flex;flex-direction:column;height:100vh;height:100dvh;max-width:1320px;margin:auto;padding:clamp(7px,1.5vh,14px) clamp(8px,1.5vw,22px);gap:clamp(6px,1vh,11px);min-height:0}.top{flex:0 0 auto;display:flex;align-items:center;gap:12px;min-height:46px}.brand{font-size:clamp(17px,2vw,23px);font-weight:950;line-height:1;letter-spacing:-.06em;white-space:nowrap}.brand b{color:var(--aqua)}.brand small{display:block;margin-top:5px;letter-spacing:.16em;font-size:9px;font-weight:800;color:#839cba}.top-right{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex:1;min-width:0}.mini-status{font-size:11px;color:#c2d1e5;background:#13243b;border:1px solid #284260;border-radius:9px;padding:9px 11px;white-space:nowrap}.mini-status strong{color:var(--yellow)}.iconbtn{color:#dce8f9;background:#14243a;border:1px solid #2c4360;border-radius:10px;min-width:34px;height:34px;display:grid;place-items:center;font-size:16px}.iconbtn:hover{background:#253d5d}
@@ -4632,19 +4632,19 @@ showHome=function(tab='inicio'){
    '📊 ÚLTIMA EXPEDICIÓN · MEJOR COMBO ×'+saved.v13LastSummary.maxCombo+' · VER INFORME →</button>');
  }
  const badge=modal.querySelector('.home-header .emblem');
- if(badge)badge.textContent=badge.textContent.replace(/V1\.2|V0\.9/g,'V1.4');
+ if(badge)badge.textContent=badge.textContent.replace(/V1\.2|V0\.9|V1\.4/g,'V1.5');
  if(tab==='inicio'){
   const tip=modal.querySelector('.home-tip');
   if(tip){
    const headline=tip.querySelector('b'),detail=tip.querySelector('span');
-   if(headline)headline.textContent='✦ NUEVO EN V1.4';
-   if(detail)detail.textContent='Rebotes físicos precisos · Combos sin fallos · Interfaz despejada';
+   if(headline)headline.textContent='✦ NUEVO EN V1.5';
+   if(detail)detail.textContent='Dominantes escalonados · Jefes únicos · Pokétienda real · Gachapón renovado';
   }
  }
  return out;
 };
 const v13Badge=document.querySelector('.brand small');
-if(v13Badge)v13Badge.textContent='EXPEDITION EDITION · V1.4';
+if(v13Badge)v13Badge.textContent='EXPEDITION EDITION · V1.5';
 const v13ComboHud=document.createElement('div');
 v13ComboHud.id='v13ComboHud';v13ComboHud.className='v13-combo-hud';
 document.getElementById('boardFrame')?.appendChild(v13ComboHud);
