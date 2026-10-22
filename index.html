@@ -1306,8 +1306,7 @@ handleAction=function(action){
   run.v07UpcomingWeather=null;
   if(['storm','wild','rare','duel','ambush','hunt','fortress','swarm','elite'].includes(node.kind)){
     const weather=['sun','rain','sand','snow'];
-    if(node.kind==='storm')run.v07UpcomingWeather='rain';
-    else if(Math.random()<.25)run.v07UpcomingWeather=weather[Math.floor(Math.random()*weather.length)];
+    /* Solo habilidades activan el clima. */
   }
   advanceRoom(node);return;
  }
@@ -1659,8 +1658,7 @@ nextRoute=function(){
  const kind=node.kind;
  run.v07UpcomingWeather=null;
  if(['storm','wild','rare','duel','ambush','hunt','fortress','swarm','elite'].includes(kind)){
-  if(kind==='storm')run.v07UpcomingWeather='rain';
-  else if(chance(.22))run.v07UpcomingWeather=pick(['sun','rain','sand','snow']);
+  /* Solo habilidades activan el clima. */
  }
  advanceRoom(node);
  v08WaveToast('PISO '+run.floor+' · '+(V07_DETAILS[kind]?.[1]||'Encuentro'));
@@ -3481,7 +3479,7 @@ V07_DETAILS.miniboss=['👹','¡Minijefe!','Un encuentro de alta presión con Po
 ZONES[3].rooms=5;
 generateMap=function(){
  const rooms=zone().rooms,rows=[];
- const dangerous=['wild','hunt','duel','storm','ambush','fortress','rare','swarm'];
+ const dangerous=['wild','hunt','duel','ambush','fortress','rare','swarm'];
  for(let floor=1;floor<=rooms;floor++){
   let kind=floor===1?'wild':floor===3?'camp':floor===rooms?'miniboss':pick(dangerous);
   rows.push(Array.from({length:3},(_,lane)=>({floor,lane,kind,edges:floor===1?[]:[lane]})));
@@ -3508,12 +3506,7 @@ startBattle=function(kind){
 const v10IncomingRows=pk9EmitRow;
 pk9EmitRow=function(row=0){
  const emitted=v10IncomingRows(row);
- if(emitted&&[5,10,14].includes(run.v09RowsEmitted)&&chance(.27)){
-  const weather=pick(['sun','rain','sand','snow']);
-  run.weather=weather;
-  const label={sun:'☀️ EL SOL SE INTENSIFICA',rain:'🌧️ EMPIEZA A LLOVER',sand:'🌪️ TORMENTA ARENA',snow:'❄️ EMPIEZA A NEVAR'}[weather];
-  v08WaveToast(label);log(label);
- }
+ // El clima no aparece por azar; lo activan las habilidades Pokémon.
  return emitted;
 };
 const v10PreviousEfficacy=attackInfo;
@@ -3746,6 +3739,135 @@ refresh=function(){
   const el=$id('topStatus');
   if(el)el.innerHTML='<strong>P'+run.floor+' · '+(run.v09RowsEmitted||0)+'/'+(run.v09RowsTotal||15)+' FILAS</strong> <span class="v10-money">₽'+(run.money||0)+'</span>';
  }
+};
+
+
+/* ===== POKÉRICOCHET 1.1: evolución del proyecto original ===== */
+const V11_WEATHER={drizzle:['rain','Llovizna'],drought:['sun','Sequía'],'sand-stream':['sand','Chorro Arena'],'snow-warning':['snow','Nevada']};
+const V11_FORMS={15:['Mega-Beedrill',10090],94:['Mega-Gengar',10038],130:['Mega-Gyarados',10041],6:['Charizard Gigamax',0]};
+const v11OriginalRow=pk9EmitRow;
+pk9EmitRow=function(row=0){
+ const before=run?.blocks?.length||0,ok=v11OriginalRow(row);
+ if(!ok||!run)return ok;
+ let added=run.blocks.slice(before),number=run.v09RowsEmitted;
+ if(run.zone===0&&run.floor<=2&&run.encounter!=='boss'){
+  const limit=number<=3?2:number<=6?3:5;
+  for(const e of added.slice(limit))run.blocks.splice(run.blocks.indexOf(e),1);
+  added=added.slice(0,limit);
+ }
+ for(const e of added){
+  if(run.zone===0&&run.floor<=3&&!e.v10Champion){
+   e.maxHp=Math.max(9,Math.round(e.maxHp*(number<=4?.73:number<=8?.85:.96)));e.hp=e.maxHp;
+   e.attack=Math.max(1,e.attack-(number<=5?1:0));
+   if(number<=4)e.ranged=e.ranged&&chance(.24);
+  }
+  if(!e.v10Champion)continue;
+  e.v11Dominant=true;
+  if(chance(.24+run.zone*.04)){e.v11Tera=chance(.7)?pick(e.types):pick(Object.keys(TT));v08WaveToast('💎 '+e.name+' · TERA '+TT[e.v11Tera])}
+  else v08WaveToast('👑 '+e.name+' DOMINANTE');
+  const weather=V11_WEATHER[e.v10Skill];
+  if(weather){run.weather=weather[0];v08WaveToast('🌤 '+e.name+' · '+weather[1]);log('🌤 '+e.name+' activa '+weather[1])}
+  if(e.v10Skill==='intimidate'){run.v11Intimidate=2;v08WaveToast('⚔ ¡INTIMIDACIÓN!')}
+ }
+ return ok;
+};
+const v11OriginalStart=startBattle;
+startBattle=function(kind){
+ v11OriginalStart(kind);if(!run)return;
+ run.v11Intimidate=0;run.v11VolleyAge=0;
+ if(run.zone===0&&run.floor<=2&&kind!=='boss')run.v09RowsTotal=12;
+ if(kind==='boss'){
+  const boss=run.blocks.find(e=>e.boss);
+  if(boss&&V11_FORMS[boss.id]){
+   boss.v11Form=V11_FORMS[boss.id];
+   boss.maxHp=Math.ceil(boss.maxHp*(1+run.zone*.1));boss.hp=boss.maxHp;
+   v08WaveToast('👑 ¡'+boss.v11Form[0].toUpperCase()+'!');
+  }
+ }
+};
+const v11OriginalAttack=attackInfo;
+attackInfo=function(m,e){
+ const types=e.types;
+ if(e.v11Tera)e.types=[e.v11Tera];
+ let info;
+ try{info=v11OriginalAttack(m,e)}finally{e.types=types}
+ if(info.dmg>0&&run?.v11Intimidate&&m.category==='physical')info.dmg=Math.max(1,Math.ceil(info.dmg*.85));
+ if(info.dmg>0&&e.v10Skill==='thick-fat'&&['fire','ice'].includes(m.type))info.dmg=Math.max(1,Math.ceil(info.dmg*.6));
+ return info;
+};
+const v11OriginalHit=hit;
+hit=function(e,b){
+ const prev=e.hp,p=active();v11OriginalHit(e,b);
+ if(!p||e.hp>=prev)return;
+ const spd=(p.stats?.[5]||pk9OneStat(p,5))+(p.v11Tempo||0),interval=clamp(Math.round(10-(spd-25)/21),4,10);
+ p.v11TempoHits=(p.v11TempoHits||0)+1;
+ if(p.v11TempoHits%interval===0)p.ult=Math.min(70,(p.ult||0)+1);
+ if(p.v11BankBonus&&b.wallBounces&&run.blocks.includes(e)){
+  e.hp-=p.v11BankBonus;textFx(b.x,b.y-12,'↩ +'+p.v11BankBonus,'#b5ffe1');
+  if(e.hp<=0)enemyDown(e);
+ }
+};
+const v11OriginalLaunch=launchBall;
+launchBall=function(){
+ v11OriginalLaunch();const b=run.shots?.at(-1),p=active();
+ if(!b||!p)return;
+ const v=Math.hypot(b.vx,b.vy)||1,target=520*clamp(1+((p.stats?.[5]||pk9OneStat(p,5))-50)/1400,.97,1.05);
+ b.vx*=target/v;b.vy*=target/v;b.v11Age=0;
+};
+const v11OriginalPhysics=advanceVolley;
+advanceVolley=function(dt){
+ if(run&&mode==='shooting'){
+  const d=dt*(run.fast?2.5:1);run.v11VolleyAge=(run.v11VolleyAge||0)+d;
+  for(const b of run.shots){
+   b.v11Age=(b.v11Age||0)+d;
+   if(b.v11Age>2.8&&Math.abs(b.vy)<120){
+    const v=Math.hypot(b.vx,b.vy)||520,vy=Math.min(v*.7,Math.max(160,Math.abs(b.vy)+65));
+    b.vy=vy;b.vx=(b.vx<0?-1:1)*Math.sqrt(Math.max(0,v*v-vy*vy));b.v11Age=2.1;
+   }
+  }
+  if(run.v11VolleyAge>19){
+   run.pending=0;run.shots.length=0;run.landing??=run.shooter;
+   run.v11VolleyAge=0;v08WaveToast('↩ RÁFAGA RECUPERADA');
+  }
+ }
+ return v11OriginalPhysics(dt);
+};
+const v11OriginalEnd=endVolley;
+endVolley=function(){if(run){run.v11VolleyAge=0;if(run.v11Intimidate>0)run.v11Intimidate--}return v11OriginalEnd()};
+V10_UPGRADES.push(
+ {id:'v11speed',name:'Entrenamiento de Velocidad',rarity:'uncommon',max:2,icon:'💨',desc:p=>'Recarga antes el especial al encadenar impactos',ok:p=>p.moves.some(m=>m.category!=='status'),apply:p=>{p.v11Tempo=(p.v11Tempo||0)+12}},
+ {id:'v11bank',name:'Rebote Preciso',rarity:'rare',max:2,icon:'↩',desc:p=>'+1 daño tras rebotar contra las paredes (por nivel)',ok:p=>p.moves.some(m=>m.category!=='status'),apply:p=>{p.v11BankBonus=(p.v11BankBonus||0)+1}}
+);
+const v11FormImages=new Map(),v11OriginalRender=renderBoard;
+renderBoard=function(now){
+ v11OriginalRender(now);
+ if(!run||!['aim','shooting','descending','retaliating'].includes(mode))return;
+ ctx.save();
+ for(const e of run.blocks){
+  if(!e.v11Dominant&&!e.v11Form)continue;
+  const x=enemyX(e),y=enemyY(e),w=enemyW(e),h=enemyH(e);
+  if(y<0||y>FLOOR_Y+20)continue;
+  const tint=e.v11Tera?TYPE_COLOR[e.v11Tera]:'#ffe0a1';
+  ctx.strokeStyle=tint;ctx.shadowColor=tint;ctx.shadowBlur=e.boss?20:12;ctx.lineWidth=e.boss?4:2.5;
+  ctx.strokeRect(x-2,y-2,w+4,h+4);ctx.shadowBlur=0;
+  ctx.textAlign='center';ctx.font='bold 10px system-ui';ctx.fillStyle=tint;
+  if(e.v11Tera)ctx.fillText('◆ '+TT[e.v11Tera],x+w/2,y-5);
+  if(e.v11Form){
+   ctx.fillText(e.v11Form[0].toUpperCase(),x+w/2,y-10);
+   const form=e.v11Form[1];
+   if(form){
+    if(!v11FormImages.has(form)){
+     const im=new Image(),entry={im,ready:false};
+     im.onload=()=>{entry.ready=true};im.onerror=()=>{entry.ready=false};
+     im.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/'+form+'.png';
+     v11FormImages.set(form,entry);
+    }
+    const spriteEntry=v11FormImages.get(form);
+    if(spriteEntry.ready)ctx.drawImage(spriteEntry.im,x+3,y+2,w-6,h-18);
+   }
+  }
+ }
+ ctx.restore();
 };
 
 fitBoard();startMenu();requestAnimationFrame(render);
