@@ -337,6 +337,7 @@
  .v16-moves-mobile .v16-move span{font-size:8px}
 }
 .v16-alpha-notice{padding:9px 12px;background:#3c2937;border:1px solid #d3a1ad;border-radius:10px;color:#ffe4c8;font-size:10px;font-weight:950;letter-spacing:.07em;margin-top:8px}@media(max-width:775px){.v16-alpha-notice{display:none!important}}
+.v16-learn-alert{width:100%;margin-top:5px;padding:8px 9px;background:#236254;color:#e4ffce;border:1px solid #88d9aa;border-radius:7px;font-size:10px;font-weight:900;cursor:pointer}@media(max-width:775px){.v16-moves-mobile .v16-learn-alert{font-size:8px;padding:5px 2px;max-width:95px}}
 </style>
 <link rel="stylesheet" href="./v09.css">
 <link rel="stylesheet" href="./v10.css">
@@ -5357,6 +5358,9 @@ afterUpgrades=function(){if(v16ShowLearn())return;return v16AfterUpgradeBefore()
 const v16HandleBefore=handleAction;
 handleAction=function(action){
  if(action==='v10:challenge')return;
+ if(action==='v16:learnopen'&&run?.v16PendingMoves?.length&&mode==='aim'){
+  run.v16LearnReturnMode='aim';v16ShowLearn();return;
+ }
  if(action.startsWith('v16:forget:')&&mode==='v16learn'){
   const selected=action.split(':')[2],entry=run?.v16PendingMoves?.shift();
   const p=entry&&run.team[entry.slot];
@@ -5367,7 +5371,12 @@ handleAction=function(action){
     log('📖 '+p.name+' aprendió '+entry.name);
    }
   }
-  hideModal();if(!v16ShowLearn())v16AfterUpgradeBefore();refresh();return;
+  hideModal();
+  if(!v16ShowLearn()){
+   if(run?.v16LearnReturnMode==='aim'){run.v16LearnReturnMode=null;mode='aim';refresh()}
+   else v16AfterUpgradeBefore();
+  }
+  refresh();return;
  }
  return v16HandleBefore(action);
 };
@@ -5469,8 +5478,10 @@ function v16RefreshMovePanel(){
    '<small>'+TT[m.type]+' · '+(m.category==='physical'?'FÍS':m.category==='special'?'ESP':'EST')+
    ' · POT '+m.power+'</small>'+(sig?'<span>✦ '+(p.v16Ready?.[m.name]?'LISTA':(p.v16Charge?.[m.name]||0)+'/'+need)+'</span>':'')+'</div>';
  }).join('');
- v16MovePanel.innerHTML='<strong>📘 MOVIMIENTOS · RÁFAGA MIXTA</strong>'+html;
- v16MoveMobile.innerHTML=html;
+ const pending=run?.v16PendingMoves?.length&&mode==='aim'?
+  '<button class="v16-learn-alert" data-action="v16:learnopen">📖 MOVIMIENTO NUEVO · ELEGIR →</button>':'';
+ v16MovePanel.innerHTML='<strong>📘 MOVIMIENTOS · RÁFAGA MIXTA</strong>'+html+pending;
+ v16MoveMobile.innerHTML=html+pending;
 }
 
 
