@@ -430,7 +430,7 @@ function hit(e,b){
  playTone(mult>1?620:330,.02,'sine',.012);
  if(e.hp<=0)enemyDown(e);
 }
-function enemyX(e){return LEFT+e.col*CS+1.5}function enemyY(e){return TOP+e.row*STEP+1.5+(run?.descentProgress||0)}function enemyW(e){return e.boss?CS*2-3:CS-3}function enemyH(e){return e.boss?STEP*2-3:STEP-3}
+function enemyX(e){return LEFT+e.col*CS+1.5}function enemyY(e){return TOP+e.row*STEP+1.5+(run?.descentProgress||0)}function enemyW(e){return (e.v16Footprint||(e.boss?3:1))*CS-3}function enemyH(e){return (e.v16Footprint||(e.boss?3:1))*STEP-3}
 function shoot(){if(mode!=='aim'||!active()||active().hp<=0)return;const move=active().moves[active().chosen],count=clamp(move.balls+active().globalBalls+(run.relics.includes('echo')&&run.turn%2===0?2:0),1,45);run.firingMove={...move};run.shots=[];run.pending=count;run.launched=0;run.volleyClock=0;run.landing=null;mode='shooting';log(`⚡ ${active().name}: ${move.name} · ${count} proyectiles`);playTone(600,.055,'triangle',.026);refresh()}
 function launchBall(){let move=run.firingMove,speed=520,theta=run.aim;run.shots.push({x:run.shooter,y:SHOOT_Y,vx:Math.cos(theta)*speed,vy:Math.sin(theta)*speed,r:BALL_R,move,trail:[],last:null});run.launched++;run.pending--}
 function circleRect(b,e){let x=enemyX(e),y=enemyY(e),w=enemyW(e),h=enemyH(e);let nearX=clamp(b.x,x,x+w),nearY=clamp(b.y,y,y+h);return (b.x-nearX)**2+(b.y-nearY)**2<=BALL_R*BALL_R}
@@ -4779,8 +4779,8 @@ const v15FinishPrevious=finishDescent;
 finishDescent=function(){
  const encounter=run?.v15Encounter;
  if(encounter){
-  const main=run.blocks.find(e=>e.v15Boss||e.v11Dominant&&encounter.kind==='dominant');
-  if(main)main.row=-1; // remains on screen; supports descend, boss itself does not
+  const main=run.blocks.find(e=>e.v15Boss);
+  if(main)main.row=-1; // only the main boss anchors; dominantes march toward the base
  }
  const result=v15FinishPrevious();
  if(!run||!encounter||mode==='over')return result;
@@ -5184,6 +5184,64 @@ showLevelUp=function(){
  v15LevelDisplayPrevious();
  const odds=modal.querySelector('.v10-odds');
  if(odds)odds.textContent='ELIGE UNA DIRECCIÓN: POTENCIA · SUPERVIVENCIA · ESTILO DE COMBATE. LAS RAREZAS MODIFICAN EL PESO DEL SORTEO.';
+};
+
+
+/* 1.6 — Dominantes as genuine 2×2 last-wave threats, following multiple enemy rows. */
+const V16_ALPHA_ROWS=[7,8,8,9];
+const v16OriginalStart=startBattle;
+startBattle=function(kind){
+ v16OriginalStart(kind);
+ if(!run)return;
+ if(kind==='boss'){
+  const boss=run.blocks.find(e=>e.v15Boss);
+  if(boss){boss.v16Footprint=3;boss.col=2;boss.row=-1;}
+  return;
+ }
+ if(kind!=='miniboss')return;
+ run.v16AlphaMode=true;
+ run.v16AlphaSpawned=false;
+ run.v16NormalRows=V16_ALPHA_ROWS[Math.min(run.zone,3)]||8;
+ run.v09RowsTotal=run.v16NormalRows+1;
+ run.v09RowsEmitted=0;run.v09Active=true;
+ run.v09Turns=0;run.v09IsBoss=false;
+ run.blocks=[];run.drops=[];run.shots=[];run.enemyBullets=[];
+ run.v15Encounter=null;run.turn=1;run.pending=0;
+ for(let n=0;n<3;n++)pk9EmitRow(n);
+ run.v09InitialSize=run.blocks.length;
+ v08WaveToast('⚠ DOMINANTE AL FINAL · '+run.v16NormalRows+' FILAS PARA PREPARARTE');
+ refresh();
+};
+const v16OriginalRow=pk9EmitRow;
+pk9EmitRow=function(row=0){
+ if(!run?.v16AlphaMode||run.encounter!=='miniboss')return v16OriginalRow(row);
+ if(run.v09RowsEmitted>=run.v09RowsTotal||!run.v09Active)return false;
+ if(run.v09RowsEmitted>=run.v16NormalRows){
+  if(run.v16AlphaSpawned)return false;
+  run.v16AlphaSpawned=true;run.v09RowsEmitted++;
+  const allies=run.blocks.slice();
+  v15Dominant('miniboss');
+  const alpha=run.blocks.find(e=>e.v11Dominant);
+  if(!alpha){run.blocks=allies;return false}
+  alpha.v16Footprint=2;alpha.col=2;alpha.row=Math.min(row,-2);
+  alpha.v16Unleashed=true;
+  run.blocks=[...allies,alpha];
+  v08WaveToast('👑 ¡DOMINANTE 2×2! · '+alpha.name.toUpperCase());
+  return true;
+ }
+ const original=run.encounter;
+ // Legacy champion rows must not spawn an unrelated extra alpha on row six.
+ run.encounter='wild';
+ let result=false;
+ try{result=v16OriginalRow(row)}finally{run.encounter=original}
+ return result;
+};
+const v16OriginalBattleWin=winBattle;
+winBattle=function(){
+ if(run?.v16AlphaMode&&run.v09Active&&run.v09RowsEmitted<run.v09RowsTotal&&run.blocks.length===0){
+  pk9EmitRow(0);mode='aim';run.pending=0;run.shots=[];refresh();return;
+ }
+ return v16OriginalBattleWin();
 };
 
 fitBoard();startMenu();requestAnimationFrame(render);
