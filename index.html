@@ -4821,7 +4821,7 @@ takeDamage=function(amount,source){
  refresh();return result;
 };
 // The old "free camp" was removing preparation choices and the value of the shop.
-const v15StoreItems=['potion','super-potion','oran-berry','sitrus-berry','leftovers','scope-lens',
+const v15StoreItems=['potion','super-potion','revive','oran-berry','sitrus-berry','leftovers','scope-lens',
  'eviolite','focus-sash','life-orb','choice-band','choice-specs','expert-belt','lum-berry',
  'tm-protect','tm-thunder-wave','tm-swords-dance','tm-flamethrower','tm-shadow-ball','tm-light-screen',
  'protein','calcium','iron','zinc','carbos','hp-up'];
@@ -4848,6 +4848,7 @@ pk9CampStock=function(){
   PK9_ITEMS[id].kind==='hold'?16:9}));
  const stock=[];
  if(heal.length)stock.push(pick(heal));
+ if(candidates.includes('revive'))stock.push('revive');
  const vitamins=candidates.filter(id=>PK9_ITEMS[id].kind==='vitamin');
  if(vitamins.length)stock.push(pick(vitamins));
  while(stock.length<6&&weighted.length){
@@ -5115,6 +5116,29 @@ function v15RefreshThreat(){
 }
 const v15DrawWithThreat=renderBoard;
 renderBoard=function(now){v15DrawWithThreat(now);v15RefreshThreat()};
+
+
+/* Every earned milestone feels valuable without giving unearned free camp buffs. */
+const v15VictoryPrevious=winBattle;
+winBattle=function(){
+ const attempt=run?.encounter,prior=mode;
+ const out=v15VictoryPrevious();
+ if(!run||run.v15VictoryPaid||!['boss','miniboss'].includes(attempt))return out;
+ const completed=run.blocks.length===0&&!['aim','shooting','retaliating','descending','bossIntro'].includes(mode);
+ if(!completed)return out;
+ run.v15VictoryPaid=true;
+ if(attempt==='boss'){
+  saved.v11Tickets=(saved.v11Tickets||0)+1;
+  run.money=(run.money||0)+35;
+  v08WaveToast('🏆 ¡JEFE SUPERADO! · 🎟 TICKET + ₽35');
+ }else{
+  saved.tokens=(saved.tokens||0)+3;
+  run.money=(run.money||0)+20;
+  v11TicketSync();
+  v08WaveToast('👑 ¡DOMINANTE DERROTADO! · 3 FRAGMENTOS + ₽20');
+ }
+ save();return out;
+};
 
 fitBoard();startMenu();requestAnimationFrame(render);
 })();
