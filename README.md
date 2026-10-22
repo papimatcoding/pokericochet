@@ -1,6 +1,6 @@
-# POKÉRICOCHET 1.4 — Expedition Edition
+# POKÉRICOCHET 1.5 — Expedition Edition
 
-[▶ Jugar en GitHub Pages](https://papimatcoding.github.io/pokericochet/?v=1.4.0)
+[▶ Jugar en GitHub Pages](https://papimatcoding.github.io/pokericochet/?v=1.5.0)
 
 Juego fan roguelite de Pokémon y rebotes, en HTML/CSS/JavaScript sin servidor ni compilación.
 
@@ -118,3 +118,20 @@ La clave de guardado `pokeRicochet-v04` no cambia. Se conservan los Pokémon, ca
 **Verificación:** sintaxis JavaScript, inicialización de partida, primer combate, KO y combo contabilizados una sola vez, contacto inmune sin carga. Las pruebas visuales y partidas completas siguen pendientes.
 
 **Siguiente etapa (1.5):** movesets de hasta tres movimientos, repertorios curados por especie, y ráfagas mixtas. Posteriormente, técnicas por movimiento y misiones diarias/semanales.
+
+## 1.5 — Expedicones estratégicas y jefes memorables
+
+- **Ritmo:** cuatro regiones de 5, 6, 7 y 7 pisos antes del jefe. Dominantes tempranos y posteriores para anticipar desafíos; ya no hay que recorrer 15-18 pisos de desgaste por región.
+- **Rutas:** caminos realmente diferentes y una Pokétienda visible en cada región, con oportunidades adicionales según el trayecto. Riesgo y preparación son una decisión.
+- **Jefes en una sola arena:** no entran 16 filas de enemigos. Mega-Beedrill invoca Combee que reducen el daño recibido mientras estén vivos; Mega-Gengar conserva Sombra Trampa e invoca Gastly; Mega-Gyarados utiliza Rompemoldes contra escudos; Charizard Gigamax tiene Giga-Llamarada en su segunda fase. La amenaza se anuncia en el HUD y los jefes reciben una entrada animada propia.
+- **Dominantes:** minijefes de una sola oleada, con mayor resistencia, habilidades reales y un segundo momento de peligro al perder PS.
+- **Estados de proyectiles rivales:** posibilidad moderada de veneno, parálisis o quemadura, con duraciones cortas y señal clara junto al Pokémon activo. Se mantienen las reglas de estados ya existentes.
+- **Pokétienda:** ya no ofrece curación ni EV gratuitos. Selecciona pociones, bayas, MTs, objetos equipables y vitaminas (Proteína, Calcio, Hierro, Zinc, Carburante, Más PS) compatibles con el equipo. Revivir solo está disponible cuando hay un Pokémon debilitado; los objetos evolutivos solo cuando existe un destinatario válido.
+- **Mejoras:** ahora se ofrecen una opción ofensiva, una defensiva y una de estilo, con cartas más interesantes para ejecución, daño a dominantes, presión, perforación y resistencia. Las mejoras de combos se han hecho más raras.
+- **IVs:** se compara un ejemplar completo frente al anterior; dejan de conservarse automáticamente los seis mejores IVs de capturas diferentes. Los IVs ya guardados no se borran ni se reducen.
+- **Gachapón:** animación de máquina de cápsulas construida con CSS, bolas diferenciadas por rareza, control de revelación y recompensa de diez tiradas. Solo Pokémon básicos. Estilos críticos incluidos directamente en el HTML para no depender de una hoja CSS antigua en caché.
+- **Premios de esfuerzo:** los dominantes dan 3 fragmentos y ₽20; los jefes garantizan un ticket simple y ₽35, una sola vez por encuentro.
+
+### Estado de comprobación
+
+El motor se ha sometido a pruebas simuladas para encuentros, tiendas, desbloqueo de recompensas y cargador de gacha, y se ha revisado la sintaxis del JavaScript. Estas pruebas no sustituyen una sesión real de juego completa ni pruebas visuales en móviles. La clave persistente `pokeRicochet-v04` se conserva.
