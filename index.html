@@ -3498,10 +3498,8 @@ nextRoute=function(){
 const v10EncounterBefore=startBattle;
 startBattle=function(kind){
  v10EncounterBefore(kind);
- if(run.v10ChallengeNext){
-  for(const e of run.blocks){e.maxHp=Math.ceil(e.maxHp*1.16);e.hp=e.maxHp}
-  run.v10ChallengeNext=false;v08WaveToast('⚔ RETO DEL ENTRENADOR · HP ENEMIGO +16 %');
- }
+ // Los desafíos ya no aumentan los PS enemigos.
+ run.v10ChallengeNext=false;
 };
 const v10IncomingRows=pk9EmitRow;
 pk9EmitRow=function(row=0){
