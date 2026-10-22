@@ -4428,7 +4428,7 @@ function v13ComboBar(){
  el.classList.toggle('is-live',h>0&&mode==='shooting');
  const tier=h>=35?'LEGENDARIO':h>=20?'DEMOLEDOR':h>=12?'IMPARABLE':h>=5?'EN CADENA':'GOLPES EFECTIVOS';
  const next=h<5?5:h<12?12:h<20?20:h<35?35:35;
- const bonus=h>=35?26:h>=20?20:h>=12?14:h>=5?8:0;
+ const bonus=h>=35?15:h>=20?10:h>=12?6:h>=5?2:0;
  el.innerHTML='<b>✦ COMBO ×'+h+'</b><small>'+tier+' · +'+bonus+' % DAÑO</small>'+
  '<span class="v13-combo-meter"><i style="width:'+(h>=35?100:Math.min(100,h/next*100))+'%"></i></span>';
 }
@@ -4476,9 +4476,9 @@ attackInfo=function(m,e){
  const info=v13DamageOriginal(m,e);
  if(info.dmg<=0||!run||mode!=='shooting')return info;
  const hits=run.v13Combo?.hits||0;
- const progress=hits>=35?.26:hits>=20?.20:hits>=12?.14:hits>=5?.08:0;
- const mastery=hits>=5?(active()?.v13ComboMastery||0)*.05:0;
- const bonus=Math.min(.35,progress+mastery);
+ const progress=hits>=35?.15:hits>=20?.10:hits>=12?.06:hits>=5?.02:0;
+ const mastery=hits>=5?(active()?.v13ComboMastery||0)*.08:0;
+ const bonus=Math.min(.25,progress+mastery);
  if(bonus>0)info.dmg=Math.max(1,Math.ceil(info.dmg*(1+bonus)));
  return info;
 };
@@ -4703,7 +4703,7 @@ function v15Dominant(kind){
  e.v10Skill=(PK9.abilities[id]||[]).find(a=>!a.hidden)?.name||'';
  e.v10AI='striker';e.ranged=true;e.cooldown=2;e.interval=2;
  e.attack=Math.min(8,2+run.zone+Math.ceil(run.floor/2));
- e.maxHp=Math.round(Math.max(125+run.zone*50,v15PowerBudget()*(1.85+run.zone*.17)));
+ e.maxHp=Math.round(Math.max(195+run.zone*65,v15PowerBudget()*(2.4+run.zone*.25)));
  e.hp=e.maxHp;e.drop=.04;
  run.blocks=[e];run.v15Encounter={kind:'dominant',id,turn:0};
  v08WaveToast('👑 ¡DOMINANTE '+e.name.toUpperCase()+'!');
@@ -4961,6 +4961,12 @@ const v15WindHitPrevious=hit;
 hit=function(e,b){
  const before=e.hp,p=active();
  const out=v15WindHitPrevious(e,b);
+ if(e?.v11Dominant&&before>e.maxHp*.5&&e.hp>0&&e.hp<=e.maxHp*.5&&!e.v15AbilityUsed){
+  e.v15AbilityUsed=true;
+  if(e.v10Skill==='overgrow'&&e.types.includes('grass')){e.attack+=2;v08WaveToast('🌿 ¡ESPESURA! · '+e.name+' SE POTENCIA')}
+  else if(e.v10Skill==='intimidate'){run.v11Intimidate=2;v08WaveToast('⚔ ¡INTIMIDACIÓN!')}
+  else{e.cooldown=Math.max(1,e.cooldown-1);v08WaveToast('👑 ¡'+e.name.toUpperCase()+' DESPIERTA!')}
+ }
  if(p?.v15SecondWind&&!p.v15WindUsed&&e.hp<before&&run?.v13Combo?.hits>=10&&p.hp>0){
   p.v15WindUsed=true;
   p.hp=Math.min(p.maxHp,p.hp+2);
@@ -5145,7 +5151,7 @@ winBattle=function(){
 
 /* Meaningful drafts: power, survival and distinctive synergy rather than three flat +1s. */
 const v15ComboUpgrade=V10_UPGRADES.find(u=>u.id==='v13combo');
-if(v15ComboUpgrade){v15ComboUpgrade.rarity='epic';v15ComboUpgrade.max=1}
+if(v15ComboUpgrade){v15ComboUpgrade.rarity='epic';v15ComboUpgrade.max=1;v15ComboUpgrade.desc=()=>'+8 % de daño con combos de 5+ impactos; bonificación total limitada al 25 %'}
 const v15CadenceUpgrade=V10_UPGRADES.find(u=>u.id==='v13cadence');
 if(v15CadenceUpgrade){v15CadenceUpgrade.rarity='rare';v15CadenceUpgrade.max=1}
 const V15_DRAFT={
