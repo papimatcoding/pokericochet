@@ -4294,7 +4294,8 @@ function v13ComboBar(){
  el.classList.toggle('is-live',h>0&&mode==='shooting');
  const tier=h>=35?'LEGENDARIO':h>=20?'DEMOLEDOR':h>=12?'IMPARABLE':h>=5?'EN CADENA':'IMPACTOS';
  const next=h<5?5:h<12?12:h<20?20:h<35?35:35;
- el.innerHTML='<b>✦ COMBO ×'+h+'</b><small>'+tier+' · '+(h>=35?'MÁX.':next+' PRÓXIMO')+'</small>'+
+ const bonus=h>=35?26:h>=20?20:h>=12?14:h>=5?8:0;
+ el.innerHTML='<b>✦ COMBO ×'+h+'</b><small>'+tier+' · +'+bonus+' % DAÑO</small>'+
  '<span class="v13-combo-meter"><i style="width:'+(h>=35?100:Math.min(100,h/next*100))+'%"></i></span>';
 }
 const v13StartOriginal=startBattle;
@@ -4383,6 +4384,23 @@ hit=function(e,b){
  if(n<=5||n%3===0)v13ComboBar();
  return out;
 };
+const v13EndComboPrevious=endVolley;
+let v13ComboCloseTimer=null;
+endVolley=function(){
+ const was=mode==='shooting',n=run?.v13Combo?.hits||0;
+ const out=v13EndComboPrevious();
+ if(was&&n>=8&&run){
+  v08WaveToast('✦ RÁFAGA · '+n+' IMPACTOS · ¡COMBO!');
+ }
+ if(was){
+  clearTimeout(v13ComboCloseTimer);
+  v13ComboCloseTimer=setTimeout(()=>{
+   const el=document.getElementById('v13ComboHud');
+   if(mode!=='shooting')el?.classList.remove('is-live');
+  },1050);
+ }
+ return out;
+};
 const v13KillOriginal=enemyDown;
 enemyDown=function(e){
  const present=run?.blocks?.includes(e),p=active();
@@ -4445,7 +4463,7 @@ function v13ReportHtml(report,fromHistory=false){
  const rows=report.team.map((p,i)=>'<div class="v13-report-pokemon">'+
   sImg(p.id,p.shiny)+'<span><b>'+(i===0?'🏅 ':'')+p.name+(p.shiny?' ✨':'')+'</b>'+
   '<small>Nv. '+p.level+' · '+nice(p.damage)+' daño · '+p.kos+' KOs</small></span></div>').join('');
- const data=[['⚡',nice(report.damage),'DAÑO TOTAL'],['✦','×'+report.maxCombo,'MEJOR COMBO'],
+ const data=[['⚡',nice(report.damage),'DAÑO DIRECTO'],['✦','×'+report.maxCombo,'MEJOR COMBO'],
   ['🎯',nice(report.hits),'IMPACTOS'],['🔴',nice(report.captures),'CAPTURAS'],
   ['👑',nice(report.bosses),'JEFES'],['⭐',nice(report.dominants),'DOMINANTES'],
   ['🟢',nice(report.volleys),'RÁFAGAS'],['⚔',nice(report.defeated),'DERROTADOS']];
