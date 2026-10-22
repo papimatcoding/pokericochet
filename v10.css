@@ -431,3 +431,36 @@
  .v13-combo-meter{height:3px}
 }
 @media(prefers-reduced-motion:reduce){.v13-combo-hud,.v13-combo-meter i{transition:none!important}}
+
+
+/* v1.4 — The arena is for physics, the interface for progress. */
+.v13-combo-hud.v14-combo-desktop{
+ position:relative!important;top:auto!important;left:auto!important;transform:none!important;
+ display:flex;opacity:1;visibility:visible;pointer-events:none;
+ width:100%;min-width:0;max-width:100%;box-sizing:border-box;margin:0 0 5px;
+ padding:10px 12px;background:linear-gradient(125deg,#143d44,#0d2837);
+ border:1px solid #5eaa93;border-radius:13px;
+ box-shadow:0 4px 14px #05192355;text-align:center;
+}
+.v13-combo-hud.v14-combo-desktop b{font-size:19px}
+.v13-combo-hud.v14-combo-desktop small{font-size:9px}
+.v13-combo-hud.v14-combo-desktop:not(.is-live){opacity:.75}
+.v14-combo-mobile{display:none}
+@media(max-width:775px){
+ .v13-combo-hud.v14-combo-desktop{display:none!important}
+ .v14-combo-mobile{
+   display:flex;align-items:center;justify-content:center;gap:9px;min-height:28px;
+   width:100%;padding:4px 8px;background:#102d39;color:#a8cbbb;
+   border-top:1px solid #367c77;border-bottom:1px solid #367c77;
+   font-variant-numeric:tabular-nums;overflow:hidden;box-sizing:border-box;
+ }
+ .v14-combo-mobile.is-live{color:#ffe0a4;background:#1b4150}
+ .v14-combo-mobile b{font-size:12px;font-weight:900}
+ .v14-combo-mobile small{font-size:9px;font-weight:800;white-space:nowrap}
+ .v14-combo-mobile .v13-combo-meter{flex:0 0 56px;width:56px;height:4px}
+}
+@media(max-width:400px){
+ .v14-combo-mobile{gap:5px;min-height:25px;padding:3px 5px}
+ .v14-combo-mobile b{font-size:11px}.v14-combo-mobile small{font-size:8px}
+ .v14-combo-mobile .v13-combo-meter{flex-basis:35px;width:35px}
+}
