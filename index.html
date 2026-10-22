@@ -4452,11 +4452,7 @@ showBattleClear=function(boss){
    }else v08WaveToast('🎯 DESAFÍO NO COMPLETADO · SIN PENALIZACIÓN');
    run.v13Mission=null;
   }
-  if(!boss&&run.encounter!=='miniboss'&&run.clearedFights%2===0){
-   for(const p of run.team){
-    if(p.hp>0)p.hp=Math.min(p.maxHp,p.hp+Math.max(2,Math.ceil(p.maxHp*.08)));
-   }
-  }
+  // La curación ya no se concede gratis por superar pisos; se gestiona en tienda y por habilidades.
  }
  return v13ClearOriginal(boss);
 };
@@ -4777,6 +4773,90 @@ pk9RollIV=function(id,shiny=false){
  if(!Object.hasOwn(saved.natureBest,root))saved.natureBest[root]=Math.floor(Math.random()*PK9_NATURES.length);
  save();
  return {fresh,best:improve?fresh:old,improvements:improve?1:0};
+};
+
+
+/* Branching paths: a dominant early, a guaranteed visible shop choice, tougher paths. */
+generateMap=function(){
+ const rooms=zone().rooms,rows=[];
+ const normal=['wild','hunt','swarm','rare','ambush','fortress','duel'];
+ for(let f=1;f<=rooms;f++){
+  const kinds=f===1?['wild','wild','hunt']:
+   f===2||f===rooms?['miniboss','miniboss','miniboss']:
+   f===3?['rare','camp','swarm']:
+   f===rooms-1?['elite','camp','hunt']:
+   [pick(normal),'rare',pick(['elite','fortress','swarm'])];
+  rows.push(kinds.map((kind,lane)=>({floor:f,lane,kind,edges:f===1?[]:
+   lane===0?[0,1]:lane===1?[0,1,2]:[1,2]})));
+ }
+ return {zone:run.zone,rows};
+};
+const v15TierTune={common:46,uncommon:31,rare:16,epic:6,legendary:1};
+for(const [t,w] of Object.entries(v15TierTune))V10_TIERS[t].percent=w;
+/* More Pokémon-like tradeoffs. Rare effects alter attack selection rather than give flat +1. */
+V10_UPGRADES.push(
+ {id:'v15execution',name:'Golpe Certero',rarity:'rare',max:2,icon:'🎯',
+  desc:()=> 'Los enemigos por debajo de 35 % PS reciben 20 % más daño por nivel',
+  ok:p=>p.moves.some(m=>m.category!=='status'),
+  apply:p=>{p.v15Execute=(p.v15Execute||0)+1}},
+ {id:'v15guardrail',name:'Refugio Estratégico',rarity:'uncommon',max:2,icon:'🛡',
+  desc:()=> 'Empieza cada combate con 2 puntos más de escudo por nivel si estás herido',
+  ok:p=>true,apply:p=>{p.v15Refuge=(p.v15Refuge||0)+1}},
+ {id:'v15piercing',name:'Presión Concentrada',rarity:'rare',max:2,icon:'🌀',
+  desc:p=>p.moves[p.chosen].name+' gana perforación +18 % y +2 potencia',
+  ok:p=>p.moves[p.chosen]?.category!=='status'&&p.moves[p.chosen]?.pierce<.55,
+  apply:p=>{const m=p.moves[p.chosen];m.pierce=Math.min(.60,(m.pierce||0)+.18);m.power+=2}},
+ {id:'v15momentum',name:'Segundo Aliento',rarity:'epic',max:1,icon:'💚',
+  desc:()=> 'Recupera 2 PS al lograr 10 impactos efectivos en una ráfaga, una vez por combate',
+  ok:p=>true,apply:p=>{p.v15SecondWind=true}},
+ {id:'v15bossbreaker',name:'Técnica Antidominante',rarity:'rare',max:2,icon:'👑',
+  desc:()=> 'Contra dominantes y jefes, +15 % daño por nivel si no hay escoltas',
+  ok:p=>p.moves.some(m=>m.category!=='status'),
+  apply:p=>{p.v15BossBreaker=(p.v15BossBreaker||0)+1}}
+);
+const v15BossDamagePrevious=attackInfo;
+attackInfo=function(m,e){
+ const v=v15BossDamagePrevious(m,e),p=active();
+ if(v.dmg<=0||!p)return v;
+ if(p.v15Execute&&e.hp/e.maxHp<=.35)v.dmg=Math.ceil(v.dmg*(1+.20*p.v15Execute));
+ if(p.v15BossBreaker&&(e.v15Boss||e.v11Dominant)&&!run.blocks.some(x=>x.v15Escort&&x.hp>0))
+  v.dmg=Math.ceil(v.dmg*(1+.15*p.v15BossBreaker));
+ return v;
+};
+const v15OpeningShieldPrevious=startBattle;
+startBattle=function(kind){
+ v15OpeningShieldPrevious(kind);
+ for(const p of run.team){
+  if(p.v15Refuge&&p.hp>0&&p.hp<p.maxHp)
+   p.shield=(p.shield||0)+p.v15Refuge*2;
+  p.v15WindUsed=false;
+ }
+};
+const v15WindHitPrevious=hit;
+hit=function(e,b){
+ const before=e.hp,p=active();
+ const out=v15WindHitPrevious(e,b);
+ if(p?.v15SecondWind&&!p.v15WindUsed&&e.hp<before&&run?.v13Combo?.hits>=10&&p.hp>0){
+  p.v15WindUsed=true;
+  p.hp=Math.min(p.maxHp,p.hp+2);
+  v08WaveToast('💚 SEGUNDO ALIENTO · '+p.name.toUpperCase());
+ }
+ return out;
+};
+const v15CampRecipientPrevious=v10RecipientPicker;
+v10RecipientPicker=function(item){
+ if(PK9_ITEMS[item]?.kind!=='vitamin')return v15CampRecipientPrevious(item);
+ const meta=PK9_ITEMS[item];
+ const candidates=run.team.map((p,i)=>{
+  const ok=v10CanUse(item,p),current=(p.evs||[])[meta.stat]||0;
+  return '<button class="v10-recipient" data-action="v10:recipient:'+item+':'+i+'" '+(!ok?'disabled':'')+'>'+
+   sImg(p.id,p.shiny)+'<span><b>'+p.name+'</b><small>'+PK9_STAT_LABELS[meta.stat]+
+   ' · EV '+current+'/252</small></span><strong>+20 EV ›</strong></button>';
+ }).join('');
+ showModal('<div class="v10-recipient-screen"><div class="emblem">💊 '+meta.name.toUpperCase()+'</div>'+
+  '<h2>¿A quién quieres entrenar?</h2><p>₽'+meta.price+' · El aporte respeta los límites de 252 EV por estadística y 510 totales.</p>'+
+  '<div class="v10-recipients">'+candidates+'</div>'+
+  '<div class="actions"><button class="secondary" data-action="v09:shop">CANCELAR</button></div></div>');
 };
 
 fitBoard();startMenu();requestAnimationFrame(render);
