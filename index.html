@@ -269,6 +269,7 @@ function attackInfo(m,e){const mult=effectiveness(m.type,e.types);const crit=cha
 function hit(e,b){
  const {mult,crit,dmg}=attackInfo(b.move,e),cx=b.x,cy=b.y;
  e.hp-=dmg;
+ v14CountImpact(e,b,dmg);
  burst(cx,cy,mult>1?'#ffe381':mult===0?'#70859d':TYPE_COLOR[b.move.type],dmg?5:2);
  if(dmg){textFx(cx+rand(-10,10),cy-8,`-${dmg}${crit>1?'!':''}`,mult>1?'#ffdc72':'#f0f9ff');if(mult>1&&chance(.15))message('¡SUPEREFICAZ! ×2')}
  else if(chance(.1))textFx(cx,cy,'INMUNE','#91a5bf');
@@ -316,15 +317,15 @@ function advanceVolley(dt){
   run.volleyClock+=dt*(run.fast?2.5:1);
   while(run.pending>0&&run.volleyClock>=.085){run.volleyClock-=.085;launchBall()}
  }
- const factor=run.fast?2.5:1,sub=Math.max(1,Math.min(7,Math.ceil(dt*factor/.007))),stepDt=dt*factor/sub;
+ const factor=run.fast?2.5:1,sub=Math.max(1,Math.min(24,Math.ceil(dt*factor/.006))),stepDt=dt*factor/sub;
  for(let step=0;step<sub;step++)for(let i=run.shots.length-1;i>=0;i--){
   const b=run.shots[i];
   b.contacts??=new Set();
   b.wallBounces??=0;
   b.trail.push([b.x,b.y]);if(b.trail.length>6)b.trail.shift();
   b.x+=b.vx*stepDt;b.y+=b.vy*stepDt;
-  if(b.x<BALL_R+7){b.x=BALL_R+7;b.vx=Math.abs(b.vx);b.wallBounces++}
-  if(b.x>W-BALL_R-7){b.x=W-BALL_R-7;b.vx=-Math.abs(b.vx);b.wallBounces++}
+  if(b.x<BALL_R+1){b.x=BALL_R+1;b.vx=Math.abs(b.vx);b.wallBounces++}
+  if(b.x>W-BALL_R-1){b.x=W-BALL_R-1;b.vx=-Math.abs(b.vx);b.wallBounces++}
   if(b.y<TOP-4+BALL_R){b.y=TOP-4+BALL_R;b.vy=Math.abs(b.vy)}
   if(b.y>SHOOT_Y+4){run.landing??=b.x;run.shots.splice(i,1);continue}
   touchDrop(b);
@@ -360,7 +361,7 @@ function takeDamage(amount,label){if(mode==='over')return;let m=active();if(!m)r
 function endVolley(){if(mode!=='shooting')return;run.turn++;run.turnTotal++;if(run.blocks.length===0){winBattle();return}let attackers=[];for(let e of [...run.blocks]){if(!e.ranged)continue;e.cooldown--;if(e.cooldown<=0){attackers.push(e);e.cooldown=e.interval}}run.aim=-Math.PI/2;if(attackers.length){mode='retaliating';run.enemyBullets=[];run.enemyQueue=attackers;run.enemyClock=.1;log(`⚠ ${attackers.length} enemigos preparan sus proyectiles`)}else beginDescent();refresh()}
 function beginDescent(){mode='descending';run.descentProgress=0;run.descentClock=0;log('⬇ Los enemigos descienden.');refresh()}
 function updateRetaliation(dt){run.enemyClock-=dt;while(run.enemyClock<=0&&run.enemyQueue.length){const e=run.enemyQueue.shift(),x=enemyX(e)+enemyW(e)/2,y=enemyY(e)+enemyH(e)/2;run.enemyBullets.push({x,y,startX:x,startY:y,goalX:run.shooter+rand(-6,6),goalY:SHOOT_Y-2,progress:0,duration:rand(.42,.64),power:Math.max(1,Math.round(e.attack*(run.relics.includes('ward')?.8:1))),color:TYPE_COLOR[e.types[0]],source:e.name});run.enemyClock+=.19;playTone(320,.09,'sawtooth',.023)}for(let i=run.enemyBullets.length-1;i>=0;i--){const b=run.enemyBullets[i];b.progress=Math.min(1,b.progress+dt/b.duration);let t=b.progress;b.x=b.startX+(b.goalX-b.startX)*t;b.y=b.startY+(b.goalY-b.startY)*t*t;if(t>=1){run.enemyBullets.splice(i,1);burst(b.goalX,b.goalY,b.color,10);takeDamage(b.power,b.source);if(mode==='over')return}}if(run.enemyQueue.length===0&&run.enemyBullets.length===0)beginDescent()}
-function finishDescent(){run.blocks.forEach(e=>e.row++);run.descentProgress=0;let reached=run.blocks.filter(e=>enemyY(e)+enemyH(e)>=FLOOR_Y);for(const e of reached){run.blocks=run.blocks.filter(x=>x!==e);takeDamage(Math.round(e.attack*(e.boss?1.85:1.45)),'Ataque cuerpo a cuerpo');burst(enemyX(e)+20,FLOOR_Y,'#ff8a91',9);if(mode==='over')return}run.drops=run.drops.filter(d=>--d.turns>0);if(run.blocks.length===0){winBattle();return}run.relaySafety=false;run.aim=-Math.PI/2;mode='aim';log('🎯 ¡Tu turno! Los contadores indican el peligro.');refresh()}
+function finishDescent(){run.blocks.forEach(e=>e.row++);run.descentProgress=0;let reached=run.blocks.filter(e=>enemyY(e)+enemyH(e)>=FLOOR_Y);for(const e of reached){run.v14Reached=(run.v14Reached||0)+1;textFx(enemyX(e)+enemyW(e)/2,FLOOR_Y-18,'⚠ ¡BRECHA!','#ffbd92');run.blocks=run.blocks.filter(x=>x!==e);takeDamage(Math.round(e.attack*(e.boss?1.85:1.45)),'Ataque cuerpo a cuerpo');burst(enemyX(e)+20,FLOOR_Y,'#ff8a91',9);if(mode==='over')return}run.drops=run.drops.filter(d=>--d.turns>0);if(run.blocks.length===0){winBattle();return}run.relaySafety=false;run.aim=-Math.PI/2;mode='aim';log('🎯 ¡Tu turno! Los contadores indican el peligro.');refresh()}
 function winBattle(){if(mode==='over'||mode==='reward'||mode==='upgrade'||mode==='global')return;mode='reward';const boss=run.encounter==='boss';let earned=boss?5:run.encounter==='elite'?3:run.encounter==='swarm'||run.encounter==='rare'?2:1;if(run.relics.includes('salvage'))earned++;saved.tokens+=earned;log(`🏆 ${boss?'Jefe vencido':'Piso superado'} · +${earned} fichas`);playTone(940,.2,'triangle',.05);saved.best=Math.max(saved.best,run.zone*20+run.floor);save();run.afterReward=()=>{if(boss)openZoneClear();else nextRoute()};if(!boss)run.clearedFights++;run.pendingGlobal=(!boss&&run.clearedFights%3===0);if(run.expQueue.length)showLevelUp();else if(run.pendingGlobal)showGlobalUpgrade();else showBattleClear(boss);refresh()}
 function showBattleClear(boss){mode='reward';showModal(`<div class="emblem">${boss?'👑 JEFE DERROTADO':'✦ SALA COMPLETADA'}</div><h2>${boss?'¡Zona superada!':'¡Victoria!'}</h2><p>Un poco más cerca de tu objetivo. Conservas los PS de tu equipo y puedes reforzarlo en la próxima ruta. Cada zona aumenta en dificultad.</p><div class="choices">${btn('closebattle','CONTINUAR','Elige la siguiente sala de la expedición.',boss?'🏆':'🧭')}</div><div class="tiny">${run.defeated} Pokémon derrotados · ${run.captures} capturas · ${saved.tokens} fichas</div>`) }
 function afterUpgrades(){if(run.expQueue.length){showLevelUp();return}if(run.pendingGlobal){showGlobalUpgrade();return}showBattleClear(run.encounter==='boss')}
@@ -410,6 +411,10 @@ function drawSprite(id,shiny,x,y,w,h,icon){let item=prefetchSprite(id,shiny);if(
 function render(now){requestAnimationFrame(render);if(!run)return;let dt=lastFrame?clamp((now-lastFrame)/1000,0,.038):.016;lastFrame=now;if(mode==='shooting')advanceVolley(dt);if(mode==='retaliating')updateRetaliation(dt);if(mode==='descending'){run.descentClock+=dt;const t=clamp(run.descentClock/.57,0,1);run.descentProgress=STEP*(1-Math.pow(1-t,3));if(t>=1){run.descentProgress=0;finishDescent()}}run.impactShake=Math.max(0,run.impactShake-dt*30);for(let p of run.particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=100*dt;p.life-=dt}run.particles=run.particles.filter(p=>p.life>0);for(let t of run.texts){t.y-=26*dt;t.life-=dt}run.texts=run.texts.filter(p=>p.life>0);for(let d of run.drops)d.t+=dt;renderBoard(now)}let lastFrame=0;
 function renderBoard(now){const z=zone(),time=now/1000;ctx.clearRect(0,0,W,H);let bg=ctx.createLinearGradient(0,0,W,H);bg.addColorStop(0,z.theme[0]);bg.addColorStop(1,z.theme[1]);ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);ctx.save();if(run.impactShake>0){ctx.translate(rand(-run.impactShake,run.impactShake)*.23,rand(-run.impactShake,run.impactShake)*.23)}
 ctx.strokeStyle='#ffffff08';ctx.lineWidth=1;for(let x=LEFT;x<W;x+=CS){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}for(let y=TOP;y<SHOOT_Y;y+=STEP){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+// The reflections and the three rendered boundaries now share coordinates.
+ctx.save();ctx.strokeStyle='#8cd9ca99';ctx.lineWidth=2;ctx.shadowColor='#86e2d5';ctx.shadowBlur=4;
+ctx.beginPath();ctx.moveTo(1,TOP-4);ctx.lineTo(1,SHOOT_Y+4);ctx.moveTo(W-1,TOP-4);ctx.lineTo(W-1,SHOOT_Y+4);
+ctx.moveTo(1,TOP-4);ctx.lineTo(W-1,TOP-4);ctx.stroke();ctx.restore();
 ctx.font='800 10px system-ui';ctx.textAlign='left';ctx.fillStyle='#a6bfd096';ctx.fillText('ENCUENTRO · '+(run.encounter==='boss'?'JEFE FINAL':(run.encounter||'SENDA').toUpperCase()),19,21);
 ctx.setLineDash([5,7]);ctx.strokeStyle='#ff8f9d6a';ctx.beginPath();ctx.moveTo(13,FLOOR_Y);ctx.lineTo(W-13,FLOOR_Y);ctx.stroke();ctx.setLineDash([]);ctx.textAlign='right';ctx.font='700 9px system-ui';ctx.fillStyle='#ffadb6b0';ctx.fillText('ZONA DE CONTACTO',W-18,FLOOR_Y-5);
 for(let e of run.blocks){const x=enemyX(e),y=enemyY(e),w=enemyW(e),h=enemyH(e);if(y>H+60||y<-120)continue;const color=TYPE_COLOR[e.types[0]]||'#91aacc';drawRoundRect(x+2,y+4,w,h,11,'#01071888');let grad=ctx.createLinearGradient(x,y,x+w,y+h);grad.addColorStop(0,'#243a55');grad.addColorStop(1,'#0e2036');drawRoundRect(x,y,w,h,10,grad,e.shiny?'#ffe27a':color,e.boss?2.8:1.6);
@@ -428,7 +433,7 @@ drawRoundRect(x+3,y+h-5,w-6,4,2,'#04101ae8');
 drawRoundRect(x+3,y+h-5,Math.max(0,(w-6)*clamp(e.hp/e.maxHp,0,1)),4,2,(e.hp/e.maxHp)>.45?'#73edaf':'#f58b86');
 }
 for(const d of run.drops){let bob=Math.sin(time*5+d.id)*3;ctx.save();ctx.translate(d.x,d.y+bob);ctx.shadowColor=d.shiny?'#ffe985':'#ff99b7';ctx.shadowBlur=d.shiny?22:11;ctx.fillStyle='#f6f8ff';ctx.beginPath();ctx.arc(0,0,10,0,Math.PI*2);ctx.fill();ctx.fillStyle=d.shiny?'#ffd45d':'#f26c81';ctx.beginPath();ctx.arc(0,0,10,Math.PI,2*Math.PI);ctx.fill();ctx.strokeStyle='#1c3047';ctx.lineWidth=2.3;ctx.beginPath();ctx.moveTo(-10,0);ctx.lineTo(10,0);ctx.stroke();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(0,0,3.7,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#263549';ctx.lineWidth=1.5;ctx.stroke();ctx.restore()}
-if(mode==='aim'){let theta=run.aim;ctx.globalAlpha=.7;for(let j=1;j<=18;j++){let dist=j*21,x=run.shooter+Math.cos(theta)*dist,y=SHOOT_Y+Math.sin(theta)*dist;let left=BALL_R+8,right=W-BALL_R-8;if(x<left)x=left+(left-x);if(x>right)x=right-(x-right);if(y<TOP)break;ctx.fillStyle='#8ef5d6';ctx.beginPath();ctx.arc(x,y,Math.max(1,3-j*.10),0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1}
+if(mode==='aim'){let theta=run.aim;ctx.globalAlpha=.7;for(let j=1;j<=18;j++){let dist=j*21,x=run.shooter+Math.cos(theta)*dist,y=SHOOT_Y+Math.sin(theta)*dist;let left=BALL_R+1,right=W-BALL_R-1;if(x<left)x=left+(left-x);if(x>right)x=right-(x-right);if(y<TOP)break;ctx.fillStyle='#8ef5d6';ctx.beginPath();ctx.arc(x,y,Math.max(1,3-j*.10),0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1}
 // The active Pokémon is visible at the launch position, not just in the HUD.
 const mon=active();if(mon){const sx=clamp(run.shooter-22,8,W-52);drawSprite(mon.id,mon.shiny,sx,SHOOT_Y-45,44,42,mon.icon);drawRoundRect(clamp(run.shooter-42,3,W-88),SHOOT_Y+15,84,17,7,'#061427dd','#6fe0c9');ctx.fillStyle='#effff9';ctx.textAlign='center';ctx.font='bold 10px system-ui';ctx.fillText(mon.name.slice(0,12),clamp(run.shooter,45,W-46),SHOOT_Y+27)}
 ctx.save();ctx.translate(run.shooter,SHOOT_Y);ctx.shadowColor='#8ef5da';ctx.shadowBlur=20;ctx.fillStyle='#d2fff2';ctx.beginPath();ctx.arc(0,0,9,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#155769';ctx.beginPath();ctx.arc(0,0,4,0,Math.PI*2);ctx.fill();ctx.restore();
@@ -3006,8 +3011,16 @@ finishDescent=function(){
    }else if(e.v10AI==='guardian'&&run.turn%4===0&&count<2){e.v10Armor=1;textFx(enemyX(e),enemyY(e)-8,'🛡 BLOQUEO','#addfff');count++}
    else if(e.v10AI==='sniper'&&e.ranged&&run.turn%4===0&&count<3)e.cooldown=Math.min(e.cooldown,1);
    else if(e.v10AI==='trickster'&&run.turn%5===0&&!e.boss&&e.row<5&&count<2){
-    e.col=Math.max(0,Math.min(6,e.col+(e.col===6?-1:chance(.5)?1:-1)));
-    textFx(enemyX(e),enemyY(e)-10,'✦ ESQUIVA','#d8caff');count++;
+    const oldCol=e.col,direction=e.col===6?-1:e.col===0?1:chance(.5)?1:-1;
+    const destination=clamp(oldCol+direction,0,COLS-1);
+    const vacant=run.blocks.every(other=>other===e||other.row!==e.row||
+      destination+1<=other.col||destination>=other.col+(other.boss?2:1));
+    if(vacant&&destination!==oldCol){
+     textFx(enemyX(e)+enemyW(e)/2,enemyY(e)+17,'↝','#d8caff');
+     e.col=destination;
+     textFx(enemyX(e)+enemyW(e)/2,enemyY(e)-9,'✦ ESQUIVA','#d8caff');
+     burst(enemyX(e)+enemyW(e)/2,enemyY(e)+enemyH(e)/2,'#c5a2ff',5);count++;
+    }
    }
   }
  }
@@ -4346,16 +4359,17 @@ attackInfo=function(m,e){
  if(bonus>0)info.dmg=Math.max(1,Math.ceil(info.dmg*(1+bonus)));
  return info;
 };
-const v13HitOriginal=hit;
-hit=function(e,b){
- const before=e.hp,p=active(),had=run?.blocks?.includes(e);
- const out=v13HitOriginal(e,b);
- if(!run||!p||!had||before<=0||e.hp>=before||mode!=='shooting')return out;
- const dealt=Math.min(Math.max(0,before),Math.max(0,before-e.hp));
- if(dealt<=0)return out;
- const st=v13Stats();
+/* The original hit() records damage before a finishing KO changes game mode.
+   Immune contacts remain visible but do not gain damage/charge or gameable combos. */
+function v14CountImpact(e,b,dmg){
+ if(!run||mode!=='shooting'||!e||!b||!run.blocks.includes(e))return;
+ run.v14Contacts=(run.v14Contacts||0)+1;
+ if(dmg<=0){run.v14ImmuneContacts=(run.v14ImmuneContacts||0)+1;return}
+ const dealt=Math.min(Math.max(0,dmg),Math.max(0,e.hp+dmg));
+ if(dealt<=0)return;
+ const p=active(),st=v13Stats();
  st.hits++;st.damage+=dealt;
- p.v13Damage=(p.v13Damage||0)+dealt;
+ if(p)p.v13Damage=(p.v13Damage||0)+dealt;
  run.v13Combo??={hits:0,peak:0,triggered:[]};
  const combo=run.v13Combo;
  combo.hits++;combo.peak=Math.max(combo.peak,combo.hits);
@@ -4380,8 +4394,8 @@ hit=function(e,b){
  }
  // Update text only on milestones or every third hit to avoid excessive DOM work.
  if(n<=5||n%3===0||[8,12,20,25,35].includes(n))v13ComboBar();
- return out;
-};
+ 
+}
 const v13EndComboPrevious=endVolley;
 let v13ComboCloseTimer=null;
 endVolley=function(){
@@ -4514,6 +4528,35 @@ if(v13Badge)v13Badge.textContent='EXPEDITION EDITION · V1.3';
 const v13ComboHud=document.createElement('div');
 v13ComboHud.id='v13ComboHud';v13ComboHud.className='v13-combo-hud';
 document.getElementById('boardFrame')?.appendChild(v13ComboHud);
+
+
+/* v1.4 — Put combo progression in the side panels, never over the board. */
+const v14DesktopCombo=document.getElementById('v13ComboHud');
+const v14MobileCombo=document.createElement('div');
+v14MobileCombo.id='v14MobileComboHud';v14MobileCombo.className='v14-combo-mobile';
+v14MobileCombo.setAttribute('aria-live','off');
+if(v14DesktopCombo){
+ v14DesktopCombo.classList.add('v14-combo-desktop');
+ const sidebar=document.querySelector('.sidebar');
+ if(sidebar)sidebar.insertBefore(v14DesktopCombo,sidebar.firstChild);
+ else document.querySelector('.arena')?.appendChild(v14DesktopCombo);
+}
+const v14Arena=document.querySelector('.arena'),v14Bottom=document.querySelector('.arena-bottom');
+if(v14Arena&&v14Bottom)v14Arena.insertBefore(v14MobileCombo,v14Bottom);
+const v14OldComboBar=v13ComboBar;
+v13ComboBar=function(){
+ v14OldComboBar();
+ const src=document.getElementById('v13ComboHud'),dst=document.getElementById('v14MobileComboHud');
+ if(!src||!dst)return;
+ dst.innerHTML=src.innerHTML;
+ dst.classList.toggle('is-live',src.classList.contains('is-live'));
+};
+const v14OldComboEnd=endVolley;
+endVolley=function(){
+ const result=v14OldComboEnd();
+ if(mode!=='shooting')document.getElementById('v14MobileComboHud')?.classList.remove('is-live');
+ return result;
+};
 
 fitBoard();startMenu();requestAnimationFrame(render);
 })();
